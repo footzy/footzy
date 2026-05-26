@@ -487,26 +487,33 @@
           const hasPred = pred != null;
           return `
           <div class="match-card" data-match-id="${m.id}"
-            style="padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s">
-            <div style="display:flex;align-items:center;justify-content:space-between">
-              <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:3px">
-                <span style="font-size:28px">${m.home_flag}</span>
-                <span style="font-size:12px;font-weight:700;text-align:center">${m.home_team}</span>
+            style="padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s">
+            <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px">
+
+              <!-- Équipe domicile -->
+              <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+                <span style="font-size:26px;line-height:1">${m.home_flag}</span>
+                <span style="font-size:11px;font-weight:700;text-align:center;line-height:1.2;word-break:break-word">${m.home_team}</span>
               </div>
-              <div style="text-align:center;padding:0 10px">
+
+              <!-- Centre : score ou heure -->
+              <div style="text-align:center;min-width:90px">
                 ${hasPred
-                  ? `<div style="font-size:22px;font-weight:800;color:var(--green-accent)">${pred.h} – ${pred.a}</div>
-                     <div style="font-size:9px;color:var(--green-accent);margin-top:2px">✓ prédit</div>
-                     <button class="delete-prono-btn" data-match-id="${m.id}" style="margin-top:8px;background:none;border:none;cursor:pointer;font-size:11px;color:var(--text-tertiary);padding:2px 6px;border-radius:4px;transition:color .15s" title="Supprimer ce pari">🗑 supprimer</button>`
-                  : `<div style="font-size:11px;color:var(--text-tertiary)">${timeStr}</div>
-                     <div style="font-size:10px;color:var(--text-tertiary);margin-top:4px">${phase}</div>
-                     <div style="margin-top:8px;font-size:10px;font-weight:700;color:var(--green-accent);border:1px solid var(--green-accent);border-radius:6px;padding:2px 8px">Pronostiquer →</div>`
+                  ? `<div style="font-size:22px;font-weight:800;color:var(--green-accent);line-height:1">${pred.h} – ${pred.a}</div>
+                     <div style="font-size:9px;color:var(--green-accent);margin-top:3px">✓ prédit</div>
+                     <button class="delete-prono-btn" data-match-id="${m.id}" style="margin-top:6px;background:none;border:none;cursor:pointer;font-size:10px;color:var(--text-tertiary);padding:2px 6px;border-radius:4px" title="Supprimer ce pari">🗑 supprimer</button>`
+                  : `<div style="font-size:13px;font-weight:700;color:var(--text-secondary)">${timeStr}</div>
+                     <div style="font-size:9px;color:var(--text-tertiary);margin-top:2px">${phase}</div>
+                     <div style="margin-top:6px;font-size:10px;font-weight:700;color:var(--green-accent);border:1px solid var(--green-accent);border-radius:6px;padding:3px 8px;white-space:nowrap">Pronostiquer →</div>`
                 }
               </div>
-              <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:3px">
-                <span style="font-size:28px">${m.away_flag}</span>
-                <span style="font-size:12px;font-weight:700;text-align:center">${m.away_team}</span>
+
+              <!-- Équipe extérieur -->
+              <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+                <span style="font-size:26px;line-height:1">${m.away_flag}</span>
+                <span style="font-size:11px;font-weight:700;text-align:center;line-height:1.2;word-break:break-word">${m.away_team}</span>
               </div>
+
             </div>
           </div>`;
         }).join('')}

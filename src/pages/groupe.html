@@ -113,8 +113,8 @@
       switcher.addEventListener('change', () => { currentGroupeId = switcher.value; loadGroupe(); subscribeRealtime(); });
       await loadGroupe();
       subscribeRealtime();
-      // Polling fallback toutes les 15s (au cas où le realtime rate un event)
-      setInterval(() => loadGroupe(), 15000);
+      // Polling fallback toutes les 5s (au cas où le realtime rate un event)
+      setInterval(() => loadGroupe(), 5000);
     }
 
     async function loadGroupe() {

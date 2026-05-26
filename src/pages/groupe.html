@@ -125,14 +125,17 @@
         toast(result === 'copied' ? 'Code copié ! 📋' : 'Partagé !');
       });
 
-      // Load members + their points (via pronostics in this groupe)
+      // Load members + their points + roles
       const { data: membres } = await supabase
         .from('groupe_membres')
-        .select('user_id, profiles(id,pseudo,points_totaux,streak_quotidien)')
+        .select('user_id, role, profiles(id,pseudo,points_totaux,streak_quotidien)')
         .eq('groupe_id', currentGroupeId);
 
+      const myMembership = membres?.find(m => m.user_id === user.id);
+      const isAdmin = myMembership?.role === 'admin';
+
       const sorted = (membres || [])
-        .map(m => m.profiles)
+        .map(m => ({ ...m.profiles, role: m.role }))
         .filter(Boolean)
         .sort((a, b) => (b.points_totaux || 0) - (a.points_totaux || 0));
 
@@ -141,15 +144,35 @@
         const rank = i + 1;
         const isMe = p.id === user.id;
         const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+        const canKick = isAdmin && !isMe && p.role !== 'admin';
         return `<div class="leaderboard-item${isMe ? ' me' : ''}">
           <div class="rank-badge ${rankClass}">${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank}</div>
           <div style="flex:1">
-            <div class="leaderboard-pseudo">${p.pseudo}${isMe ? ' 👈' : ''}</div>
+            <div class="leaderboard-pseudo">${p.pseudo}${isMe ? ' 👈' : ''}${p.role === 'admin' ? ' 👑' : ''}</div>
             ${p.streak_quotidien > 0 ? `<div style="font-size:11px;color:var(--text-tertiary)">🔥 ${p.streak_quotidien} jours</div>` : ''}
           </div>
+          ${canKick ? `<button class="kick-btn" data-uid="${p.id}" style="background:none;border:1px solid var(--danger);color:var(--danger);border-radius:8px;padding:4px 8px;font-size:11px;cursor:pointer;margin-right:8px">Exclure</button>` : ''}
           <div class="leaderboard-points">${p.points_totaux || 0} pts</div>
         </div>`;
       }).join('');
+
+      // Handlers bouton Exclure
+      lb.querySelectorAll('.kick-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const uid = btn.dataset.uid;
+          const name = btn.closest('.leaderboard-item').querySelector('.leaderboard-pseudo').textContent.replace(' 👑','').trim();
+          if (!confirm(`Exclure ${name} du groupe ?`)) return;
+          btn.disabled = true;
+          const { error } = await supabase
+            .from('groupe_membres')
+            .delete()
+            .eq('groupe_id', currentGroupeId)
+            .eq('user_id', uid);
+          if (error) { toast('Erreur lors de l\'exclusion ❌'); btn.disabled = false; return; }
+          toast(`${name} a été exclu 👋`);
+          loadGroupe();
+        });
+      });
 
       // Realtime updates
       supabase.channel('groupe-' + currentGroupeId)
@@ -203,7 +226,7 @@
       if (!nom) { errEl.textContent = 'Donne un nom à ton groupe.'; errEl.style.display = 'block'; return; }
       const { data: groupe, error } = await supabase.from('groupes').insert({ nom, created_by: user.id }).select().single();
       if (error) { errEl.textContent = 'Erreur à la création.'; errEl.style.display = 'block'; return; }
-      await supabase.from('groupe_membres').insert({ groupe_id: groupe.id, user_id: user.id });
+      await supabase.from('groupe_membres').insert({ groupe_id: groupe.id, user_id: user.id, role: 'admin' });
       toast('Groupe créé ! 🎉');
       document.getElementById('create-modal').classList.remove('open');
       window.location.href = '/src/pages/groupe.html?id=' + groupe.id;
@@ -224,7 +247,7 @@
       const { data: groupes } = await supabase.rpc('find_group_by_code', { p_code: code });
       const g = groupes?.[0];
       if (!g) { errEl.textContent = 'Groupe introuvable.'; errEl.style.display = 'block'; return; }
-      await supabase.from('groupe_membres').insert({ groupe_id: g.id, user_id: user.id });
+      await supabase.from('groupe_membres').insert({ groupe_id: g.id, user_id: user.id, role: 'membre' });
       toast('Groupe rejoint !');
       document.getElementById('join-modal').classList.remove('open');
       window.location.href = '/src/pages/groupe.html?id=' + g.id;

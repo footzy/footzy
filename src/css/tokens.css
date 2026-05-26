@@ -1,39 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&display=swap');
+
 :root {
   /* ── Backgrounds ── */
-  --bg-base:    #080808;
-  --bg-surface: #111111;
-  --bg-card:    rgba(255,255,255,0.05);
-  --bg-card-elevated: #1A1A1A;
+  --bg-base:          #F0EDE8;   /* warm paper — main bg */
+  --bg-surface:       #FAFAF8;   /* off-white — cards */
+  --bg-dark:          #0F0F0E;   /* ink black — score hero, modal bg */
+  --bg-dark-soft:     #1A1A18;   /* soft black — dark cards */
+  --bg-muted:         #E8E4DE;   /* deeper gray — inputs, secondary zones */
+  --bg-card:          #FAFAF8;
+  --bg-card-elevated: #FAFAF8;   /* alias kept for inline styles in HTML */
 
   /* ── Borders ── */
-  --border-glass: rgba(255,255,255,0.08);
-  --border-soft:  rgba(255,255,255,0.05);
+  --border:        #E0DCD6;
+  --border-strong: #C8C4BE;
+  --border-glass:  #E0DCD6;      /* alias — used in many inline styles */
+  --border-soft:   #ECEAE5;
 
-  /* ── Accent ── */
-  --green-accent:  #80FF00;
-  --green-dim:     rgba(128,255,0,0.12);
-  --green-border:  rgba(128,255,0,0.25);
-  --green-primary: #1A1A1A;
-  --green-soft:    #404040;
+  /* ── Accent (vert Footzy — utilisé avec parcimonie) ── */
+  --accent:        #00E05A;
+  --accent-dark:   #00B548;
+  --accent-bg:     rgba(0,224,90,0.10);
+  /* Legacy aliases (HTML inline styles) */
+  --green-accent:  #00E05A;
+  --green-dim:     rgba(0,224,90,0.10);
+  --green-border:  rgba(0,224,90,0.22);
+  --green-primary: #FAFAF8;
+  --green-soft:    #E0DCD6;
 
   /* ── Text ── */
-  --text-primary:   #FFFFFF;
-  --text-secondary: rgba(255,255,255,0.55);
-  --text-tertiary:  rgba(255,255,255,0.30);
+  --text-primary:   #0F0F0E;
+  --text-secondary: #6B6560;
+  --text-tertiary:  #A09890;
+  --text-inverse:   #FAFAF8;
 
   /* ── Status ── */
-  --live-red: #FF3B3B;
-  --danger:   #FF4444;
-  --gold:     #FFD700;
+  --live:     #E63946;
+  --live-red: #E63946;
+  --live-bg:  rgba(230,57,70,0.10);
+  --danger:   #E63946;
+  --gold:     #F5A623;
+  --gold-bg:  rgba(245,166,35,0.12);
 
-  /* ── Inner light cards (Clario style) ── */
-  --card-light-bg:     #F0F0F0;
-  --card-light-border: rgba(0,0,0,0.06);
-  --card-light-text:   #0A0A0A;
-  --card-light-sub:    rgba(0,0,0,0.45);
+  /* ── Shadows ── */
+  --shadow-xs:     0 1px 2px  rgba(15,15,14,0.06);
+  --shadow-sm:     0 2px 8px  rgba(15,15,14,0.08);
+  --shadow-md:     0 4px 16px rgba(15,15,14,0.10);
+  --shadow-lg:     0 8px 32px rgba(15,15,14,0.12);
+  --shadow-accent: 0 4px 20px rgba(0,224,90,0.30);
+
+  /* ── Radius ── */
+  --radius-sm:   8px;
+  --radius-md:   14px;
+  --radius-lg:   20px;
+  --radius-xl:   28px;
+  --radius-full: 9999px;
+
+  /* ── Spacing ── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ── Typography scale ── */
+  --text-xs:   11px;
+  --text-sm:   13px;
+  --text-base: 15px;
+  --text-md:   18px;
+  --text-lg:   24px;
+  --text-xl:   32px;
+  --text-2xl:  48px;
+  --text-3xl:  72px;
 }
 
-* {
+/* ── Reset ── */
+*, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -43,15 +89,16 @@
 html, body {
   background: var(--bg-base);
   color: var(--text-primary);
-  font-family: 'Inter', -apple-system, 'SF Pro Display', 'Segoe UI', sans-serif;
-  font-size: 14px;
-  line-height: 1.6;
+  font-family: 'Geist', 'Inter', -apple-system, 'Helvetica Neue', sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
   min-height: 100vh;
   max-width: 430px;
   margin: 0 auto;
   overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
 }
 
-a { color: inherit; text-decoration: none; }
+a      { color: inherit; text-decoration: none; }
 button { cursor: pointer; border: none; background: none; font-family: inherit; }
 input, select, textarea { font-family: inherit; }

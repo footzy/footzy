@@ -183,7 +183,10 @@
       if (realtimeChannel) supabase.removeChannel(realtimeChannel);
       realtimeChannel = supabase.channel('groupe-' + currentGroupeId)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'pronostics', filter: `groupe_id=eq.${currentGroupeId}` }, () => loadGroupe())
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'groupe_membres', filter: `groupe_id=eq.${currentGroupeId}` }, () => loadGroupe())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'groupe_membres' }, (payload) => {
+          const id = payload.new?.groupe_id ?? payload.old?.groupe_id;
+          if (id === currentGroupeId) loadGroupe();
+        })
         .subscribe();
     }
 

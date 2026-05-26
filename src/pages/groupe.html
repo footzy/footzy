@@ -99,6 +99,17 @@
     </div>
   </div>
 
+  <!-- Confirm rejoindre un autre groupe -->
+  <div class="modal-overlay" id="confirm-join-modal">
+    <div class="modal-sheet" style="text-align:center">
+      <div style="font-size:36px;margin-bottom:12px">🤔</div>
+      <h2 style="font-size:17px;font-weight:700;margin-bottom:8px">Rejoindre un autre groupe ?</h2>
+      <p style="font-size:13px;color:var(--text-tertiary);margin-bottom:20px">Tu es déjà dans un groupe. Tu pourras basculer entre tes groupes depuis le menu en haut.</p>
+      <button class="cta-primary" id="confirm-join-ok-btn" style="font-size:13px;height:44px">Continuer</button>
+      <button style="margin-top:12px;color:var(--text-tertiary);font-size:13px;width:100%;text-align:center" onclick="document.getElementById('confirm-join-modal').classList.remove('open')">Annuler</button>
+    </div>
+  </div>
+
   <!-- Kicked modal -->
   <div class="modal-overlay" id="kicked-modal">
     <div class="modal-sheet" style="text-align:center">
@@ -121,6 +132,7 @@
     let currentGroupeId = params.get('id');
     let realtimeChannel = null;
     let kickedFromGroup = false;
+    let isAlreadyInGroup = false;
 
     // Écouter les notifications personnelles (kick + suppression groupe)
     supabase.channel(`notif-${user.id}`)
@@ -156,9 +168,10 @@
       subscribeRealtime();
       // Polling fallback toutes les 5s (au cas où le realtime rate un event)
       setInterval(() => loadGroupe(), 5000);
-      // Cacher "Créer un groupe" si l'utilisateur est déjà membre (non-admin) d'un groupe
-      const isMemberSomewhere = memberships.some(m => m.role === 'membre');
-      if (isMemberSomewhere) document.getElementById('create-groupe-btn').style.display = 'none';
+      // Masquer "Créer un groupe" pour tout le monde déjà dans un groupe
+      isAlreadyInGroup = true;
+      document.getElementById('create-groupe-btn').style.display = 'none';
+      document.getElementById('join-autre-btn').textContent = 'Rejoindre un autre groupe';
     }
 
     async function loadGroupe() {
@@ -417,9 +430,20 @@
       if (e.target === document.getElementById('create-modal')) document.getElementById('create-modal').classList.remove('open');
     });
 
-    // Join another group
+    // Join another group (avec confirmation si déjà dans un groupe)
     document.getElementById('join-autre-btn').addEventListener('click', () => {
+      if (isAlreadyInGroup) {
+        document.getElementById('confirm-join-modal').classList.add('open');
+      } else {
+        document.getElementById('join-modal').classList.add('open');
+      }
+    });
+    document.getElementById('confirm-join-ok-btn').addEventListener('click', () => {
+      document.getElementById('confirm-join-modal').classList.remove('open');
       document.getElementById('join-modal').classList.add('open');
+    });
+    document.getElementById('confirm-join-modal').addEventListener('click', e => {
+      if (e.target === document.getElementById('confirm-join-modal')) document.getElementById('confirm-join-modal').classList.remove('open');
     });
     document.getElementById('join-code-input').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase(); });
     document.getElementById('join-modal-btn').addEventListener('click', async () => {

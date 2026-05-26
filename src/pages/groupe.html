@@ -11,22 +11,53 @@
     /* Modal pronostique — bottom sheet mobile, dialog centré desktop */
     #match-prono-modal { align-items: flex-end; padding: 0; }
     #match-prono-modal > div {
-      width: 100%;
-      border-radius: 20px 20px 0 0;
-      max-height: 92vh;
-      overflow-y: auto;
+      width: 100%; border-radius: 20px 20px 0 0;
+      max-height: 92vh; overflow-y: auto;
     }
     @media (min-width: 600px) {
-      #match-prono-modal {
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-      }
-      #match-prono-modal > div {
-        max-width: 480px;
-        border-radius: 20px;
-        max-height: 88vh;
-      }
+      #match-prono-modal { align-items: center; justify-content: center; padding: 20px; }
+      #match-prono-modal > div { max-width: 480px; border-radius: 20px; max-height: 88vh; }
+    }
+
+    /* ── Launch animation ── */
+    #launch-overlay {
+      position: fixed; inset: 0; z-index: 999;
+      background: #000;
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 16px;
+    }
+    #launch-overlay.show { display: flex; }
+    #launch-count {
+      font-size: 120px; font-weight: 900; line-height: 1;
+      color: var(--green-accent);
+      animation: countPop .5s ease;
+    }
+    @keyframes countPop {
+      0%   { transform: scale(0.5); opacity: 0; }
+      60%  { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+    #launch-go {
+      font-size: 56px; font-weight: 900; letter-spacing: -2px;
+      color: var(--green-accent);
+      animation: goSlam .4s cubic-bezier(.2,1.4,.4,1);
+    }
+    @keyframes goSlam {
+      0%   { transform: scale(0.2) rotate(-10deg); opacity: 0; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    .launch-particles {
+      position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+    }
+    .particle {
+      position: absolute; width: 8px; height: 8px; border-radius: 50%;
+      background: var(--green-accent); opacity: 0;
+      animation: particleFly 1.2s ease forwards;
+    }
+    @keyframes particleFly {
+      0%   { transform: translate(0,0) scale(1); opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
     }
   </style>
 </head>
@@ -57,6 +88,33 @@
 
     <!-- Groupe tab -->
     <div id="tab-groupe">
+
+      <!-- Gage + statut -->
+      <div id="gage-section" style="padding:0 16px 16px;display:none">
+
+        <!-- Badge statut -->
+        <div id="game-status-badge" style="margin-bottom:14px"></div>
+
+        <!-- Carte gage -->
+        <div style="background:var(--bg-card-elevated);border:1px solid var(--border-glass);border-radius:18px;padding:16px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--text-tertiary);margin-bottom:6px">🎯 Le gage</div>
+          <div id="gage-display" style="font-size:15px;font-weight:600;line-height:1.4"></div>
+          <input id="gage-input" type="text" class="input-field" placeholder="Ex : Le dernier paie le resto 🍕" style="display:none;margin-top:10px;font-size:14px">
+          <button id="gage-edit-btn" style="display:none;margin-top:10px;font-size:12px;color:var(--green-accent);font-weight:600;background:none;border:none;cursor:pointer;padding:0">✏️ Modifier le gage</button>
+        </div>
+
+        <!-- Lancer le jeu (admin, statut=attente) -->
+        <button id="launch-game-btn" class="cta-primary" style="display:none;margin-top:14px;gap:8px;font-size:16px;font-weight:800;letter-spacing:-.01em">
+          🚀 Lancer le jeu
+        </button>
+
+        <!-- Terminer le jeu (admin, statut=en_cours) -->
+        <button id="end-game-btn" class="cta-secondary" style="display:none;margin-top:14px;font-size:14px">
+          🏁 Terminer le jeu
+        </button>
+
+      </div>
+
       <div id="groupe-leaderboard">
         <div style="text-align:center;padding:32px;color:var(--text-tertiary)">Chargement...</div>
       </div>
@@ -209,6 +267,13 @@
     </div>
   </div>
 
+  <!-- Launch animation overlay -->
+  <div id="launch-overlay">
+    <div class="launch-particles" id="launch-particles"></div>
+    <div id="launch-count"></div>
+    <div style="font-size:16px;color:var(--text-secondary);font-weight:600;letter-spacing:-.01em" id="launch-sub">Le jeu commence…</div>
+  </div>
+
   <!-- Kicked modal -->
   <div class="modal-overlay" id="kicked-modal">
     <div class="modal-sheet" style="text-align:center">
@@ -268,6 +333,10 @@
         document.getElementById('kicked-title').textContent = `${payload.admin_pseudo} a supprimé le groupe`;
         document.getElementById('kicked-msg').textContent = `Le groupe "${payload.groupe_nom}" a été supprimé.`;
         document.getElementById('kicked-modal').classList.add('open');
+      })
+      .on('broadcast', { event: 'game_started' }, ({ payload }) => {
+        playLaunchAnimation();
+        setTimeout(() => { loadGroupe(true); toast(`🚀 Le jeu est lancé ! Gage : ${payload.gage}`); }, 2800);
       })
       .subscribe();
 
@@ -356,6 +425,79 @@
 
       const isAdmin = myMembership?.role === 'admin';
 
+      // ── Gage + statut ──
+      const gageSection  = document.getElementById('gage-section');
+      const statusBadge  = document.getElementById('game-status-badge');
+      const gageDisplay  = document.getElementById('gage-display');
+      const gageInput    = document.getElementById('gage-input');
+      const gageEditBtn  = document.getElementById('gage-edit-btn');
+      const launchBtn    = document.getElementById('launch-game-btn');
+      const endBtn       = document.getElementById('end-game-btn');
+      gageSection.style.display = 'block';
+
+      // Badge statut
+      const statusMap = {
+        attente:  { label: '⏳ En attente du lancement', color: 'var(--text-tertiary)',  bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)' },
+        en_cours: { label: '🟢 JEU EN COURS',            color: 'var(--green-accent)',   bg: 'var(--green-dim)',       border: 'var(--green-border)' },
+        termine:  { label: '🏁 Jeu terminé',             color: 'var(--text-secondary)', bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.08)' },
+      };
+      const s = statusMap[groupe.statut] || statusMap.attente;
+      statusBadge.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;background:${s.bg};border:1px solid ${s.border};border-radius:50px;padding:5px 14px;font-size:12px;font-weight:700;color:${s.color}">${s.label}</span>`;
+
+      // Gage display
+      gageDisplay.textContent = groupe.gage || 'Aucun gage défini…';
+      gageDisplay.style.color = groupe.gage ? 'var(--text-primary)' : 'var(--text-tertiary)';
+
+      // Admin : édition gage
+      if (isAdmin && groupe.statut !== 'termine') {
+        gageEditBtn.style.display = '';
+        gageEditBtn.onclick = async () => {
+          if (gageInput.style.display === 'none') {
+            gageInput.style.display = '';
+            gageInput.value = groupe.gage || '';
+            gageInput.focus();
+            gageEditBtn.textContent = '✓ Sauvegarder';
+          } else {
+            const val = gageInput.value.trim();
+            await supabase.from('groupes').update({ gage: val }).eq('id', currentGroupeId);
+            gageInput.style.display = 'none';
+            gageEditBtn.textContent = '✏️ Modifier le gage';
+            toast('Gage mis à jour ✓');
+            loadGroupe(true);
+          }
+        };
+      }
+
+      // Admin : boutons lancer / terminer
+      launchBtn.style.display = (isAdmin && groupe.statut === 'attente') ? '' : 'none';
+      endBtn.style.display    = (isAdmin && groupe.statut === 'en_cours') ? '' : 'none';
+
+      launchBtn.onclick = async () => {
+        if (!groupe.gage) {
+          toast('Définis d\'abord un gage !'); return;
+        }
+        const ok = await showConfirm({ icon: '🚀', title: 'Lancer le jeu ?', message: `Le gage : "${groupe.gage}"\n\nTous les membres peuvent maintenant faire leurs pronos !`, label: '🚀 C\'est parti !', danger: false });
+        if (!ok) return;
+        await supabase.from('groupes').update({ statut: 'en_cours' }).eq('id', currentGroupeId);
+        // Notifier tous les membres
+        const others = (membres || []).filter(m => m.user_id !== user.id);
+        for (const m of others) {
+          const ch = supabase.channel(`notif-${m.user_id}`);
+          await ch.send({ type: 'broadcast', event: 'game_started', payload: { groupe_nom: groupe.nom, gage: groupe.gage } });
+          supabase.removeChannel(ch);
+        }
+        playLaunchAnimation();
+        setTimeout(() => loadGroupe(true), 2800);
+      };
+
+      endBtn.onclick = async () => {
+        const ok = await showConfirm({ icon: '🏁', title: 'Terminer le jeu ?', message: 'Le classement sera figé. Action irréversible.', label: 'Terminer', danger: true });
+        if (!ok) return;
+        await supabase.from('groupes').update({ statut: 'termine' }).eq('id', currentGroupeId);
+        toast('Jeu terminé ! 🏁');
+        loadGroupe(true);
+      };
+
       // Boutons action groupe
       const actionsZone = document.getElementById('groupe-actions-zone');
       const deleteBtn = document.getElementById('delete-groupe-btn');
@@ -437,6 +579,39 @@
         });
       });
 
+    }
+
+    // ── Animation lancement ──
+    function playLaunchAnimation() {
+      const overlay  = document.getElementById('launch-overlay');
+      const countEl  = document.getElementById('launch-count');
+      const subEl    = document.getElementById('launch-sub');
+      const particles = document.getElementById('launch-particles');
+      overlay.classList.add('show');
+
+      const steps = ['3','2','1','🚀'];
+      let i = 0;
+      const tick = () => {
+        countEl.style.animation = 'none';
+        void countEl.offsetWidth;
+        countEl.style.animation = 'countPop .5s ease';
+        countEl.textContent = steps[i];
+        if (steps[i] === '🚀') {
+          subEl.textContent = 'C\'est parti ! 🎯';
+          // Confettis
+          particles.innerHTML = '';
+          for (let p = 0; p < 30; p++) {
+            const el = document.createElement('div');
+            el.className = 'particle';
+            el.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;background:${['#80FF00','#fff','#FFD700'][Math.floor(Math.random()*3)]};--dx:${(Math.random()-0.5)*300}px;--dy:${(Math.random()-1.2)*300}px;animation-delay:${Math.random()*0.3}s;animation-duration:${0.8+Math.random()*0.6}s`;
+            particles.appendChild(el);
+          }
+          setTimeout(() => overlay.classList.remove('show'), 1600);
+        }
+        i++;
+        if (i < steps.length) setTimeout(tick, 900);
+      };
+      tick();
     }
 
     // Realtime — un seul channel, créé une fois après le premier chargement

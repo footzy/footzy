@@ -464,7 +464,8 @@
               <div style="text-align:center;padding:0 10px">
                 ${hasPred
                   ? `<div style="font-size:22px;font-weight:800;color:var(--green-accent)">${pred.h} – ${pred.a}</div>
-                     <div style="font-size:9px;color:var(--green-accent);margin-top:2px">✓ prédit</div>`
+                     <div style="font-size:9px;color:var(--green-accent);margin-top:2px">✓ prédit</div>
+                     <button class="delete-prono-btn" data-match-id="${m.id}" style="margin-top:8px;background:none;border:none;cursor:pointer;font-size:11px;color:var(--text-tertiary);padding:2px 6px;border-radius:4px;transition:color .15s" title="Supprimer ce pari">🗑 supprimer</button>`
                   : `<div style="font-size:11px;color:var(--text-tertiary)">${timeStr}</div>
                      <div style="font-size:10px;color:var(--text-tertiary);margin-top:4px">${phase}</div>
                      <div style="margin-top:8px;font-size:10px;font-weight:700;color:var(--green-accent);border:1px solid var(--green-accent);border-radius:6px;padding:2px 8px">Pronostiquer →</div>`
@@ -478,6 +479,27 @@
           </div>`;
         }).join('')}
       `).join('');
+
+      // Clic sur supprimer → supprime le prono
+      el.querySelectorAll('.delete-prono-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const matchId = btn.dataset.matchId;
+          if (!/^[0-9a-f-]{36}$/.test(matchId)) {
+            toast('Les matchs de démo ne sont pas en base.');
+            return;
+          }
+          const { error } = await supabase
+            .from('pronostics')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('match_id', matchId)
+            .eq('groupe_id', currentGroupeId);
+          if (error) { toast('Erreur ❌ ' + error.message); return; }
+          toast('Pari supprimé');
+          loadGroupePronos();
+        });
+      });
 
       // Clic sur une carte → ouvre le modal
       el.querySelectorAll('.match-card').forEach(card => {

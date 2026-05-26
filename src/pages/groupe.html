@@ -198,6 +198,17 @@
     </div>
   </div>
 
+  <!-- Confirm modal (remplace window.confirm) -->
+  <div class="modal-overlay" id="confirm-modal">
+    <div class="modal-sheet" style="text-align:center">
+      <div id="confirm-icon" style="font-size:40px;margin-bottom:14px"></div>
+      <h2 id="confirm-title" style="font-size:17px;font-weight:700;margin-bottom:8px"></h2>
+      <p id="confirm-msg" style="font-size:14px;color:var(--text-tertiary);margin-bottom:28px;line-height:1.5"></p>
+      <button id="confirm-ok-btn" class="cta-primary" style="margin-bottom:12px"></button>
+      <button onclick="document.getElementById('confirm-modal').classList.remove('open')" style="width:100%;text-align:center;font-size:14px;color:var(--text-tertiary);padding:8px">Annuler</button>
+    </div>
+  </div>
+
   <!-- Kicked modal -->
   <div class="modal-overlay" id="kicked-modal">
     <div class="modal-sheet" style="text-align:center">
@@ -215,6 +226,28 @@
     const user = await requireAuth();
     if (!user) throw new Error('not authed');
     const profile = await getCurrentProfile();
+
+    // ─── Confirm modal (remplace window.confirm) ───
+    function showConfirm({ icon = '⚠️', title, message, label = 'Confirmer', danger = false }) {
+      return new Promise(resolve => {
+        document.getElementById('confirm-icon').textContent  = icon;
+        document.getElementById('confirm-title').textContent = title;
+        document.getElementById('confirm-msg').textContent   = message;
+        const btn = document.getElementById('confirm-ok-btn');
+        btn.textContent = label;
+        btn.style.background = danger ? 'var(--danger)' : 'var(--green-accent)';
+        btn.style.color      = '#fff';
+        btn.onclick = () => {
+          document.getElementById('confirm-modal').classList.remove('open');
+          resolve(true);
+        };
+        document.querySelector('#confirm-modal .modal-sheet > button:last-child').onclick = () => {
+          document.getElementById('confirm-modal').classList.remove('open');
+          resolve(false);
+        };
+        document.getElementById('confirm-modal').classList.add('open');
+      });
+    }
 
     const params = new URLSearchParams(location.search);
     let currentGroupeId = params.get('id');
@@ -333,7 +366,8 @@
 
       // Quitter le groupe (membre)
       leaveBtn.onclick = async () => {
-        if (!confirm(`Quitter le groupe "${groupe.nom}" ?`)) return;
+        const ok = await showConfirm({ icon: '👋', title: `Quitter "${groupe.nom}" ?`, message: 'Tu ne pourras plus voir les pronos de ce groupe.', label: 'Quitter', danger: false });
+        if (!ok) return;
         leaveBtn.disabled = true;
         await supabase.from('groupe_membres').delete().eq('groupe_id', currentGroupeId).eq('user_id', user.id);
         toast('Vous avez quitté le groupe 👋');
@@ -341,7 +375,8 @@
       };
 
       deleteBtn.onclick = async () => {
-        if (!confirm(`Supprimer le groupe "${groupe.nom}" ? Cette action est irréversible.`)) return;
+        const ok = await showConfirm({ icon: '🗑️', title: `Supprimer "${groupe.nom}" ?`, message: 'Tous les membres seront exclus et les pronos effacés. Action irréversible.', label: 'Supprimer', danger: true });
+        if (!ok) return;
         deleteBtn.disabled = true;
         // Notifier tous les membres
         const others = (membres || []).filter(m => m.user_id !== user.id);
@@ -384,7 +419,8 @@
         btn.addEventListener('click', async () => {
           const uid = btn.dataset.uid;
           const name = btn.closest('.leaderboard-item').querySelector('.leaderboard-pseudo').textContent.replace(' 👑','').trim();
-          if (!confirm(`Exclure ${name} du groupe ?`)) return;
+          const ok = await showConfirm({ icon: '🚫', title: `Exclure ${name} ?`, message: `${name} sera retiré du groupe et ne pourra plus voir les pronos.`, label: 'Exclure', danger: true });
+          if (!ok) return;
           btn.disabled = true;
           const { error } = await supabase
             .from('groupe_membres')

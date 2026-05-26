@@ -232,11 +232,11 @@
       switcher.addEventListener('change', () => { currentGroupeId = switcher.value; loadGroupe(); subscribeRealtime(); });
       await loadGroupe();
       subscribeRealtime();
-      // Polling fallback toutes les 5s selon l'onglet actif
+      // Polling fallback toutes les 5s selon l'onglet actif (silent = pas de flash)
       setInterval(() => {
         const activeTab = document.querySelector('.tab-btn.active')?.dataset?.tab;
-        if (activeTab === 'pronos') loadGroupePronos();
-        else if (activeTab === 'tous') loadTousPronos();
+        if (activeTab === 'pronos') loadGroupePronos(true);
+        else if (activeTab === 'tous') loadTousPronos(true);
         else loadGroupe();
       }, 5000);
       // Masquer "Créer un groupe" pour tout le monde déjà dans un groupe
@@ -363,8 +363,8 @@
       realtimeChannel = supabase.channel('groupe-' + currentGroupeId)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'pronostics', filter: `groupe_id=eq.${currentGroupeId}` }, () => {
           const activeTab = document.querySelector('.tab-btn.active')?.dataset?.tab;
-          if (activeTab === 'pronos') loadGroupePronos();
-          else if (activeTab === 'tous') loadTousPronos();
+          if (activeTab === 'pronos') loadGroupePronos(true);
+          else if (activeTab === 'tous') loadTousPronos(true);
           else loadGroupe();
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'groupe_membres' }, (payload) => {
@@ -412,9 +412,9 @@
     });
 
     // Pronos du groupe
-    async function loadGroupePronos() {
+    async function loadGroupePronos(silent = false) {
       const el = document.getElementById('groupe-pronos');
-      el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-tertiary)">Chargement...</div>';
+      if (!silent) el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-tertiary)">Chargement...</div>';
 
       // Prochains matchs depuis Supabase (vrais noms de colonnes)
       let { data: matchs, error: matchsErr } = await supabase
@@ -595,9 +595,9 @@
     });
 
     // ─── Tous les pronos du groupe ───
-    async function loadTousPronos() {
+    async function loadTousPronos(silent = false) {
       const el = document.getElementById('tous-pronos');
-      el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-tertiary)">Chargement...</div>';
+      if (!silent) el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-tertiary)">Chargement...</div>';
 
       // Membres du groupe
       const { data: membres } = await supabase

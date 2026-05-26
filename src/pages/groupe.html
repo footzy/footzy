@@ -28,7 +28,7 @@
     /* ── Launch animation ── */
     #launch-overlay {
       position: fixed; inset: 0; z-index: 999;
-      background: #000;
+      background: var(--bg-dark);
       display: none; flex-direction: column;
       align-items: center; justify-content: center;
       gap: 16px;
@@ -108,7 +108,7 @@
         <div id="game-status-badge" style="margin-bottom:14px"></div>
 
         <!-- Carte gage -->
-        <div style="background:var(--bg-card-elevated);border:1px solid var(--border-glass);border-radius:18px;padding:16px">
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:18px;padding:16px">
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--text-tertiary);margin-bottom:6px">🎯 Le gage</div>
           <div id="gage-display" style="font-size:15px;font-weight:600;line-height:1.4"></div>
           <input id="gage-input" type="text" class="input-field" placeholder="Ex : Le dernier paie le resto 🍕" style="display:none;margin-top:10px;font-size:14px">
@@ -214,7 +214,7 @@
       <!-- Drag handle + close -->
       <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 16px 8px">
         <h2 style="font-size:17px;font-weight:700">Mon pronostique</h2>
-        <button onclick="document.getElementById('match-prono-modal').classList.remove('open')" style="background:rgba(255,255,255,0.08);border:none;color:var(--text-primary);width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+        <button onclick="document.getElementById('match-prono-modal').classList.remove('open')" style="background:var(--bg-muted);border:1px solid var(--border);color:var(--text-primary);width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
       </div>
 
       <!-- Match header -->
@@ -250,16 +250,16 @@
         </div>
 
         <!-- Résultat calculé -->
-        <div id="modal-result-badge" style="margin-top:20px;text-align:center;padding:10px;border-radius:12px;background:rgba(255,255,255,0.05);font-size:13px;font-weight:700"></div>
+        <div id="modal-result-badge" style="margin-top:20px;text-align:center;padding:10px;border-radius:12px;background:var(--bg-muted);font-size:13px;font-weight:700"></div>
       </div>
 
       <!-- Points info -->
       <div style="margin:0 16px 16px;display:flex;gap:8px">
-        <div style="flex:1;background:rgba(0,255,100,0.06);border:1px solid rgba(0,255,100,0.15);border-radius:10px;padding:10px;text-align:center">
+        <div style="flex:1;background:var(--accent-bg);border:1px solid rgba(0,224,90,0.15);border-radius:10px;padding:10px;text-align:center">
           <div style="font-size:18px;font-weight:800;color:var(--green-accent)">+3</div>
           <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px">Bon résultat</div>
         </div>
-        <div style="flex:1;background:rgba(0,255,100,0.06);border:1px solid rgba(0,255,100,0.15);border-radius:10px;padding:10px;text-align:center">
+        <div style="flex:1;background:var(--accent-bg);border:1px solid rgba(0,224,90,0.15);border-radius:10px;padding:10px;text-align:center">
           <div style="font-size:18px;font-weight:800;color:var(--green-accent)">+7</div>
           <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px">Score exact</div>
         </div>
@@ -288,7 +288,7 @@
   <div class="modal-overlay" id="bm-modal">
     <div class="modal-sheet">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
-        <div id="bm-target-avatar" style="width:40px;height:40px;border-radius:50%;background:var(--bg-card-elevated);border:1px solid var(--border-glass);display:flex;align-items:center;justify-content:center;font-size:20px">👤</div>
+        <div id="bm-target-avatar" style="width:40px;height:40px;border-radius:50%;background:var(--bg-surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px">👤</div>
         <div>
           <div style="font-size:15px;font-weight:700" id="bm-target-name">—</div>
           <div style="font-size:12px;color:var(--text-tertiary)" id="bm-actions-left"></div>
@@ -412,8 +412,8 @@
         return `<button data-gid="${m.groupes.id}" style="
           flex-shrink:0;padding:7px 16px;border-radius:50px;font-size:13px;font-weight:600;
           cursor:pointer;transition:all .18s;white-space:nowrap;
-          background:${isActive ? 'var(--green-accent)' : 'var(--bg-card-elevated)'};
-          border:1px solid ${isActive ? 'var(--green-accent)' : 'var(--border-glass)'};
+          background:${isActive ? 'var(--green-accent)' : 'var(--bg-surface)'};
+          border:1px solid ${isActive ? 'var(--green-accent)' : 'var(--border)'};
           color:${isActive ? '#080808' : 'var(--text-secondary)'}
         ">${m.groupes.nom}</button>`;
       }).join('');
@@ -507,9 +507,9 @@
 
       // Badge statut
       const statusMap = {
-        attente:  { label: '⏳ En attente du lancement', color: 'var(--text-tertiary)',  bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)' },
+        attente:  { label: '⏳ En attente du lancement', color: 'var(--text-tertiary)',  bg: 'var(--bg-muted)',        border: 'var(--border)' },
         en_cours: { label: '🟢 JEU EN COURS',            color: 'var(--green-accent)',   bg: 'var(--green-dim)',       border: 'var(--green-border)' },
-        termine:  { label: '🏁 Jeu terminé',             color: 'var(--text-secondary)', bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.08)' },
+        termine:  { label: '🏁 Jeu terminé',             color: 'var(--text-secondary)', bg: 'var(--bg-muted)',        border: 'var(--border)' },
       };
       const s = statusMap[groupe.statut] || statusMap.attente;
       statusBadge.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;background:${s.bg};border:1px solid ${s.border};border-radius:50px;padding:5px 14px;font-size:12px;font-weight:700;color:${s.color}">${s.label}</span>`;
@@ -671,11 +671,11 @@
         return `<div class="leaderboard-item${isMe ? ' me' : ''}">
           <div class="rank-badge ${rankClass}">${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank}</div>
           <div style="flex:1">
-            <div class="leaderboard-pseudo">${p.pseudo}${isMe ? ' <span style="font-size:10px;color:var(--green-accent);font-weight:600;background:rgba(128,255,0,0.1);padding:2px 6px;border-radius:6px">vous</span>' : ''}${p.role === 'admin' ? ' <span style="font-size:10px;color:var(--text-tertiary);font-weight:500">admin</span>' : ''}</div>
+            <div class="leaderboard-pseudo">${p.pseudo}${isMe ? ' <span style="font-size:10px;color:var(--green-accent);font-weight:600;background:var(--accent-bg);padding:2px 6px;border-radius:6px">vous</span>' : ''}${p.role === 'admin' ? ' <span style="font-size:10px;color:var(--text-tertiary);font-weight:500">admin</span>' : ''}</div>
             ${p.streak_quotidien > 0 ? `<div style="font-size:11px;color:var(--text-tertiary)">🔥 ${p.streak_quotidien} jours</div>` : ''}
           </div>
           ${canKick ? `<button class="kick-btn" data-uid="${p.id}" style="background:none;border:1px solid var(--danger);color:var(--danger);border-radius:8px;padding:4px 8px;font-size:11px;cursor:pointer;margin-right:6px">Exclure</button>` : ''}
-          ${canBM ? `<button class="bm-btn" data-uid="${p.id}" data-pseudo="${p.pseudo}" style="background:var(--bg-card-elevated);border:1px solid var(--border-glass);border-radius:8px;padding:4px 10px;font-size:14px;cursor:pointer;margin-right:6px" title="Bonus / Malus">⚡</button>` : ''}
+          ${canBM ? `<button class="bm-btn" data-uid="${p.id}" data-pseudo="${p.pseudo}" style="background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:14px;cursor:pointer;margin-right:6px" title="Bonus / Malus">⚡</button>` : ''}
           <div class="leaderboard-points" style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
             <span>${total} pts</span>
             ${bmBadge}
@@ -719,8 +719,8 @@
 
     // ── Bonus/Malus ──
     const BM_OPTIONS = [
-      { label: '🚀 Boost',         pts: +3, color: 'var(--green-accent)', bg: 'rgba(128,255,0,0.08)',  border: 'var(--green-border)',  desc: '+3 pts' },
-      { label: '🎯 Double chance',  pts: +2, color: 'var(--green-accent)', bg: 'rgba(128,255,0,0.06)',  border: 'var(--green-border)',  desc: '+2 pts' },
+      { label: '🚀 Boost',         pts: +3, color: 'var(--green-accent)', bg: 'rgba(0,224,90,0.08)',  border: 'var(--green-border)',  desc: '+3 pts' },
+      { label: '🎯 Double chance',  pts: +2, color: 'var(--green-accent)', bg: 'rgba(0,224,90,0.06)',  border: 'var(--green-border)',  desc: '+2 pts' },
       { label: '💣 Sabotage',       pts: -2, color: 'var(--danger)',       bg: 'rgba(255,68,68,0.08)',  border: 'rgba(255,68,68,0.3)',  desc: '−2 pts' },
       { label: '🍕 Payer le resto', pts: -3, color: 'var(--danger)',       bg: 'rgba(255,68,68,0.1)',   border: 'rgba(255,68,68,0.35)', desc: '−3 pts' },
     ];
@@ -801,16 +801,16 @@
       el.id = 'go-popup';
       el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);display:flex;align-items:flex-end;justify-content:center;padding:0 0 0 0';
       el.innerHTML = `
-        <div style="background:#111111;border:1px solid rgba(255,255,255,0.1);border-top:1px solid rgba(255,255,255,0.1);border-radius:28px 28px 0 0;padding:32px 24px 48px;text-align:center;width:100%;max-width:480px;animation:goSlideUp .35s cubic-bezier(.32,.72,0,1)">
+        <div style="background:var(--bg-dark);border:1px solid rgba(255,255,255,0.1);border-top:1px solid rgba(255,255,255,0.1);border-radius:28px 28px 0 0;padding:32px 24px 48px;text-align:center;width:100%;max-width:480px;animation:goSlideUp .35s cubic-bezier(.32,.72,0,1)">
           <div style="font-size:56px;margin-bottom:10px">💀</div>
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;color:rgba(255,255,255,0.3);margin-bottom:10px">Dernier du classement</div>
-          <div style="font-size:34px;font-weight:900;letter-spacing:-.02em;color:#fff;margin-bottom:4px">${loser_pseudo || '???'}</div>
+          <div style="font-size:34px;font-weight:900;letter-spacing:-.02em;color:var(--text-inverse);margin-bottom:4px">${loser_pseudo || '???'}</div>
           <div style="font-size:13px;color:rgba(255,255,255,0.35);margin-bottom:22px">${loser_pts ?? 0} pts au total</div>
           <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:14px;padding:14px;margin-bottom:28px">
             <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,0.3);margin-bottom:6px">🎯 Le gage à payer</div>
-            <div style="font-size:17px;font-weight:700;color:#80FF00;line-height:1.5">${gage || 'Aucun gage défini…'}</div>
+            <div style="font-size:17px;font-weight:700;color:var(--accent);line-height:1.5">${gage || 'Aucun gage défini…'}</div>
           </div>
-          <button id="go-popup-close" style="background:#80FF00;color:#080808;border:none;border-radius:50px;height:52px;width:100%;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:-.01em">Compris 😅</button>
+          <button id="go-popup-close" style="background:var(--accent);color:#080808;border:none;border-radius:50px;height:52px;width:100%;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:-.01em">Compris 😅</button>
         </div>`;
       document.body.appendChild(el);
       document.getElementById('go-popup-close').addEventListener('click', () => {
@@ -841,7 +841,7 @@
           for (let p = 0; p < 30; p++) {
             const el = document.createElement('div');
             el.className = 'particle';
-            el.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;background:${['#80FF00','#fff','#FFD700'][Math.floor(Math.random()*3)]};--dx:${(Math.random()-0.5)*300}px;--dy:${(Math.random()-1.2)*300}px;animation-delay:${Math.random()*0.3}s;animation-duration:${0.8+Math.random()*0.6}s`;
+            el.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;background:${['#00E05A','#0F0F0E','#F5A623'][Math.floor(Math.random()*3)]};--dx:${(Math.random()-0.5)*300}px;--dy:${(Math.random()-1.2)*300}px;animation-delay:${Math.random()*0.3}s;animation-duration:${0.8+Math.random()*0.6}s`;
             particles.appendChild(el);
           }
           setTimeout(() => overlay.classList.remove('show'), 1600);
@@ -1187,7 +1187,7 @@
 
         return `
           <div style="border-bottom:2px solid var(--border);margin-bottom:4px">
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px 8px;background:rgba(255,255,255,0.02)">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px 8px;background:var(--bg-muted)">
               <div style="display:flex;align-items:center;gap:6px">
                 <span style="font-size:20px">${m.home_flag}</span>
                 <span style="font-size:12px;font-weight:700">${m.home_team}</span>

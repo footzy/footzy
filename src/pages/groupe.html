@@ -51,8 +51,8 @@
     <!-- Tabs -->
     <div class="tabs">
       <button class="tab-btn active" data-tab="groupe">Classement</button>
-      <button class="tab-btn" data-tab="pronos">Mes pronos</button>
-      <button class="tab-btn" data-tab="tous">Tous les pronos</button>
+      <button class="tab-btn" data-tab="pronos" id="tab-btn-pronos" style="display:none">Mes pronos</button>
+      <button class="tab-btn" data-tab="tous" id="tab-btn-tous" style="display:none">Tous les pronos</button>
     </div>
 
     <!-- Groupe tab -->
@@ -265,6 +265,9 @@
       isAlreadyInGroup = true;
       document.getElementById('create-groupe-btn').style.display = 'none';
       document.getElementById('join-autre-btn').textContent = 'Rejoindre un autre groupe';
+      // Afficher les onglets pronos uniquement si dans un groupe
+      document.getElementById('tab-btn-pronos').style.display = '';
+      document.getElementById('tab-btn-tous').style.display = '';
     }
 
     async function loadGroupe() {

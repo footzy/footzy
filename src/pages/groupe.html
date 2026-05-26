@@ -41,11 +41,11 @@
     </div>
 
     <!-- Code + Groupe switcher -->
-    <div style="padding:0 16px 12px;display:flex;align-items:center;gap:8px">
-      <span id="group-code" style="font-size:13px;color:var(--text-tertiary);letter-spacing:0.15em"></span>
-      <select id="groupe-switcher" class="input-field" style="flex:1;appearance:none;padding:8px 12px;height:auto;font-size:13px">
-        <option>Chargement...</option>
-      </select>
+    <div style="padding:0 16px 12px">
+      <div id="groupe-chips" style="display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px"></div>
+      <div style="margin-top:6px;font-size:11px;color:var(--text-tertiary);letter-spacing:0.12em">
+        Code : <span id="group-code" style="font-weight:600;color:var(--text-secondary)"></span>
+      </div>
     </div>
 
     <!-- Tabs -->
@@ -244,14 +244,35 @@
       .select('groupe_id, role, groupes(id,nom,code)')
       .eq('user_id', user.id);
 
-    const switcher = document.getElementById('groupe-switcher');
+    const chipsEl = document.getElementById('groupe-chips');
+
+    function renderChips() {
+      chipsEl.innerHTML = memberships.map(m => {
+        const isActive = m.groupes.id === currentGroupeId;
+        return `<button data-gid="${m.groupes.id}" style="
+          flex-shrink:0;padding:7px 16px;border-radius:50px;font-size:13px;font-weight:600;
+          cursor:pointer;transition:all .18s;white-space:nowrap;
+          background:${isActive ? 'var(--green-accent)' : 'var(--bg-card-elevated)'};
+          border:1px solid ${isActive ? 'var(--green-accent)' : 'var(--border-glass)'};
+          color:${isActive ? '#080808' : 'var(--text-secondary)'}
+        ">${m.groupes.nom}</button>`;
+      }).join('');
+      chipsEl.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          currentGroupeId = btn.dataset.gid;
+          renderChips();
+          loadGroupe();
+          subscribeRealtime();
+        });
+      });
+    }
+
     if (!memberships?.length) {
-      switcher.innerHTML = '<option>Aucun groupe</option>';
+      chipsEl.innerHTML = `<span style="font-size:13px;color:var(--text-tertiary)">Aucun groupe</span>`;
       document.getElementById('groupe-leaderboard').innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-tertiary)"><a href="/src/pages/onboarding.html" style="color:var(--green-accent)">Rejoins un groupe</a> pour voir le classement</div>`;
     } else {
-      switcher.innerHTML = memberships.map(m => `<option value="${m.groupes.id}" ${m.groupes.id === currentGroupeId ? 'selected' : ''}>${m.groupes.nom}</option>`).join('');
       if (!currentGroupeId) currentGroupeId = memberships[0].groupes.id;
-      switcher.addEventListener('change', () => { currentGroupeId = switcher.value; loadGroupe(); subscribeRealtime(); });
+      renderChips();
       await loadGroupe();
       subscribeRealtime();
       // Polling fallback toutes les 5s selon l'onglet actif (silent = pas de flash)

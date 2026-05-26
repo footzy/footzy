@@ -55,7 +55,7 @@
     <div class="badges-grid" id="badges-grid"></div>
 
     <!-- Historique pronos -->
-    <p class="section-title">Derniers pronostics</p>
+    <p class="section-title">Mes pronos publics</p>
     <div id="pronos-history" style="padding:0 16px 8px">
       <div style="text-align:center;padding:16px;color:var(--text-tertiary)">Chargement...</div>
     </div>
@@ -179,11 +179,12 @@
       if (e.target === document.getElementById('vainqueur-modal')) document.getElementById('vainqueur-modal').classList.remove('open');
     });
 
-    // Pronos history
+    // Pronos history — feed only (groupe_id IS NULL = pronos publics)
     const { data: pronos } = await supabase
       .from('pronostics')
       .select('*, matchs(home_team,away_team,home_flag,away_flag,home_score,away_score,status,kickoff_at)')
       .eq('user_id', user.id)
+      .is('groupe_id', null)
       .order('created_at', { ascending: false })
       .limit(10);
 

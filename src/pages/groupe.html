@@ -574,13 +574,16 @@
           loser_pts:    loserPts,
         };
 
-        // 1. Afficher le modal TOUT DE SUITE (synchrone, avant tout await)
+        // 1. Afficher le popup IMMÉDIATEMENT (avant tout await)
         showGameOver(goPayload);
 
-        // 2. Mettre à jour le statut (async, en arrière-plan)
-        supabase.from('groupes').update({ statut: 'termine' }).eq('id', currentGroupeId);
+        // 2. Mettre à jour le statut en DB (awaité — le popup est déjà visible)
+        await supabase.from('groupes').update({ statut: 'termine' }).eq('id', currentGroupeId);
 
-        // 3. Notifier les autres membres (fire & forget)
+        // 3. Rafraîchir le classement derrière le popup
+        loadGroupe(true);
+
+        // 4. Notifier les autres membres (fire & forget)
         for (const m of (membres || [])) {
           if (m.user_id === user.id) continue;
           const ch = supabase.channel(`notif-${m.user_id}`);

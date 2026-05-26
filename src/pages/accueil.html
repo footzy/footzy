@@ -172,6 +172,24 @@
     .reaction-btn.active .count { color: var(--green-accent); }
     .reaction-btn:active { transform: scale(0.92); }
 
+    /* ── Delete button on own cards ── */
+    .feed-delete-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255,68,68,0.08);
+      border: 1px solid rgba(255,68,68,0.18);
+      color: var(--danger);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .feed-delete-btn:active { background: rgba(255,68,68,0.18); transform: scale(0.9); }
+
     /* ── Post overlay sheet ── */
     .post-overlay {
       position: fixed;
@@ -454,6 +472,7 @@
 
       feedList.innerHTML = pronos.map(p => renderCard(p, rxCounts[p.id] || {})).join('');
       feedList.querySelectorAll('.reaction-btn').forEach(btn => btn.addEventListener('click', handleReaction));
+      feedList.querySelectorAll('.feed-delete-btn').forEach(btn => btn.addEventListener('click', handleDelete));
     }
 
     function renderCard(p, counts) {
@@ -467,6 +486,7 @@
       else if (p.status === 'lost')     statusBadge = `<span class="feed-status-badge lost">0 pt</span>`;
 
       const dateLabel = m ? formatDate(m.kickoff_at) : '';
+      const isOwner  = p.user_id === user.id;
       const EMOJIS = ['🔥', '👏', '😱', '🎯'];
       const rxHTML = EMOJIS.map(emoji => {
         const cnt    = counts[emoji] || 0;
@@ -475,7 +495,7 @@
       }).join('');
 
       return `
-        <div class="feed-card">
+        <div class="feed-card" data-id="${p.id}">
           <div class="feed-card-header">
             <div class="feed-avatar">${init}</div>
             <div class="feed-user-info">
@@ -483,6 +503,7 @@
               <div><span class="feed-plan-badge">⭐ Premium</span></div>
             </div>
             ${statusBadge}
+            ${isOwner ? `<button class="feed-delete-btn" data-prono="${p.id}" title="Supprimer">🗑</button>` : ''}
           </div>
           <div class="feed-match-info">
             <span class="feed-match-flags">${m?.home_flag || ''}${m?.away_flag || ''}</span>
@@ -714,6 +735,44 @@
     // ─────────────────────────────────────────
     // HELPERS
     // ─────────────────────────────────────────
+    // ── Delete a feed prono ──
+    async function handleDelete(e) {
+      const pronoId = e.currentTarget.dataset.prono;
+
+      // Confirm via custom overlay
+      const confirmed = await new Promise(resolve => {
+        const el = document.createElement('div');
+        el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);display:flex;align-items:flex-end;justify-content:center';
+        el.innerHTML = `
+          <div style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:28px 28px 0 0;width:100%;max-width:480px;padding:28px 20px calc(28px + env(safe-area-inset-bottom));text-align:center">
+            <div style="font-size:40px;margin-bottom:12px">🗑</div>
+            <div style="font-size:17px;font-weight:700;margin-bottom:6px">Supprimer ce pronostic ?</div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:24px">Il disparaîtra du Feed et de ton profil.</div>
+            <button id="del-confirm" style="background:#FF4444;color:#fff;border:none;border-radius:50px;height:50px;width:100%;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px">Supprimer</button>
+            <button id="del-cancel" style="background:rgba(255,255,255,0.06);color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:50px;height:50px;width:100%;font-size:15px;font-weight:600;cursor:pointer">Annuler</button>
+          </div>`;
+        document.body.appendChild(el);
+        el.querySelector('#del-confirm').onclick = () => { el.remove(); resolve(true);  };
+        el.querySelector('#del-cancel').onclick  = () => { el.remove(); resolve(false); };
+        el.addEventListener('click', ev => { if (ev.target === el) { el.remove(); resolve(false); } });
+      });
+
+      if (!confirmed) return;
+
+      const { error } = await supabase.from('pronostics').delete().eq('id', pronoId).eq('user_id', user.id);
+      if (error) { toast('Erreur : ' + error.message); return; }
+
+      // Animate card out then remove
+      const card = document.querySelector(`.feed-card[data-id="${pronoId}"]`);
+      if (card) {
+        card.style.transition = 'opacity 0.25s, transform 0.25s';
+        card.style.opacity    = '0';
+        card.style.transform  = 'scale(0.95)';
+        setTimeout(() => card.remove(), 260);
+      }
+      toast('Pronostic supprimé 🗑');
+    }
+
     function emptyState(icon, title, text) {
       return `<div class="empty-state"><div class="icon">${icon}</div><h3>${title}</h3><p>${text}</p></div>`;
     }

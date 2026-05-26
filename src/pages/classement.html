@@ -338,6 +338,7 @@
     import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
     import { createCheckout, PLANS } from '/src/js/lib/whop.js';
 
+    (async () => {
     const user    = await requireAuth();
     if (!user) throw new Error('not authed');
     const profile = await getCurrentProfile();
@@ -453,6 +454,7 @@
         document.getElementById('my-next-reward').textContent = nextReward;
       }
     }
+    })();
   </script>
 </body>
 </html>

@@ -1,7 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
-import crypto from 'crypto';
 
 export const config = { runtime: 'edge' };
+
+async function verifyHmac(secret, body, signature) {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw', encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(body));
+  const expected = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return expected === signature;
+}
 
 export default async function handler(req) {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
@@ -9,12 +20,8 @@ export default async function handler(req) {
   const body = await req.text();
   const signature = req.headers.get('whop-signature');
 
-  const expected = crypto
-    .createHmac('sha256', process.env.WHOP_WEBHOOK_SECRET)
-    .update(body)
-    .digest('hex');
-
-  if (signature !== expected) {
+  const valid = await verifyHmac(process.env.WHOP_WEBHOOK_SECRET, body, signature);
+  if (!valid) {
     return new Response('Invalid signature', { status: 401 });
   }
 

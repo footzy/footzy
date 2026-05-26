@@ -331,13 +331,25 @@
       const el = document.getElementById('groupe-pronos');
       el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-tertiary)">Chargement...</div>';
 
-      // Prochains matchs
-      const { data: matchs } = await supabase
+      // Prochains matchs depuis Supabase
+      let { data: matchs } = await supabase
         .from('matchs')
         .select('id,equipe1,equipe2,date_match,phase')
         .gte('date_match', new Date().toISOString())
         .order('date_match', { ascending: true })
         .limit(15);
+
+      // Fallback visuel si pas encore de matchs en base
+      if (!matchs?.length) {
+        matchs = [
+          { id: 'f1', equipe1: '🇫🇷 France',    equipe2: '🇲🇦 Maroc',      date_match: '2026-06-14T14:00:00Z', phase: 'groupes' },
+          { id: 'f2', equipe1: '🇧🇷 Brésil',    equipe2: '🇦🇷 Argentine',   date_match: '2026-06-14T18:00:00Z', phase: 'groupes' },
+          { id: 'f3', equipe1: '🇪🇸 Espagne',   equipe2: '🇩🇪 Allemagne',   date_match: '2026-06-15T21:00:00Z', phase: 'groupes' },
+          { id: 'f4', equipe1: '🇵🇹 Portugal',  equipe2: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Angleterre', date_match: '2026-06-16T18:00:00Z', phase: 'groupes' },
+          { id: 'f5', equipe1: '🇺🇸 États-Unis', equipe2: '🇯🇵 Japon',      date_match: '2026-06-17T21:00:00Z', phase: 'huitiemes' },
+          { id: 'f6', equipe1: '🇳🇱 Pays-Bas',  equipe2: '🇧🇪 Belgique',    date_match: '2026-06-18T18:00:00Z', phase: 'huitiemes' },
+        ];
+      }
 
       // Pronos existants de l'utilisateur
       const { data: mesPronos } = await supabase
@@ -346,39 +358,58 @@
         .eq('user_id', user.id);
       const pronoMap = Object.fromEntries((mesPronos || []).map(p => [p.match_id, p.prediction]));
 
-      if (!matchs?.length) {
-        el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-tertiary)">Aucun match à venir</div>';
-        return;
-      }
+      // Grouper par date
+      const byDate = {};
+      matchs.forEach(m => {
+        const key = new Date(m.date_match).toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
+        if (!byDate[key]) byDate[key] = [];
+        byDate[key].push(m);
+      });
 
-      el.innerHTML = matchs.map(m => {
-        const d = new Date(m.date_match);
-        const dateStr = d.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' });
-        const timeStr = d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
-        const pred = pronoMap[m.id];
-        const btn = (val, label) => `
-          <button class="prono-btn" data-match="${m.id}" data-val="${val}"
-            style="flex:1;padding:8px 4px;border-radius:10px;border:1.5px solid ${pred === val ? 'var(--green-accent)' : 'var(--border)'};
-            background:${pred === val ? 'rgba(0,255,100,0.1)' : 'transparent'};
-            color:${pred === val ? 'var(--green-accent)' : 'var(--text-secondary)'};
-            font-size:12px;font-weight:700;cursor:pointer;transition:all .15s">
-            ${label}
-          </button>`;
-        return `
+      const renderBtn = (m, val, label, pred) => `
+        <button class="prono-btn" data-match="${m.id}" data-val="${val}"
+          style="flex:1;padding:9px 4px;border-radius:10px;border:1.5px solid ${pred === val ? 'var(--green-accent)' : 'var(--border)'};
+          background:${pred === val ? 'rgba(0,255,100,0.1)' : 'transparent'};
+          color:${pred === val ? 'var(--green-accent)' : 'var(--text-secondary)'};
+          font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          ${pred === val ? '✓ ' : ''}${label}
+        </button>`;
+
+      el.innerHTML = Object.entries(byDate).map(([date, ms]) => `
+        <div style="padding:10px 16px 4px;font-size:11px;font-weight:700;color:var(--text-tertiary);text-transform:capitalize;letter-spacing:.03em;border-bottom:1px solid var(--border)">
+          📅 ${date}
+        </div>
+        ${ms.map(m => {
+          const timeStr = new Date(m.date_match).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+          const pred = pronoMap[m.id];
+          const phase = { groupes:'Phase de groupes', huitiemes:'Huitièmes', quarts:'Quarts', demis:'Demis', finale:'Finale' }[m.phase] || m.phase;
+          const name1 = m.equipe1.replace(/^\S+\s/, '');
+          const name2 = m.equipe2.replace(/^\S+\s/, '');
+          return `
           <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
-            <div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px">${dateStr} · ${timeStr} · <span style="text-transform:uppercase;letter-spacing:.05em">${m.phase || ''}</span></div>
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-              <span style="flex:1;text-align:right;font-weight:700;font-size:14px">${m.equipe1}</span>
-              <span style="font-size:11px;color:var(--text-tertiary);font-weight:600">VS</span>
-              <span style="flex:1;text-align:left;font-weight:700;font-size:14px">${m.equipe2}</span>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:4px">
+                <span style="font-size:26px">${m.equipe1.split(' ')[0]}</span>
+                <span style="font-size:12px;font-weight:700">${name1}</span>
+              </div>
+              <div style="text-align:center;padding:0 8px">
+                <div style="font-size:10px;color:var(--text-tertiary);margin-bottom:2px">${timeStr}</div>
+                <div style="font-size:11px;font-weight:700;color:var(--text-secondary)">VS</div>
+                <div style="font-size:9px;color:var(--text-tertiary);margin-top:2px;white-space:nowrap">${phase}</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:4px">
+                <span style="font-size:26px">${m.equipe2.split(' ')[0]}</span>
+                <span style="font-size:12px;font-weight:700">${name2}</span>
+              </div>
             </div>
-            <div style="display:flex;gap:8px">
-              ${btn('1', m.equipe1.split(' ').slice(-1)[0])}
-              ${btn('N', 'Nul')}
-              ${btn('2', m.equipe2.split(' ').slice(-1)[0])}
+            <div style="display:flex;gap:6px">
+              ${renderBtn(m, '1', name1, pred)}
+              ${renderBtn(m, 'N', 'Nul', pred)}
+              ${renderBtn(m, '2', name2, pred)}
             </div>
           </div>`;
-      }).join('');
+        }).join('')}
+      `).join('');
 
       // Gestion des clics sur les boutons de prono
       el.querySelectorAll('.prono-btn').forEach(btn => {

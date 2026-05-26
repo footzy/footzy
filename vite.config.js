@@ -14,6 +14,7 @@ export default defineConfig({
         onboarding: resolve(__dirname, 'src/pages/onboarding.html'),
         accueil:     resolve(__dirname, 'src/pages/accueil.html'),
         classement:  resolve(__dirname, 'src/pages/classement.html'),
+        oracle:      resolve(__dirname, 'src/pages/oracle.html'),
         home: resolve(__dirname, 'src/pages/home.html'),
         match: resolve(__dirname, 'src/pages/match.html'),
         pronostic: resolve(__dirname, 'src/pages/pronostic.html'),

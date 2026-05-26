@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Footzy — Oracle IA</title>
+  <link rel="stylesheet" href="/src/css/tokens.css" />
+  <link rel="stylesheet" href="/src/css/components.css" />
+  <link rel="stylesheet" href="/src/css/pages.css" />
+  <style>
+    @keyframes oraclePulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(128,255,0,0); transform: scale(1); }
+      50%       { box-shadow: 0 0 32px 8px rgba(128,255,0,0.18); transform: scale(1.04); }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes revealUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes shimmer {
+      0%   { background-position: -200% center; }
+      100% { background-position:  200% center; }
+    }
+
+    /* ── Header ── */
+    .oracle-header {
+      padding: 20px 20px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .oracle-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .oracle-logo .icon {
+      font-size: 26px;
+      animation: oraclePulse 3s ease-in-out infinite;
+    }
+    .oracle-logo .name {
+      font-size: 20px;
+      font-weight: 800;
+      font-style: italic;
+      letter-spacing: -0.03em;
+      background: linear-gradient(90deg, #80FF00, #fff, #80FF00);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 3s linear infinite;
+    }
+    .oracle-premium-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--gold);
+      background: rgba(255,215,0,0.10);
+      border: 1px solid rgba(255,215,0,0.25);
+      border-radius: 50px;
+      padding: 4px 10px;
+    }
+
+    /* ── Premium gate ── */
+    .oracle-gate {
+      margin: 16px;
+      background: var(--bg-card-elevated);
+      border: 1px solid var(--border-glass);
+      border-radius: 24px;
+      overflow: hidden;
+    }
+    .oracle-gate-preview {
+      padding: 20px;
+      filter: blur(6px);
+      pointer-events: none;
+      user-select: none;
+      opacity: 0.5;
+    }
+    .oracle-gate-cta {
+      background: linear-gradient(180deg, rgba(8,8,8,0) 0%, rgba(8,8,8,0.98) 40%);
+      padding: 40px 20px 24px;
+      text-align: center;
+      margin-top: -80px;
+      position: relative;
+    }
+    .oracle-gate-cta h3 { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+    .oracle-gate-cta p  { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.6; }
+
+    /* ── Match picker ── */
+    .oracle-match-card {
+      background: var(--bg-card-elevated);
+      border: 1px solid var(--border-glass);
+      border-radius: 18px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .oracle-match-card:active { transform: scale(0.98); border-color: var(--green-border); }
+    .oracle-match-card.selected { border-color: var(--green-accent); background: rgba(128,255,0,0.04); }
+    .oracle-match-flags { font-size: 22px; letter-spacing: -2px; flex-shrink: 0; }
+    .oracle-match-info  { flex: 1; min-width: 0; }
+    .oracle-match-name  { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .oracle-match-date  { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+    .oracle-btn {
+      background: var(--green-accent);
+      color: #080808;
+      border: none;
+      border-radius: 50px;
+      padding: 7px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .oracle-btn:active   { opacity: 0.85; transform: scale(0.95); }
+    .oracle-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .cached-badge {
+      background: rgba(128,255,0,0.08);
+      border: 1px solid var(--green-border);
+      color: var(--green-accent);
+      border-radius: 50px;
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* ── Loading oracle ── */
+    .oracle-loading {
+      text-align: center;
+      padding: 48px 24px;
+      animation: revealUp .3s ease;
+    }
+    .oracle-loading .orb {
+      font-size: 56px;
+      display: block;
+      margin-bottom: 16px;
+      animation: oraclePulse 1.5s ease-in-out infinite;
+    }
+    .oracle-loading .text {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    .oracle-loading .sub {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+    .oracle-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(128,255,0,0.15);
+      border-top-color: var(--green-accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 16px auto 0;
+    }
+
+    /* ── Analysis card ── */
+    .analysis-card {
+      background: var(--bg-card-elevated);
+      border: 1px solid var(--green-border);
+      border-radius: 24px;
+      overflow: hidden;
+      animation: revealUp .45s cubic-bezier(.32,.72,0,1);
+    }
+    .analysis-header {
+      background: linear-gradient(135deg, rgba(128,255,0,0.08), rgba(0,0,0,0));
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--border-glass);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .analysis-match-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+    .analysis-verdict {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--green-accent);
+      background: var(--green-dim);
+      border: 1px solid var(--green-border);
+      border-radius: 50px;
+      padding: 4px 10px;
+      text-align: right;
+      max-width: 160px;
+    }
+
+    /* Score */
+    .analysis-score-wrap {
+      padding: 20px 20px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .analysis-team {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+    }
+    .analysis-team .flag  { font-size: 36px; }
+    .analysis-team .name  { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); text-align: center; }
+    .analysis-score {
+      font-size: 52px;
+      font-weight: 900;
+      font-style: italic;
+      letter-spacing: -0.03em;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+      color: #fff;
+    }
+    .analysis-score .sep { font-size: 28px; opacity: 0.2; font-style: normal; font-weight: 400; }
+
+    /* Confidence */
+    .confidence-wrap {
+      padding: 0 20px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .confidence-label { font-size: 11px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.08em; flex-shrink: 0; }
+    .confidence-track {
+      flex: 1;
+      height: 6px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 50px;
+      overflow: hidden;
+    }
+    .confidence-fill {
+      height: 100%;
+      border-radius: 50px;
+      background: linear-gradient(90deg, #80FF00, #fff);
+      transition: width 1s cubic-bezier(.32,.72,0,1);
+    }
+    .confidence-pct { font-size: 14px; font-weight: 700; color: var(--green-accent); flex-shrink: 0; }
+
+    /* Analysis text */
+    .analysis-section {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border-glass);
+    }
+    .analysis-section-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-tertiary);
+      margin-bottom: 8px;
+    }
+    .analysis-text {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+
+    /* Facteur clé */
+    .facteur-cle {
+      background: rgba(255,184,0,0.06);
+      border: 1px solid rgba(255,184,0,0.18);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,215,0,0.9);
+      line-height: 1.5;
+    }
+
+    /* Buteur */
+    .buteur-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(128,255,0,0.06);
+      border: 1px solid var(--green-border);
+      border-radius: 50px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--green-accent);
+    }
+
+    /* Key players */
+    .players-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .player-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+    .player-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green-accent);
+      flex-shrink: 0;
+    }
+    .player-name  { font-size: 13px; font-weight: 700; flex: 1; }
+    .player-team  { font-size: 11px; color: var(--text-tertiary); }
+    .player-role  { font-size: 11px; font-weight: 600; color: var(--green-accent); background: var(--green-dim); border-radius: 50px; padding: 2px 8px; flex-shrink: 0; }
+
+    /* Form dots */
+    .form-wrap { display: flex; align-items: center; gap: 10px; }
+    .form-team  { font-size: 11px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; width: 60px; }
+    .form-dots  { display: flex; gap: 4px; }
+    .form-dot {
+      width: 24px; height: 24px;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700;
+    }
+    .form-dot.W { background: rgba(128,255,0,0.15); color: var(--green-accent); }
+    .form-dot.D { background: rgba(255,255,255,0.06); color: var(--text-secondary); }
+    .form-dot.L { background: rgba(255,68,68,0.12); color: var(--danger); }
+
+    /* Stats bars */
+    .stats-grid { display: flex; flex-direction: column; gap: 10px; }
+    .stat-row   { display: grid; grid-template-columns: 60px 1fr 28px; align-items: center; gap: 8px; }
+    .stat-label { font-size: 11px; font-weight: 600; color: var(--text-tertiary); }
+    .stat-track { height: 6px; background: rgba(255,255,255,0.06); border-radius: 50px; overflow: hidden; }
+    .stat-fill  { height: 100%; border-radius: 50px; transition: width 1s cubic-bezier(.32,.72,0,1); }
+    .stat-fill.attack  { background: linear-gradient(90deg, #80FF00, #aFFF40); }
+    .stat-fill.defense { background: linear-gradient(90deg, #00B4FF, #60D4FF); }
+    .stat-val   { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-align: right; }
+  </style>
+</head>
+<body>
+  <div class="page-content">
+
+    <!-- Header -->
+    <div class="oracle-header">
+      <div class="oracle-logo">
+        <span class="icon">🔮</span>
+        <span class="name">Oracle IA</span>
+      </div>
+      <span class="oracle-premium-badge" id="plan-badge">⭐ Premium</span>
+    </div>
+
+    <div id="oracle-body" style="padding:0 0 16px">
+      <div style="text-align:center;padding:60px 20px;color:var(--text-tertiary)">Chargement…</div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <a href="/src/pages/accueil.html"><span style="font-size:22px">🏠</span><span>Accueil</span></a>
+    <a href="/src/pages/home.html"><span style="font-size:22px">⚽</span><span>Matchs</span></a>
+    <a href="/src/pages/oracle.html" class="active"><span style="font-size:22px">🔮</span><span>Oracle</span></a>
+    <a href="/src/pages/groupe.html"><span style="font-size:22px">👥</span><span>Groupe</span></a>
+    <a href="/src/pages/profil.html"><span style="font-size:22px">👤</span><span>Profil</span></a>
+  </nav>
+
+  <script type="module">
+    import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
+    import { createCheckout, PLANS } from '/src/js/lib/whop.js';
+    import { formatKickoff } from '/src/js/lib/utils.js';
+
+    (async () => {
+    const user    = await requireAuth();
+    if (!user) throw new Error('not authed');
+    const profile = await getCurrentProfile();
+    const isPremium = profile?.plan === 'mid' || profile?.plan === 'elite';
+
+    // Badge
+    const badge = document.getElementById('plan-badge');
+    if (profile?.plan === 'elite') {
+      badge.textContent = '💎 Elite';
+      badge.style.cssText = 'display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#C98FFF;background:rgba(182,109,255,.10);border:1px solid rgba(182,109,255,.25);border-radius:50px;padding:4px 10px';
+    } else if (!isPremium) {
+      badge.textContent = '🔒 Premium requis';
+      badge.style.color = 'var(--text-tertiary)';
+    }
+
+    const body = document.getElementById('oracle-body');
+
+    // ── Premium gate for free users ──
+    if (!isPremium) {
+      body.innerHTML = `
+        <div class="oracle-gate" style="margin:16px">
+          <div class="oracle-gate-preview">
+            <div style="background:rgba(128,255,0,0.05);border:1px solid var(--green-border);border-radius:18px;padding:18px 20px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+                <span style="font-size:13px;font-weight:700">🇫🇷 France vs Brésil 🇧🇷</span>
+                <span style="color:var(--green-accent);font-size:12px;font-weight:700">Victoire domicile</span>
+              </div>
+              <div style="display:flex;justify-content:center;gap:8px;font-size:48px;font-weight:900;font-style:italic;margin:12px 0">
+                <span>2</span><span style="opacity:.2;font-size:28px">–</span><span>1</span>
+              </div>
+              <div style="height:6px;background:rgba(255,255,255,.06);border-radius:50px;overflow:hidden;margin-bottom:4px">
+                <div style="height:100%;width:74%;background:linear-gradient(90deg,#80FF00,#fff);border-radius:50px"></div>
+              </div>
+              <div style="font-size:11px;color:var(--text-tertiary);text-align:right">Confiance : 74%</div>
+            </div>
+          </div>
+          <div class="oracle-gate-cta">
+            <h3>🔮 Débloque l'Oracle IA</h3>
+            <p>Analyses tactiques, score prédit, joueurs clés, buteur probable… L'IA analyse chaque match pour toi.</p>
+            <button class="cta-primary" id="unlock-btn">Passer Premium — 6,99 €/mois</button>
+            <p style="font-size:11px;color:var(--text-tertiary);margin-top:10px">Annulable à tout moment</p>
+          </div>
+        </div>`;
+      document.getElementById('unlock-btn').addEventListener('click', () => createCheckout(PLANS.mid_monthly, user.id));
+      return;
+    }
+
+    // ── Load upcoming matches ──
+    const now = new Date().toISOString();
+    const { data: matches } = await supabase
+      .from('matchs')
+      .select('id, home_team, away_team, home_flag, away_flag, kickoff_at, phase, groupe')
+      .gt('kickoff_at', now)
+      .order('kickoff_at')
+      .limit(15);
+
+    if (!matches?.length) {
+      body.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--text-tertiary)">
+        <div style="font-size:48px;margin-bottom:12px">🔮</div>
+        <div style="font-weight:700;color:var(--text-secondary)">Aucun match à venir</div>
+      </div>`;
+      return;
+    }
+
+    // Check which matches have cached analyses
+    const matchIds = matches.map(m => m.id);
+    const { data: cached } = await supabase
+      .from('oracle_analyses').select('match_id').in('match_id', matchIds);
+    const cachedSet = new Set(cached?.map(c => c.match_id) || []);
+
+    body.innerHTML = `
+      <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--text-tertiary);padding:20px 20px 10px">
+        Choisir un match à analyser
+      </p>
+      <div id="match-picker" style="display:flex;flex-direction:column;gap:8px;padding:0 16px">
+        ${matches.map((m, i) => `
+          <div class="oracle-match-card" data-idx="${i}" id="mc-${m.id}">
+            <span class="oracle-match-flags">${m.home_flag}${m.away_flag}</span>
+            <div class="oracle-match-info">
+              <div class="oracle-match-name">${m.home_team} vs ${m.away_team}</div>
+              <div class="oracle-match-date">${formatKickoff(m.kickoff_at)}</div>
+            </div>
+            ${cachedSet.has(m.id)
+              ? `<span class="cached-badge">🔮 Voir</span>`
+              : `<button class="oracle-btn" data-match-id="${m.id}">Analyser</button>`}
+          </div>`).join('')}
+      </div>
+      <div id="analysis-zone" style="padding:16px 16px 0"></div>`;
+
+    // Click handlers
+    document.querySelectorAll('.oracle-match-card').forEach(card => {
+      card.addEventListener('click', () => analyzeMatch(matches[parseInt(card.dataset.idx)], card));
+    });
+
+    let currentCard = null;
+
+    async function analyzeMatch(match, card) {
+      if (currentCard) currentCard.classList.remove('selected');
+      currentCard = card;
+      card.classList.add('selected');
+
+      const zone = document.getElementById('analysis-zone');
+      zone.innerHTML = `
+        <div class="oracle-loading">
+          <span class="orb">🔮</span>
+          <div class="text">L'Oracle analyse ce match…</div>
+          <div class="sub">Traitement des données tactiques et historiques</div>
+          <div class="oracle-spinner"></div>
+        </div>`;
+      zone.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      try {
+        // Get JWT for API call
+        const { data: { session } } = await supabase.auth.getSession();
+        const jwt = session?.access_token;
+
+        const res = await fetch('/api/oracle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwt}` },
+          body: JSON.stringify({
+            matchId:    match.id,
+            homeTeam:   match.home_team,
+            awayTeam:   match.away_team,
+            homeFlag:   match.home_flag,
+            awayFlag:   match.away_flag,
+            phase:      match.phase,
+            kickoffAt:  match.kickoff_at,
+          })
+        });
+
+        if (!res.ok) throw new Error('API error ' + res.status);
+        const data = await res.json();
+        renderAnalysis(data, match, zone);
+
+        // Mark as cached
+        const btn = card.querySelector('.oracle-btn');
+        if (btn) {
+          btn.outerHTML = `<span class="cached-badge">🔮 Voir</span>`;
+        }
+
+      } catch (err) {
+        zone.innerHTML = `<div style="text-align:center;padding:32px;color:var(--danger)">
+          <div style="font-size:32px;margin-bottom:8px">⚠️</div>
+          <div style="font-weight:700">Erreur Oracle</div>
+          <div style="font-size:12px;margin-top:6px;color:var(--text-tertiary)">${err.message}</div>
+        </div>`;
+      }
+    }
+
+    function renderAnalysis(d, match, zone) {
+      const formDots = (form) => (form || 'WWDLD').split('').map(c =>
+        `<span class="form-dot ${c}">${c}</span>`).join('');
+
+      const stats = d.stats || {};
+      const keyPlayers = Array.isArray(d.key_players) ? d.key_players : [];
+
+      zone.innerHTML = `
+        <div class="analysis-card">
+          <div class="analysis-header">
+            <div class="analysis-match-label">${match.home_flag} ${match.home_team} vs ${match.away_team} ${match.away_flag}</div>
+            <div class="analysis-verdict">${d.verdict || '—'}</div>
+          </div>
+
+          <!-- Score -->
+          <div class="analysis-score-wrap">
+            <div class="analysis-team">
+              <span class="flag">${match.home_flag}</span>
+              <span class="name">${match.home_team}</span>
+            </div>
+            <div class="analysis-score">
+              <span>${d.home_score ?? '?'}</span>
+              <span class="sep">–</span>
+              <span>${d.away_score ?? '?'}</span>
+            </div>
+            <div class="analysis-team">
+              <span class="flag">${match.away_flag}</span>
+              <span class="name">${match.away_team}</span>
+            </div>
+          </div>
+
+          <!-- Confidence -->
+          <div class="confidence-wrap">
+            <span class="confidence-label">Confiance</span>
+            <div class="confidence-track">
+              <div class="confidence-fill" id="conf-fill" style="width:0%"></div>
+            </div>
+            <span class="confidence-pct">${d.confidence ?? 0}%</span>
+          </div>
+
+          <!-- Analyse -->
+          <div class="analysis-section">
+            <div class="analysis-section-title">🔮 Analyse Oracle</div>
+            <div class="analysis-text">${d.analysis || '—'}</div>
+          </div>
+
+          <!-- Facteur clé -->
+          ${d.facteur_cle ? `
+          <div class="analysis-section">
+            <div class="analysis-section-title">⚡ Facteur décisif</div>
+            <div class="facteur-cle">${d.facteur_cle}</div>
+          </div>` : ''}
+
+          <!-- Buteur -->
+          ${d.buteur ? `
+          <div class="analysis-section">
+            <div class="analysis-section-title">⚽ Buteur probable</div>
+            <span class="buteur-chip">⚽ ${d.buteur}</span>
+          </div>` : ''}
+
+          <!-- Key players -->
+          ${keyPlayers.length ? `
+          <div class="analysis-section">
+            <div class="analysis-section-title">⭐ Joueurs à surveiller</div>
+            <div class="players-grid">
+              ${keyPlayers.map(p => `
+                <div class="player-row">
+                  <div class="player-dot"></div>
+                  <div style="flex:1">
+                    <div class="player-name">${p.name}</div>
+                    <div class="player-team">${p.team}</div>
+                  </div>
+                  <span class="player-role">${p.role}</span>
+                </div>`).join('')}
+            </div>
+          </div>` : ''}
+
+          <!-- Forme récente -->
+          <div class="analysis-section">
+            <div class="analysis-section-title">📈 Forme récente</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div class="form-wrap">
+                <span class="form-team">${match.home_team.slice(0,8)}</span>
+                <div class="form-dots">${formDots(d.home_form)}</div>
+              </div>
+              <div class="form-wrap">
+                <span class="form-team">${match.away_team.slice(0,8)}</span>
+                <div class="form-dots">${formDots(d.away_form)}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="analysis-section" style="padding-bottom:18px">
+            <div class="analysis-section-title">📊 Forces en présence</div>
+            <div class="stats-grid">
+              <div class="stat-row">
+                <span class="stat-label">Attaque ${match.home_flag}</span>
+                <div class="stat-track"><div class="stat-fill attack" style="width:${stats.home_attack || 0}%"></div></div>
+                <span class="stat-val">${stats.home_attack || 0}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Défense ${match.home_flag}</span>
+                <div class="stat-track"><div class="stat-fill defense" style="width:${stats.home_defense || 0}%"></div></div>
+                <span class="stat-val">${stats.home_defense || 0}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Attaque ${match.away_flag}</span>
+                <div class="stat-track"><div class="stat-fill attack" style="width:${stats.away_attack || 0}%"></div></div>
+                <span class="stat-val">${stats.away_attack || 0}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Défense ${match.away_flag}</span>
+                <div class="stat-track"><div class="stat-fill defense" style="width:${stats.away_defense || 0}%"></div></div>
+                <span class="stat-val">${stats.away_defense || 0}</span>
+              </div>
+            </div>
+          </div>
+
+        </div>`;
+
+      // Animate confidence bar
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          document.getElementById('conf-fill').style.width = (d.confidence || 0) + '%';
+        });
+      });
+    }
+    })();
+  </script>
+</body>
+</html>

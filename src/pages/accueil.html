@@ -671,18 +671,22 @@
           .is('groupe_id', null)
           .maybeSingle();
 
-        let err;
+        let err, saved;
         if (existing) {
-          ({ error: err } = await supabase.from('pronostics')
+          ({ data: saved, error: err } = await supabase.from('pronostics')
             .update({ home_score: homeScore, away_score: awayScore })
-            .eq('id', existing.id));
+            .eq('id', existing.id)
+            .select('id').single());
         } else {
-          ({ error: err } = await supabase.from('pronostics')
-            .insert({ user_id: user.id, match_id: match.id, groupe_id: null, home_score: homeScore, away_score: awayScore }));
+          ({ data: saved, error: err } = await supabase.from('pronostics')
+            .insert({ user_id: user.id, match_id: match.id, groupe_id: null, home_score: homeScore, away_score: awayScore })
+            .select('id').single());
         }
 
-        if (err) {
-          toast('Erreur : ' + err.message);
+        // Detect both explicit errors and silent RLS blocks (err=null but no row)
+        if (err || !saved) {
+          const msg = err?.message || 'Insert bloqué (RLS). Vérifie les policies Supabase.';
+          toast('Erreur : ' + msg);
           btn.disabled = false;
           btn.textContent = 'Publier sur le Feed 🚀';
           return;

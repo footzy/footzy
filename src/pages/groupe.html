@@ -109,8 +109,9 @@
     } else {
       switcher.innerHTML = memberships.map(m => `<option value="${m.groupes.id}" ${m.groupes.id === currentGroupeId ? 'selected' : ''}>${m.groupes.nom}</option>`).join('');
       if (!currentGroupeId) currentGroupeId = memberships[0].groupes.id;
-      switcher.addEventListener('change', () => { currentGroupeId = switcher.value; loadGroupe(); });
+      switcher.addEventListener('change', () => { currentGroupeId = switcher.value; loadGroupe(); subscribeRealtime(); });
       await loadGroupe();
+      subscribeRealtime();
     }
 
     async function loadGroupe() {
@@ -174,8 +175,13 @@
         });
       });
 
-      // Realtime updates (pronostics + membres)
-      supabase.channel('groupe-' + currentGroupeId)
+    }
+
+    // Realtime — un seul channel, créé une fois après le premier chargement
+    let realtimeChannel = null;
+    function subscribeRealtime() {
+      if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+      realtimeChannel = supabase.channel('groupe-' + currentGroupeId)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'pronostics', filter: `groupe_id=eq.${currentGroupeId}` }, () => loadGroupe())
         .on('postgres_changes', { event: '*', schema: 'public', table: 'groupe_membres', filter: `groupe_id=eq.${currentGroupeId}` }, () => loadGroupe())
         .subscribe();

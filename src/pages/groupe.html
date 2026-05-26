@@ -205,9 +205,8 @@
             .eq('groupe_id', currentGroupeId)
             .eq('user_id', uid);
           if (error) { toast('Erreur lors de l\'exclusion ❌'); btn.disabled = false; return; }
-          // Notifier l'exclu en temps réel
+          // Notifier l'exclu en temps réel (REST direct, pas besoin de subscribe)
           const notifCh = supabase.channel(`notif-${uid}`);
-          await notifCh.subscribe();
           await notifCh.send({ type: 'broadcast', event: 'kicked', payload: { admin_pseudo: profile.pseudo, groupe_nom: groupe.nom } });
           supabase.removeChannel(notifCh);
           toast(`${name} a été exclu 👋`);

@@ -19,6 +19,12 @@
       #match-prono-modal > div { max-width: 480px; border-radius: 20px; max-height: 88vh; }
     }
 
+    /* ── Bonus/Malus pop-up ── */
+    @keyframes bmPopIn {
+      0%   { transform: scale(0.7) translateY(20px); opacity: 0; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
     /* ── Launch animation ── */
     #launch-overlay {
       position: fixed; inset: 0; z-index: 999;
@@ -272,6 +278,38 @@
     </div>
   </div>
 
+  <!-- Bonus/Malus — modal envoi -->
+  <div class="modal-overlay" id="bm-modal">
+    <div class="modal-sheet">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+        <div id="bm-target-avatar" style="width:40px;height:40px;border-radius:50%;background:var(--bg-card-elevated);border:1px solid var(--border-glass);display:flex;align-items:center;justify-content:center;font-size:20px">👤</div>
+        <div>
+          <div style="font-size:15px;font-weight:700" id="bm-target-name">—</div>
+          <div style="font-size:12px;color:var(--text-tertiary)" id="bm-actions-left"></div>
+        </div>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-tertiary);margin-bottom:12px">Choisir une action</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="bm-options">
+        <!-- généré en JS -->
+      </div>
+
+      <button onclick="document.getElementById('bm-modal').classList.remove('open')" style="width:100%;text-align:center;font-size:14px;color:var(--text-tertiary);padding:16px 8px 0;background:none;border:none;cursor:pointer">Annuler</button>
+    </div>
+  </div>
+
+  <!-- Bonus/Malus — notification reçue (big pop-up) -->
+  <div id="bm-notif-overlay" style="position:fixed;inset:0;z-index:998;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px)">
+    <div style="background:var(--bg-surface);border:1px solid var(--border-glass);border-radius:28px;padding:32px 24px;text-align:center;max-width:340px;width:100%;animation:bmPopIn .4s cubic-bezier(.2,1.4,.4,1)">
+      <div id="bm-notif-icon" style="font-size:56px;margin-bottom:12px"></div>
+      <div id="bm-notif-label" style="font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px"></div>
+      <div id="bm-notif-from" style="font-size:14px;color:var(--text-secondary);margin-bottom:6px"></div>
+      <div id="bm-notif-pts" style="font-size:36px;font-weight:900;margin:16px 0"></div>
+      <button onclick="document.getElementById('bm-notif-overlay').style.display='none'" class="cta-primary" style="height:46px;font-size:14px">OK 👍</button>
+    </div>
+  </div>
+
   <!-- Launch animation overlay -->
   <div id="launch-overlay">
     <div class="launch-particles" id="launch-particles"></div>
@@ -344,6 +382,9 @@
         playLaunchAnimation();
         setTimeout(() => { loadGroupe(true); toast(`🚀 Le jeu est lancé ! Gage : ${payload.gage}`); }, 2800);
       })
+      .on('broadcast', { event: 'bonus_malus' }, ({ payload }) => {
+        showBMNotif(payload);
+      })
       .subscribe();
 
     // Load groups
@@ -411,11 +452,21 @@
         toast(result === 'copied' ? 'Code copié ! 📋' : 'Partagé !');
       });
 
-      // Load members + their points + roles
+      // Load members + their points + roles + bonus_malus
       const { data: membres } = await supabase
         .from('groupe_membres')
-        .select('user_id, role, profiles(id,pseudo,points_totaux,streak_quotidien)')
+        .select('user_id, role, bonus_malus_pts, profiles(id,pseudo,points_totaux,streak_quotidien)')
         .eq('groupe_id', currentGroupeId);
+
+      // Compter les actions bonus/malus déjà envoyées par moi dans ce groupe
+      const { data: myActions } = await supabase
+        .from('bonus_malus')
+        .select('id')
+        .eq('groupe_id', currentGroupeId)
+        .eq('from_user_id', user.id);
+      const actionsUsed = myActions?.length || 0;
+      const MAX_ACTIONS = 3;
+      const actionsLeft = Math.max(0, MAX_ACTIONS - actionsUsed);
 
       const myMembership = membres?.find(m => m.user_id === user.id);
 
@@ -552,24 +603,34 @@
       };
 
       const sorted = (membres || [])
-        .map(m => ({ ...m.profiles, role: m.role }))
+        .map(m => ({ ...m.profiles, role: m.role, bm_pts: m.bonus_malus_pts || 0 }))
         .filter(Boolean)
-        .sort((a, b) => (b.points_totaux || 0) - (a.points_totaux || 0));
+        .sort((a, b) => ((b.points_totaux||0)+(b.bm_pts||0)) - ((a.points_totaux||0)+(a.bm_pts||0)));
 
       const lb = document.getElementById('groupe-leaderboard');
+      const gameEnCours = groupe.statut === 'en_cours';
       lb.innerHTML = sorted.map((p, i) => {
         const rank = i + 1;
         const isMe = p.id === user.id;
         const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
         const canKick = isAdmin && !isMe && p.role !== 'admin';
+        const canBM   = gameEnCours && !isMe;
+        const total   = (p.points_totaux || 0) + (p.bm_pts || 0);
+        const bmBadge = p.bm_pts !== 0
+          ? `<span style="font-size:10px;font-weight:700;color:${p.bm_pts > 0 ? 'var(--green-accent)' : 'var(--danger)'};">${p.bm_pts > 0 ? '+' : ''}${p.bm_pts}</span>`
+          : '';
         return `<div class="leaderboard-item${isMe ? ' me' : ''}">
           <div class="rank-badge ${rankClass}">${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank}</div>
           <div style="flex:1">
-            <div class="leaderboard-pseudo">${p.pseudo}${isMe ? ' <span style="font-size:10px;color:var(--green-accent);font-weight:600;background:rgba(0,255,100,0.08);padding:2px 6px;border-radius:6px">vous</span>' : ''}${p.role === 'admin' ? ' <span style="font-size:10px;color:var(--text-tertiary);font-weight:500">admin</span>' : ''}</div>
+            <div class="leaderboard-pseudo">${p.pseudo}${isMe ? ' <span style="font-size:10px;color:var(--green-accent);font-weight:600;background:rgba(128,255,0,0.1);padding:2px 6px;border-radius:6px">vous</span>' : ''}${p.role === 'admin' ? ' <span style="font-size:10px;color:var(--text-tertiary);font-weight:500">admin</span>' : ''}</div>
             ${p.streak_quotidien > 0 ? `<div style="font-size:11px;color:var(--text-tertiary)">🔥 ${p.streak_quotidien} jours</div>` : ''}
           </div>
-          ${canKick ? `<button class="kick-btn" data-uid="${p.id}" style="background:none;border:1px solid var(--danger);color:var(--danger);border-radius:8px;padding:4px 8px;font-size:11px;cursor:pointer;margin-right:8px">Exclure</button>` : ''}
-          <div class="leaderboard-points">${p.points_totaux || 0} pts</div>
+          ${canKick ? `<button class="kick-btn" data-uid="${p.id}" style="background:none;border:1px solid var(--danger);color:var(--danger);border-radius:8px;padding:4px 8px;font-size:11px;cursor:pointer;margin-right:6px">Exclure</button>` : ''}
+          ${canBM ? `<button class="bm-btn" data-uid="${p.id}" data-pseudo="${p.pseudo}" style="background:var(--bg-card-elevated);border:1px solid var(--border-glass);border-radius:8px;padding:4px 10px;font-size:14px;cursor:pointer;margin-right:6px" title="Bonus / Malus">⚡</button>` : ''}
+          <div class="leaderboard-points" style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+            <span>${total} pts</span>
+            ${bmBadge}
+          </div>
         </div>`;
       }).join('');
 
@@ -596,6 +657,94 @@
         });
       });
 
+      // ── Handlers bouton ⚡ Bonus/Malus ──
+      lb.querySelectorAll('.bm-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetId     = btn.dataset.uid;
+          const targetPseudo = btn.dataset.pseudo;
+          openBMModal(targetId, targetPseudo, actionsLeft, groupe);
+        });
+      });
+
+    }
+
+    // ── Bonus/Malus ──
+    const BM_OPTIONS = [
+      { label: '🚀 Boost',         pts: +3, color: 'var(--green-accent)', bg: 'rgba(128,255,0,0.08)',  border: 'var(--green-border)',  desc: '+3 pts' },
+      { label: '🎯 Double chance',  pts: +2, color: 'var(--green-accent)', bg: 'rgba(128,255,0,0.06)',  border: 'var(--green-border)',  desc: '+2 pts' },
+      { label: '💣 Sabotage',       pts: -2, color: 'var(--danger)',       bg: 'rgba(255,68,68,0.08)',  border: 'rgba(255,68,68,0.3)',  desc: '−2 pts' },
+      { label: '🍕 Payer le resto', pts: -3, color: 'var(--danger)',       bg: 'rgba(255,68,68,0.1)',   border: 'rgba(255,68,68,0.35)', desc: '−3 pts' },
+    ];
+
+    function openBMModal(targetId, targetPseudo, actionsLeft, groupe) {
+      document.getElementById('bm-target-name').textContent = targetPseudo;
+      document.getElementById('bm-actions-left').textContent =
+        actionsLeft > 0 ? `${actionsLeft} action${actionsLeft > 1 ? 's' : ''} restante${actionsLeft > 1 ? 's' : ''}` : '⛔ Plus d\'actions disponibles';
+
+      const grid = document.getElementById('bm-options');
+      grid.innerHTML = BM_OPTIONS.map((o, idx) => `
+        <button class="bm-option-btn" data-idx="${idx}" data-tid="${targetId}" data-tpseudo="${targetPseudo}" ${actionsLeft === 0 ? 'disabled' : ''}
+          style="padding:14px 10px;border-radius:14px;border:1px solid ${o.border};background:${o.bg};cursor:${actionsLeft > 0 ? 'pointer' : 'not-allowed'};opacity:${actionsLeft > 0 ? '1' : '0.4'};text-align:center;transition:all .15s">
+          <div style="font-size:22px;margin-bottom:4px">${o.label.split(' ')[0]}</div>
+          <div style="font-size:12px;font-weight:700;color:${o.color}">${o.label.substring(o.label.indexOf(' ')+1)}</div>
+          <div style="font-size:13px;font-weight:800;color:${o.color};margin-top:4px">${o.desc}</div>
+        </button>`
+      ).join('');
+
+      document.getElementById('bm-modal').classList.add('open');
+
+      grid.querySelectorAll('.bm-option-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const o   = BM_OPTIONS[+btn.dataset.idx];
+          const tid = btn.dataset.tid;
+          const tps = btn.dataset.tpseudo;
+          document.getElementById('bm-modal').classList.remove('open');
+
+          // Sauvegarder en DB
+          await supabase.from('bonus_malus').insert({
+            groupe_id: currentGroupeId,
+            from_user_id: user.id,
+            to_user_id: tid,
+            points: o.pts,
+            label: o.label,
+          });
+
+          // Mettre à jour bonus_malus_pts du membre ciblé
+          const { data: cur } = await supabase
+            .from('groupe_membres').select('bonus_malus_pts')
+            .eq('groupe_id', currentGroupeId).eq('user_id', tid).single();
+          await supabase.from('groupe_membres')
+            .update({ bonus_malus_pts: (cur?.bonus_malus_pts || 0) + o.pts })
+            .eq('groupe_id', currentGroupeId).eq('user_id', tid);
+
+          // Notifier la cible
+          const ch = supabase.channel(`notif-${tid}`);
+          await ch.send({ type: 'broadcast', event: 'bonus_malus', payload: {
+            from_pseudo: profile.pseudo,
+            label: o.label,
+            pts: o.pts,
+          }});
+          supabase.removeChannel(ch);
+
+          toast(`${o.label} envoyé à ${tps} !`);
+          loadGroupe(true);
+        });
+      });
+    }
+
+    function showBMNotif({ from_pseudo, label, pts }) {
+      const overlay = document.getElementById('bm-notif-overlay');
+      const icon    = label.split(' ')[0];
+      const name    = label.substring(label.indexOf(' ')+1);
+      const isBonus = pts > 0;
+      document.getElementById('bm-notif-icon').textContent  = icon;
+      document.getElementById('bm-notif-label').textContent = name;
+      document.getElementById('bm-notif-label').style.color = isBonus ? 'var(--green-accent)' : 'var(--danger)';
+      document.getElementById('bm-notif-from').textContent  = `${from_pseudo} t'envoie ça...`;
+      document.getElementById('bm-notif-pts').textContent   = `${isBonus ? '+' : ''}${pts} pts`;
+      document.getElementById('bm-notif-pts').style.color   = isBonus ? 'var(--green-accent)' : 'var(--danger)';
+      overlay.style.display = 'flex';
+      loadGroupe(true);
     }
 
     // ── Animation lancement ──

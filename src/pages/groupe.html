@@ -46,6 +46,11 @@
       </div>
     </div>
 
+    <!-- Supprimer le groupe (admin only) -->
+    <div id="delete-groupe-zone" style="display:none;padding:0 16px 4px">
+      <button id="delete-groupe-btn" style="width:100%;height:40px;border-radius:12px;border:1px solid var(--danger);background:none;color:var(--danger);font-size:13px;font-weight:600;cursor:pointer">🗑️ Supprimer ce groupe</button>
+    </div>
+
     <!-- Rejoindre / Créer -->
     <div style="padding:16px;display:flex;flex-direction:column;gap:10px">
       <button class="cta-primary" id="create-groupe-btn" style="font-size:13px;height:44px">+ Créer un groupe</button>
@@ -108,12 +113,18 @@
     let realtimeChannel = null;
     let kickedFromGroup = false;
 
-    // Écouter les notifications personnelles (kick)
+    // Écouter les notifications personnelles (kick + suppression groupe)
     supabase.channel(`notif-${user.id}`)
       .on('broadcast', { event: 'kicked' }, ({ payload }) => {
         kickedFromGroup = true;
         document.getElementById('kicked-title').textContent = `${payload.admin_pseudo} vous a exclu`;
         document.getElementById('kicked-msg').textContent = `Vous avez été retiré du groupe "${payload.groupe_nom}".`;
+        document.getElementById('kicked-modal').classList.add('open');
+      })
+      .on('broadcast', { event: 'group_deleted' }, ({ payload }) => {
+        kickedFromGroup = true;
+        document.getElementById('kicked-title').textContent = `${payload.admin_pseudo} a supprimé le groupe`;
+        document.getElementById('kicked-msg').textContent = `Le groupe "${payload.groupe_nom}" a été supprimé.`;
         document.getElementById('kicked-modal').classList.add('open');
       })
       .subscribe();
@@ -169,6 +180,27 @@
       if (kickedFromGroup) return;
 
       const isAdmin = myMembership?.role === 'admin';
+
+      // Bouton supprimer groupe (admin only)
+      const deleteZone = document.getElementById('delete-groupe-zone');
+      const deleteBtn = document.getElementById('delete-groupe-btn');
+      deleteZone.style.display = isAdmin ? 'block' : 'none';
+      deleteBtn.onclick = async () => {
+        if (!confirm(`Supprimer le groupe "${groupe.nom}" ? Cette action est irréversible.`)) return;
+        deleteBtn.disabled = true;
+        // Notifier tous les membres
+        const others = (membres || []).filter(m => m.user_id !== user.id);
+        for (const m of others) {
+          const ch = supabase.channel(`notif-${m.user_id}`);
+          await ch.send({ type: 'broadcast', event: 'group_deleted', payload: { admin_pseudo: profile.pseudo, groupe_nom: groupe.nom } });
+          supabase.removeChannel(ch);
+        }
+        // Supprimer membres puis groupe
+        await supabase.from('groupe_membres').delete().eq('groupe_id', currentGroupeId);
+        await supabase.from('groupes').delete().eq('id', currentGroupeId);
+        toast('Groupe supprimé 🗑️');
+        setTimeout(() => { window.location.href = '/src/pages/groupe.html'; }, 1000);
+      };
 
       const sorted = (membres || [])
         .map(m => ({ ...m.profiles, role: m.role }))

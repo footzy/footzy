@@ -95,6 +95,7 @@
 
     const params = new URLSearchParams(location.search);
     let currentGroupeId = params.get('id');
+    let realtimeChannel = null;
 
     // Load groups
     const { data: memberships } = await supabase
@@ -178,7 +179,6 @@
     }
 
     // Realtime — un seul channel, créé une fois après le premier chargement
-    let realtimeChannel = null;
     function subscribeRealtime() {
       if (realtimeChannel) supabase.removeChannel(realtimeChannel);
       realtimeChannel = supabase.channel('groupe-' + currentGroupeId)

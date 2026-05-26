@@ -54,9 +54,10 @@
       </div>
     </div>
 
-    <!-- Supprimer le groupe (admin only) -->
-    <div id="delete-groupe-zone" style="display:none;padding:12px 16px 4px">
+    <!-- Actions groupe (admin = supprimer / membre = quitter) -->
+    <div id="groupe-actions-zone" style="display:none;padding:12px 16px 4px">
       <button id="delete-groupe-btn" style="width:100%;height:40px;border-radius:12px;border:1px solid var(--danger);background:none;color:var(--danger);font-size:13px;font-weight:600;cursor:pointer">🗑️ Supprimer ce groupe</button>
+      <button id="leave-groupe-btn" style="width:100%;height:40px;border-radius:12px;border:1px solid var(--border);background:none;color:var(--text-tertiary);font-size:13px;font-weight:600;cursor:pointer">Quitter ce groupe</button>
     </div>
 
     <!-- Rejoindre / Créer -->
@@ -189,10 +190,23 @@
 
       const isAdmin = myMembership?.role === 'admin';
 
-      // Bouton supprimer groupe (admin only)
-      const deleteZone = document.getElementById('delete-groupe-zone');
+      // Boutons action groupe
+      const actionsZone = document.getElementById('groupe-actions-zone');
       const deleteBtn = document.getElementById('delete-groupe-btn');
-      deleteZone.style.display = isAdmin ? 'block' : 'none';
+      const leaveBtn = document.getElementById('leave-groupe-btn');
+      actionsZone.style.display = 'block';
+      deleteBtn.style.display = isAdmin ? 'block' : 'none';
+      leaveBtn.style.display = !isAdmin ? 'block' : 'none';
+
+      // Quitter le groupe (membre)
+      leaveBtn.onclick = async () => {
+        if (!confirm(`Quitter le groupe "${groupe.nom}" ?`)) return;
+        leaveBtn.disabled = true;
+        await supabase.from('groupe_membres').delete().eq('groupe_id', currentGroupeId).eq('user_id', user.id);
+        toast('Vous avez quitté le groupe 👋');
+        setTimeout(() => { window.location.href = '/src/pages/groupe.html'; }, 800);
+      };
+
       deleteBtn.onclick = async () => {
         if (!confirm(`Supprimer le groupe "${groupe.nom}" ? Cette action est irréversible.`)) return;
         deleteBtn.disabled = true;

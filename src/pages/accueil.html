@@ -319,11 +319,108 @@
     .empty-state h3    { font-size: 16px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; }
     .empty-state p     { font-size: 13px; line-height: 1.7; }
 
-    /* ── Actualité placeholder ── */
-    .actu-coming-soon    { margin: 16px; background: var(--bg-card-elevated); border: 1px solid var(--border-glass); border-radius: 20px; padding: 32px 24px; text-align: center; }
-    .actu-coming-soon .icon { font-size: 44px; margin-bottom: 12px; }
-    .actu-coming-soon h3 { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
-    .actu-coming-soon p  { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+    /* ── Actualité cards ── */
+    .actu-card {
+      border-radius: 20px;
+      overflow: hidden;
+      background: var(--bg-card-elevated);
+      border: 1px solid var(--border-glass);
+      padding: 16px 18px 14px;
+      position: relative;
+    }
+    .actu-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      border-radius: 3px 0 0 3px;
+    }
+    /* Type colours */
+    .actu-flash::before   { background: #FF3B3B; }
+    .actu-stats::before   { background: #00B4FF; }
+    .actu-prono::before   { background: var(--green-accent); }
+    .actu-debrief::before { background: #B66DFF; }
+    .actu-question::before{ background: #FFB800; }
+
+    .actu-flash   { border-color: rgba(255,59,59,0.2); }
+    .actu-stats   { border-color: rgba(0,180,255,0.2); }
+    .actu-prono   { border-color: rgba(128,255,0,0.2); }
+    .actu-debrief { border-color: rgba(182,109,255,0.2); }
+    .actu-question{ border-color: rgba(255,184,0,0.2); }
+
+    .actu-type-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.10em;
+      border-radius: 50px;
+      padding: 3px 10px;
+      margin-bottom: 10px;
+    }
+    .actu-flash    .actu-type-badge { background: rgba(255,59,59,0.12);  color: #FF6B6B; border: 1px solid rgba(255,59,59,0.25); }
+    .actu-stats    .actu-type-badge { background: rgba(0,180,255,0.10);  color: #4DC8FF; border: 1px solid rgba(0,180,255,0.25); }
+    .actu-prono    .actu-type-badge { background: var(--green-dim);      color: var(--green-accent); border: 1px solid var(--green-border); }
+    .actu-debrief  .actu-type-badge { background: rgba(182,109,255,0.10);color: #C98FFF; border: 1px solid rgba(182,109,255,0.25); }
+    .actu-question .actu-type-badge { background: rgba(255,184,0,0.10);  color: #FFD34D; border: 1px solid rgba(255,184,0,0.25); }
+
+    .actu-title  { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 6px; line-height: 1.35; }
+    .actu-body   { font-size: 13px; color: var(--text-secondary); line-height: 1.65; }
+    .actu-time   { font-size: 11px; color: var(--text-tertiary); margin-top: 10px; }
+
+    /* Prono oracle score */
+    .actu-prono-score {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: rgba(128,255,0,0.05);
+      border: 1px solid rgba(128,255,0,0.15);
+      border-radius: 14px;
+      padding: 10px 16px;
+      margin: 10px 0;
+    }
+    .actu-prono-score .score { font-size: 28px; font-weight: 900; font-style: italic; color: var(--green-accent); letter-spacing: -0.02em; }
+    .actu-prono-score .sep   { font-size: 18px; opacity: 0.3; }
+    .actu-prono-score .team  { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-tertiary); }
+
+    /* Question reactions */
+    .actu-reactions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+    .actu-vote-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 50px;
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s;
+      border: 1px solid;
+      user-select: none;
+    }
+    .actu-vote-btn.agree  { background: rgba(128,255,0,0.06); border-color: rgba(128,255,0,0.2); color: var(--green-accent); }
+    .actu-vote-btn.agree.voted  { background: var(--green-dim); border-color: var(--green-border); }
+    .actu-vote-btn.disagree     { background: rgba(255,68,68,0.06); border-color: rgba(255,68,68,0.2); color: #FF6B6B; }
+    .actu-vote-btn.disagree.voted { background: rgba(255,68,68,0.14); border-color: rgba(255,68,68,0.35); }
+    .actu-vote-btn:active { transform: scale(0.94); }
+    .actu-comments-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--text-tertiary);
+      font-weight: 600;
+      margin-left: auto;
+    }
   </style>
 </head>
 <body>
@@ -348,10 +445,8 @@
 
     <!-- ── Actualité tab ── -->
     <div id="panel-actu">
-      <div class="actu-coming-soon">
-        <div class="icon">📰</div>
-        <h3>Actualité CdM 2026</h3>
-        <p>Les dernières news, résultats et analyses de la Coupe du Monde arrivent très bientôt. Reste connecté !</p>
+      <div id="actu-list" style="display:flex;flex-direction:column;gap:10px;padding:12px 16px 16px">
+        <div style="text-align:center;padding:48px 20px;color:var(--text-tertiary)">Chargement…</div>
       </div>
     </div>
 
@@ -396,18 +491,178 @@
 
     // ── Tab switching ──
     let feedLoaded = false;
+    let actuLoaded = false;
     window.switchTab = (tab) => {
       document.getElementById('tab-actu').classList.toggle('active', tab === 'actu');
       document.getElementById('tab-feed').classList.toggle('active', tab === 'feed');
       document.getElementById('panel-actu').style.display = tab === 'actu' ? '' : 'none';
       document.getElementById('panel-feed').style.display = tab === 'feed' ? '' : 'none';
-      // Show FAB only on Feed tab for premium users
       fab.style.display = (tab === 'feed' && isPremium) ? 'flex' : 'none';
       if (tab === 'feed' && !feedLoaded) loadFeed();
+      if (tab === 'actu' && !actuLoaded) loadActu();
     };
+
+    // Trigger first load since actu is the default tab
+    loadActu();
 
     // ── FAB click → match picker ──
     fab.addEventListener('click', openMatchPicker);
+
+    // ─────────────────────────────────────────
+    // ACTUALITÉ LOADING
+    // ─────────────────────────────────────────
+    let myVotes = {}; // post_id → 'agree'|'disagree'
+
+    async function loadActu() {
+      actuLoaded = true;
+      const list = document.getElementById('actu-list');
+
+      const { data: posts, error } = await supabase
+        .from('actualite_posts')
+        .select('*')
+        .order('is_pinned', { ascending: false })
+        .order('created_at',  { ascending: false })
+        .limit(20);
+
+      if (error || !posts?.length) {
+        list.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--text-tertiary)">
+          <div style="font-size:48px;margin-bottom:12px">📰</div>
+          <div style="font-weight:700;color:var(--text-secondary)">Aucune actualité pour l'instant</div>
+        </div>`;
+        return;
+      }
+
+      // Load reaction counts for question posts
+      const questionIds = posts.filter(p => p.type === 'question').map(p => p.id);
+      let rxCounts = {}, commentCounts = {};
+
+      if (questionIds.length) {
+        const { data: rxData } = await supabase
+          .from('actualite_reactions').select('post_id, type').in('post_id', questionIds);
+        rxData?.forEach(r => {
+          if (!rxCounts[r.post_id]) rxCounts[r.post_id] = { agree: 0, disagree: 0 };
+          rxCounts[r.post_id][r.type]++;
+        });
+
+        const { data: myRxData } = await supabase
+          .from('actualite_reactions').select('post_id, type')
+          .eq('user_id', user.id).in('post_id', questionIds);
+        myRxData?.forEach(r => { myVotes[r.post_id] = r.type; });
+
+        const { data: cmtData } = await supabase
+          .from('actualite_comments').select('post_id').in('post_id', questionIds);
+        cmtData?.forEach(c => { commentCounts[c.post_id] = (commentCounts[c.post_id] || 0) + 1; });
+      }
+
+      list.innerHTML = posts.map(p => renderActuCard(p, rxCounts[p.id] || { agree:0, disagree:0 }, commentCounts[p.id] || 0)).join('');
+
+      // Vote listeners
+      list.querySelectorAll('.actu-vote-btn').forEach(btn => btn.addEventListener('click', handleVote));
+    }
+
+    function timeAgo(dateStr) {
+      const diff = Date.now() - new Date(dateStr).getTime();
+      const m = Math.floor(diff / 60000);
+      if (m < 1)  return 'à l\'instant';
+      if (m < 60) return `il y a ${m}min`;
+      const h = Math.floor(m / 60);
+      if (h < 24) return `il y a ${h}h`;
+      return `il y a ${Math.floor(h / 24)}j`;
+    }
+
+    const TYPE_META = {
+      flash:    { label: '⚡ Actu Flash',        cls: 'actu-flash'    },
+      stats:    { label: '📊 Stats du jour',      cls: 'actu-stats'    },
+      prono:    { label: '🔮 Pronostic Oracle',   cls: 'actu-prono'    },
+      debrief:  { label: '🎙️ Débrief',            cls: 'actu-debrief'  },
+      question: { label: '💬 Question du jour',   cls: 'actu-question' },
+    };
+
+    function renderActuCard(p, rx, cmtCount) {
+      const meta  = TYPE_META[p.type] || TYPE_META.flash;
+      const pinHTML = p.is_pinned ? `<span style="font-size:10px;font-weight:700;color:var(--gold);background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.2);border-radius:50px;padding:2px 8px;margin-left:6px">📌 À la une</span>` : '';
+
+      // Extra block for prono type (score display)
+      let extraHTML = '';
+      if (p.type === 'prono') {
+        const scoreMatch = p.contenu.match(/(\d+)-(\d+)/);
+        if (scoreMatch) {
+          const [, h, a] = scoreMatch;
+          const teams = p.titre?.split(' vs ') || ['', ''];
+          extraHTML = `
+            <div class="actu-prono-score">
+              <span class="team">${teams[0] || ''}</span>
+              <span class="score">${h}</span>
+              <span class="sep">–</span>
+              <span class="score">${a}</span>
+              <span class="team">${teams[1] || ''}</span>
+            </div>`;
+        }
+      }
+
+      // Reactions for question type
+      let reactHTML = '';
+      if (p.type === 'question') {
+        const myVote      = myVotes[p.id];
+        const agreeActive = myVote === 'agree'    ? ' voted' : '';
+        const disActive   = myVote === 'disagree' ? ' voted' : '';
+        reactHTML = `
+          <div class="actu-reactions">
+            <button class="actu-vote-btn agree${agreeActive}" data-post="${p.id}" data-vote="agree">🔥 D'accord <strong>${rx.agree}</strong></button>
+            <button class="actu-vote-btn disagree${disActive}" data-post="${p.id}" data-vote="disagree">❌ Pas d'accord <strong>${rx.disagree}</strong></button>
+            <span class="actu-comments-chip">💬 ${cmtCount}</span>
+          </div>`;
+      }
+
+      return `
+        <div class="actu-card ${meta.cls}" data-post-id="${p.id}">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+            <span class="actu-type-badge">${meta.label}</span>${pinHTML}
+          </div>
+          ${p.titre ? `<div class="actu-title">${p.emoji ? p.emoji + ' ' : ''}${p.titre}</div>` : ''}
+          ${extraHTML}
+          <div class="actu-body">${p.contenu}</div>
+          ${reactHTML}
+          <div class="actu-time">${timeAgo(p.created_at)}</div>
+        </div>`;
+    }
+
+    async function handleVote(e) {
+      const btn    = e.currentTarget;
+      const postId = btn.dataset.post;
+      const vote   = btn.dataset.vote;
+      const card   = btn.closest('.actu-card');
+
+      if (myVotes[postId] === vote) {
+        // Toggle off
+        await supabase.from('actualite_reactions').delete().eq('post_id', postId).eq('user_id', user.id);
+        delete myVotes[postId];
+      } else {
+        await supabase.from('actualite_reactions').upsert(
+          { post_id: postId, user_id: user.id, type: vote },
+          { onConflict: 'post_id,user_id' }
+        );
+        myVotes[postId] = vote;
+      }
+
+      // Refresh counts
+      const { data: fresh } = await supabase.from('actualite_reactions').select('type').eq('post_id', postId);
+      const newRx = { agree: 0, disagree: 0 };
+      fresh?.forEach(r => newRx[r.type]++);
+
+      const agreBtn = card.querySelector('[data-vote="agree"]');
+      const disBtn  = card.querySelector('[data-vote="disagree"]');
+      if (agreBtn) {
+        agreBtn.className = `actu-vote-btn agree${myVotes[postId] === 'agree' ? ' voted' : ''}`;
+        agreBtn.innerHTML = `🔥 D'accord <strong>${newRx.agree}</strong>`;
+        agreBtn.addEventListener('click', handleVote);
+      }
+      if (disBtn) {
+        disBtn.className = `actu-vote-btn disagree${myVotes[postId] === 'disagree' ? ' voted' : ''}`;
+        disBtn.innerHTML = `❌ Pas d'accord <strong>${newRx.disagree}</strong>`;
+        disBtn.addEventListener('click', handleVote);
+      }
+    }
 
     // ─────────────────────────────────────────
     // FEED LOADING

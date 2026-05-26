@@ -141,7 +141,7 @@
     // Load groups
     const { data: memberships } = await supabase
       .from('groupe_membres')
-      .select('groupe_id, groupes(id,nom,code)')
+      .select('groupe_id, role, groupes(id,nom,code)')
       .eq('user_id', user.id);
 
     const switcher = document.getElementById('groupe-switcher');
@@ -156,6 +156,9 @@
       subscribeRealtime();
       // Polling fallback toutes les 5s (au cas où le realtime rate un event)
       setInterval(() => loadGroupe(), 5000);
+      // Cacher "Créer un groupe" si l'utilisateur est déjà membre (non-admin) d'un groupe
+      const isMemberSomewhere = memberships.some(m => m.role === 'membre');
+      if (isMemberSomewhere) document.getElementById('create-groupe-btn').style.display = 'none';
     }
 
     async function loadGroupe() {

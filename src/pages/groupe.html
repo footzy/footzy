@@ -103,6 +103,71 @@
     </div>
   </div>
 
+  <!-- Match pronostique bottom sheet -->
+  <div class="modal-overlay" id="match-prono-modal" style="align-items:flex-end;padding:0">
+    <div style="background:var(--surface-1);border-radius:20px 20px 0 0;width:100%;max-height:92vh;overflow-y:auto;padding-bottom:calc(16px + env(safe-area-inset-bottom))">
+      <!-- Drag handle + close -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 16px 8px">
+        <h2 style="font-size:17px;font-weight:700">Mon pronostique</h2>
+        <button onclick="document.getElementById('match-prono-modal').classList.remove('open')" style="background:rgba(255,255,255,0.08);border:none;color:var(--text-primary);width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+      </div>
+
+      <!-- Match header -->
+      <div id="modal-match-header" style="padding:16px;text-align:center;border-bottom:1px solid var(--border)"></div>
+
+      <!-- Score exact -->
+      <div style="padding:20px 16px 12px">
+        <div style="font-size:12px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px">Score exact</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:20px">
+          <!-- Score équipe 1 -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1">
+            <span id="modal-flag1" style="font-size:32px"></span>
+            <span id="modal-name1" style="font-size:12px;font-weight:700;text-align:center"></span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button id="score1-minus" style="width:32px;height:32px;border-radius:50%;border:1.5px solid var(--border);background:transparent;color:var(--text-primary);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
+              <span id="score1-val" style="font-size:32px;font-weight:800;min-width:36px;text-align:center">0</span>
+              <button id="score1-plus" style="width:32px;height:32px;border-radius:50%;border:1.5px solid var(--green-accent);background:transparent;color:var(--green-accent);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
+            </div>
+          </div>
+
+          <span style="font-size:20px;font-weight:800;color:var(--text-tertiary)">—</span>
+
+          <!-- Score équipe 2 -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1">
+            <span id="modal-flag2" style="font-size:32px"></span>
+            <span id="modal-name2" style="font-size:12px;font-weight:700;text-align:center"></span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button id="score2-minus" style="width:32px;height:32px;border-radius:50%;border:1.5px solid var(--border);background:transparent;color:var(--text-primary);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
+              <span id="score2-val" style="font-size:32px;font-weight:800;min-width:36px;text-align:center">0</span>
+              <button id="score2-plus" style="width:32px;height:32px;border-radius:50%;border:1.5px solid var(--green-accent);background:transparent;color:var(--green-accent);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Résultat calculé -->
+        <div id="modal-result-badge" style="margin-top:20px;text-align:center;padding:10px;border-radius:12px;background:rgba(255,255,255,0.05);font-size:13px;font-weight:700"></div>
+      </div>
+
+      <!-- Points info -->
+      <div style="margin:0 16px 16px;display:flex;gap:8px">
+        <div style="flex:1;background:rgba(0,255,100,0.06);border:1px solid rgba(0,255,100,0.15);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:18px;font-weight:800;color:var(--green-accent)">+3</div>
+          <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px">Bon résultat</div>
+        </div>
+        <div style="flex:1;background:rgba(0,255,100,0.06);border:1px solid rgba(0,255,100,0.15);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:18px;font-weight:800;color:var(--green-accent)">+7</div>
+          <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px">Score exact</div>
+        </div>
+      </div>
+
+      <!-- Save -->
+      <div style="padding:0 16px">
+        <button class="cta-primary" id="save-prono-btn" style="height:50px;font-size:15px">Enregistrer mon pronostique</button>
+        <div id="save-prono-msg" style="text-align:center;font-size:12px;color:var(--text-tertiary);margin-top:8px;display:none"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Kicked modal -->
   <div class="modal-overlay" id="kicked-modal">
     <div class="modal-sheet" style="text-align:center">
@@ -354,9 +419,9 @@
       // Pronos existants de l'utilisateur
       const { data: mesPronos } = await supabase
         .from('pronostics')
-        .select('match_id,prediction')
+        .select('match_id,home_score,away_score')
         .eq('user_id', user.id);
-      const pronoMap = Object.fromEntries((mesPronos || []).map(p => [p.match_id, p.prediction]));
+      const pronoMap = Object.fromEntries((mesPronos || []).map(p => [p.match_id, { h: p.home_score, a: p.away_score }]));
 
       // Grouper par date
       const byDate = {};
@@ -366,14 +431,7 @@
         byDate[key].push(m);
       });
 
-      const renderBtn = (m, val, label, pred) => `
-        <button class="prono-btn" data-match="${m.id}" data-val="${val}"
-          style="flex:1;padding:9px 4px;border-radius:10px;border:1.5px solid ${pred === val ? 'var(--green-accent)' : 'var(--border)'};
-          background:${pred === val ? 'rgba(0,255,100,0.1)' : 'transparent'};
-          color:${pred === val ? 'var(--green-accent)' : 'var(--text-secondary)'};
-          font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-          ${pred === val ? '✓ ' : ''}${label}
-        </button>`;
+      const phaseLabel = { groupes:'Phase de groupes', huitiemes:'Huitièmes', quarts:'Quarts de finale', demis:'Demi-finales', finale:'Finale' };
 
       el.innerHTML = Object.entries(byDate).map(([date, ms]) => `
         <div style="padding:10px 16px 4px;font-size:11px;font-weight:700;color:var(--text-tertiary);text-transform:capitalize;letter-spacing:.03em;border-bottom:1px solid var(--border)">
@@ -381,56 +439,126 @@
         </div>
         ${ms.map(m => {
           const timeStr = new Date(m.date_match).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
-          const pred = pronoMap[m.id];
-          const phase = { groupes:'Phase de groupes', huitiemes:'Huitièmes', quarts:'Quarts', demis:'Demis', finale:'Finale' }[m.phase] || m.phase;
+          const phase = phaseLabel[m.phase] || m.phase;
+          const flag1 = m.equipe1.split(' ')[0];
+          const flag2 = m.equipe2.split(' ')[0];
           const name1 = m.equipe1.replace(/^\S+\s/, '');
           const name2 = m.equipe2.replace(/^\S+\s/, '');
+          const pred = pronoMap[m.id];
+          const hasPred = pred != null;
+          const resultLabel = hasPred
+            ? (pred.h > pred.a ? `${name1} gagne` : pred.h < pred.a ? `${name2} gagne` : 'Match nul')
+            : null;
           return `
-          <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-              <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:4px">
-                <span style="font-size:26px">${m.equipe1.split(' ')[0]}</span>
-                <span style="font-size:12px;font-weight:700">${name1}</span>
+          <div class="match-card" data-match-id="${m.id}"
+            style="padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;active:background:rgba(255,255,255,0.03)">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:3px">
+                <span style="font-size:28px">${flag1}</span>
+                <span style="font-size:12px;font-weight:700;text-align:center">${name1}</span>
               </div>
-              <div style="text-align:center;padding:0 8px">
-                <div style="font-size:10px;color:var(--text-tertiary);margin-bottom:2px">${timeStr}</div>
-                <div style="font-size:11px;font-weight:700;color:var(--text-secondary)">VS</div>
-                <div style="font-size:9px;color:var(--text-tertiary);margin-top:2px;white-space:nowrap">${phase}</div>
+              <div style="text-align:center;padding:0 10px">
+                ${hasPred
+                  ? `<div style="font-size:22px;font-weight:800;color:var(--green-accent)">${pred.h} – ${pred.a}</div>
+                     <div style="font-size:9px;color:var(--green-accent);margin-top:2px">✓ prédit</div>`
+                  : `<div style="font-size:11px;color:var(--text-tertiary)">${timeStr}</div>
+                     <div style="font-size:10px;color:var(--text-tertiary);margin-top:4px">${phase}</div>
+                     <div style="margin-top:8px;font-size:10px;font-weight:700;color:var(--green-accent);border:1px solid var(--green-accent);border-radius:6px;padding:2px 8px">Pronostiquer →</div>`
+                }
               </div>
-              <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:4px">
-                <span style="font-size:26px">${m.equipe2.split(' ')[0]}</span>
-                <span style="font-size:12px;font-weight:700">${name2}</span>
+              <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:3px">
+                <span style="font-size:28px">${flag2}</span>
+                <span style="font-size:12px;font-weight:700;text-align:center">${name2}</span>
               </div>
-            </div>
-            <div style="display:flex;gap:6px">
-              ${renderBtn(m, '1', name1, pred)}
-              ${renderBtn(m, 'N', 'Nul', pred)}
-              ${renderBtn(m, '2', name2, pred)}
             </div>
           </div>`;
         }).join('')}
       `).join('');
 
-      // Gestion des clics sur les boutons de prono
-      el.querySelectorAll('.prono-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const matchId = btn.dataset.match;
-          const val = btn.dataset.val;
-          await supabase.from('pronostics').upsert(
-            { user_id: user.id, match_id: matchId, prediction: val, groupe_id: currentGroupeId },
-            { onConflict: 'user_id,match_id' }
-          );
-          // Mise à jour visuelle immédiate
-          el.querySelectorAll(`.prono-btn[data-match="${matchId}"]`).forEach(b => {
-            const active = b.dataset.val === val;
-            b.style.borderColor = active ? 'var(--green-accent)' : 'var(--border)';
-            b.style.background = active ? 'rgba(0,255,100,0.1)' : 'transparent';
-            b.style.color = active ? 'var(--green-accent)' : 'var(--text-secondary)';
-          });
-          toast('Prono enregistré ✅');
+      // Clic sur une carte → ouvre le modal
+      el.querySelectorAll('.match-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const matchId = card.dataset.matchId;
+          const m = matchs.find(x => x.id === matchId);
+          if (!m) return;
+          openPronoModal(m, pronoMap[matchId]);
         });
       });
     }
+
+    // ─── Modal pronostique ───
+    let modalScore1 = 0, modalScore2 = 0, modalCurrentMatch = null;
+
+    function updateModalResult() {
+      const name1 = document.getElementById('modal-name1').textContent;
+      const name2 = document.getElementById('modal-name2').textContent;
+      const badge = document.getElementById('modal-result-badge');
+      document.getElementById('score1-val').textContent = modalScore1;
+      document.getElementById('score2-val').textContent = modalScore2;
+      if (modalScore1 > modalScore2)      { badge.textContent = `🟢 Victoire ${name1}`; badge.style.color = 'var(--green-accent)'; }
+      else if (modalScore1 < modalScore2) { badge.textContent = `🟢 Victoire ${name2}`; badge.style.color = 'var(--green-accent)'; }
+      else                                { badge.textContent = '🤝 Match nul'; badge.style.color = 'var(--text-secondary)'; }
+    }
+
+    function openPronoModal(m, existing) {
+      modalCurrentMatch = m;
+      modalScore1 = existing?.h ?? 0;
+      modalScore2 = existing?.a ?? 0;
+      const flag1 = m.equipe1.split(' ')[0];
+      const flag2 = m.equipe2.split(' ')[0];
+      const name1 = m.equipe1.replace(/^\S+\s/, '');
+      const name2 = m.equipe2.replace(/^\S+\s/, '');
+      const d = new Date(m.date_match);
+      const dateStr = d.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
+      const timeStr = d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+      const phaseLabel = { groupes:'Phase de groupes', huitiemes:'Huitièmes', quarts:'Quarts', demis:'Demis', finale:'Finale' };
+      document.getElementById('modal-match-header').innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:6px">
+          <span style="font-size:36px">${flag1}</span>
+          <div style="text-align:center">
+            <div style="font-size:13px;font-weight:700;color:var(--text-primary)">${name1} vs ${name2}</div>
+            <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px">${dateStr} · ${timeStr}</div>
+            <div style="font-size:10px;color:var(--text-tertiary)">${phaseLabel[m.phase] || m.phase}</div>
+          </div>
+          <span style="font-size:36px">${flag2}</span>
+        </div>`;
+      document.getElementById('modal-flag1').textContent = flag1;
+      document.getElementById('modal-flag2').textContent = flag2;
+      document.getElementById('modal-name1').textContent = name1;
+      document.getElementById('modal-name2').textContent = name2;
+      const msg = document.getElementById('save-prono-msg');
+      msg.style.display = existing ? 'block' : 'none';
+      msg.textContent = existing ? `Prono actuel : ${existing.h} – ${existing.a} · Modifier ci-dessus` : '';
+      updateModalResult();
+      document.getElementById('match-prono-modal').classList.add('open');
+    }
+
+    document.getElementById('score1-plus').addEventListener('click',  () => { modalScore1 = Math.min(modalScore1 + 1, 20); updateModalResult(); });
+    document.getElementById('score1-minus').addEventListener('click', () => { modalScore1 = Math.max(modalScore1 - 1, 0);  updateModalResult(); });
+    document.getElementById('score2-plus').addEventListener('click',  () => { modalScore2 = Math.min(modalScore2 + 1, 20); updateModalResult(); });
+    document.getElementById('score2-minus').addEventListener('click', () => { modalScore2 = Math.max(modalScore2 - 1, 0);  updateModalResult(); });
+
+    document.getElementById('save-prono-btn').addEventListener('click', async () => {
+      if (!modalCurrentMatch) return;
+      const btn = document.getElementById('save-prono-btn');
+      btn.disabled = true; btn.textContent = 'Enregistrement...';
+      const { error } = await supabase.from('pronostics').upsert({
+        user_id: user.id,
+        match_id: modalCurrentMatch.id,
+        groupe_id: currentGroupeId,
+        home_score: modalScore1,
+        away_score: modalScore2,
+      }, { onConflict: 'user_id,match_id,groupe_id' });
+      btn.disabled = false; btn.textContent = 'Enregistrer mon pronostique';
+      if (error) { toast('Erreur ❌ ' + error.message); return; }
+      toast('Pronostique enregistré ✅');
+      document.getElementById('match-prono-modal').classList.remove('open');
+      loadGroupePronos();
+    });
+
+    document.getElementById('match-prono-modal').addEventListener('click', e => {
+      if (e.target === document.getElementById('match-prono-modal')) document.getElementById('match-prono-modal').classList.remove('open');
+    });
 
     // Create group
     document.getElementById('create-groupe-btn').addEventListener('click', () => {

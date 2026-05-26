@@ -1,17 +1,36 @@
 :root {
-  --bg-base: #0A1A0F;
-  --bg-surface: #0F2016;
-  --bg-card: rgba(255,255,255,0.06);
-  --border-glass: rgba(255,255,255,0.10);
-  --green-primary: #1B4332;
-  --green-accent: #00FF6A;
-  --green-soft: #40916C;
-  --text-primary: #FFFFFF;
-  --text-secondary: rgba(255,255,255,0.60);
-  --text-tertiary: rgba(255,255,255,0.35);
+  /* ── Backgrounds ── */
+  --bg-base:    #080808;
+  --bg-surface: #111111;
+  --bg-card:    rgba(255,255,255,0.05);
+  --bg-card-elevated: #1A1A1A;
+
+  /* ── Borders ── */
+  --border-glass: rgba(255,255,255,0.08);
+  --border-soft:  rgba(255,255,255,0.05);
+
+  /* ── Accent ── */
+  --green-accent:  #80FF00;
+  --green-dim:     rgba(128,255,0,0.12);
+  --green-border:  rgba(128,255,0,0.25);
+  --green-primary: #1A1A1A;
+  --green-soft:    #404040;
+
+  /* ── Text ── */
+  --text-primary:   #FFFFFF;
+  --text-secondary: rgba(255,255,255,0.55);
+  --text-tertiary:  rgba(255,255,255,0.30);
+
+  /* ── Status ── */
   --live-red: #FF3B3B;
-  --danger: #FF4444;
-  --gold: #FFD700;
+  --danger:   #FF4444;
+  --gold:     #FFD700;
+
+  /* ── Inner light cards (Clario style) ── */
+  --card-light-bg:     #F0F0F0;
+  --card-light-border: rgba(0,0,0,0.06);
+  --card-light-text:   #0A0A0A;
+  --card-light-sub:    rgba(0,0,0,0.45);
 }
 
 * {
@@ -24,7 +43,7 @@
 html, body {
   background: var(--bg-base);
   color: var(--text-primary);
-  font-family: -apple-system, 'SF Pro Display', 'Segoe UI', sans-serif;
+  font-family: 'Inter', -apple-system, 'SF Pro Display', 'Segoe UI', sans-serif;
   font-size: 14px;
   line-height: 1.6;
   min-height: 100vh;

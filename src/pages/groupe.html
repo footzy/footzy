@@ -65,6 +65,12 @@
       0%   { transform: translate(0,0) scale(1); opacity: 1; }
       100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
     }
+
+    /* ── Game Over slide-up ── */
+    @keyframes goSlideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
@@ -317,6 +323,8 @@
     <div style="font-size:16px;color:var(--text-secondary);font-weight:600;letter-spacing:-.01em" id="launch-sub">Le jeu commence…</div>
   </div>
 
+  <!-- Game Over : créé dynamiquement en JS -->
+
   <!-- Kicked modal -->
   <div class="modal-overlay" id="kicked-modal">
     <div class="modal-sheet" style="text-align:center">
@@ -384,6 +392,9 @@
       })
       .on('broadcast', { event: 'bonus_malus' }, ({ payload }) => {
         showBMNotif(payload);
+      })
+      .on('broadcast', { event: 'game_over' }, ({ payload }) => {
+        showGameOver(payload);
       })
       .subscribe();
 
@@ -553,16 +564,41 @@
       endBtn.onclick = async () => {
         const ok = await showConfirm({ icon: '🏁', title: 'Terminer le jeu ?', message: 'Le classement sera figé. Les pronos seront définitivement verrouillés.', label: 'Terminer', danger: true });
         if (!ok) return;
-        await supabase.from('groupes').update({ statut: 'termine' }).eq('id', currentGroupeId);
-        toast('Jeu terminé ! 🏁');
-        loadGroupe(true);
+
+        // Données depuis la closure (loadGroupe a déjà tout chargé)
+        const loser    = sorted[sorted.length - 1];
+        const loserPts = (loser?.points_totaux || 0) + (loser?.bm_pts || 0);
+        const goPayload = {
+          loser_pseudo: loser?.pseudo || '???',
+          gage:         groupe.gage   || '',
+          loser_pts:    loserPts,
+        };
+
+        // 1. Afficher le modal TOUT DE SUITE (synchrone, avant tout await)
+        showGameOver(goPayload);
+
+        // 2. Mettre à jour le statut (async, en arrière-plan)
+        supabase.from('groupes').update({ statut: 'termine' }).eq('id', currentGroupeId);
+
+        // 3. Notifier les autres membres (fire & forget)
+        for (const m of (membres || [])) {
+          if (m.user_id === user.id) continue;
+          const ch = supabase.channel(`notif-${m.user_id}`);
+          ch.send({ type: 'broadcast', event: 'game_over', payload: goPayload })
+            .catch(() => {}).finally(() => supabase.removeChannel(ch));
+        }
       };
 
       relaunchBtn.onclick = async () => {
-        const ok = await showConfirm({ icon: '🔄', title: 'Relancer le jeu ?', message: 'Le statut repasse en "En attente". Les membres pourront à nouveau modifier leurs pronos.', label: '🔄 Relancer', danger: false });
+        const ok = await showConfirm({ icon: '🔄', title: 'Nouvelle partie ?', message: 'Les points bonus/malus et les pronostics seront remis à zéro. Prêt pour une nouvelle manche !', label: '🔄 C\'est parti !', danger: false });
         if (!ok) return;
+        // Remettre le statut en attente
         await supabase.from('groupes').update({ statut: 'attente' }).eq('id', currentGroupeId);
-        toast('Jeu remis en attente 🔄');
+        // Supprimer tous les bonus/malus du groupe (reset des pts BM)
+        await supabase.from('bonus_malus').delete().eq('groupe_id', currentGroupeId);
+        // Remettre les points de pronostics à 0 pour ce groupe
+        await supabase.from('pronostics').update({ points: 0, status: 'pending' }).eq('groupe_id', currentGroupeId);
+        toast('Nouvelle partie lancée ! Points remis à zéro 🔄');
         loadGroupe(true);
       };
 
@@ -750,6 +786,32 @@
       document.getElementById('bm-notif-pts').style.color   = isBonus ? 'var(--green-accent)' : 'var(--danger)';
       overlay.style.display = 'flex';
       loadGroupe(true);
+    }
+
+    // ── Game Over : créé dynamiquement, z-index max, impossible à bloquer ──
+    function showGameOver({ loser_pseudo, gage, loser_pts }) {
+      document.getElementById('go-popup')?.remove(); // éviter les doublons
+
+      const el = document.createElement('div');
+      el.id = 'go-popup';
+      el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);display:flex;align-items:flex-end;justify-content:center;padding:0 0 0 0';
+      el.innerHTML = `
+        <div style="background:#111111;border:1px solid rgba(255,255,255,0.1);border-top:1px solid rgba(255,255,255,0.1);border-radius:28px 28px 0 0;padding:32px 24px 48px;text-align:center;width:100%;max-width:480px;animation:goSlideUp .35s cubic-bezier(.32,.72,0,1)">
+          <div style="font-size:56px;margin-bottom:10px">💀</div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;color:rgba(255,255,255,0.3);margin-bottom:10px">Dernier du classement</div>
+          <div style="font-size:34px;font-weight:900;letter-spacing:-.02em;color:#fff;margin-bottom:4px">${loser_pseudo || '???'}</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.35);margin-bottom:22px">${loser_pts ?? 0} pts au total</div>
+          <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:14px;padding:14px;margin-bottom:28px">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,0.3);margin-bottom:6px">🎯 Le gage à payer</div>
+            <div style="font-size:17px;font-weight:700;color:#80FF00;line-height:1.5">${gage || 'Aucun gage défini…'}</div>
+          </div>
+          <button id="go-popup-close" style="background:#80FF00;color:#080808;border:none;border-radius:50px;height:52px;width:100%;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:-.01em">Compris 😅</button>
+        </div>`;
+      document.body.appendChild(el);
+      document.getElementById('go-popup-close').addEventListener('click', () => {
+        el.remove();
+        loadGroupe(true);
+      });
     }
 
     // ── Animation lancement ──

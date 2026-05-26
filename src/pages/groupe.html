@@ -216,7 +216,7 @@
         return `<div class="leaderboard-item${isMe ? ' me' : ''}">
           <div class="rank-badge ${rankClass}">${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank}</div>
           <div style="flex:1">
-            <div class="leaderboard-pseudo">${p.pseudo}${isMe ? ' 👈' : ''}${p.role === 'admin' ? ' 👑' : ''}</div>
+            <div class="leaderboard-pseudo">${p.pseudo}${isMe ? ' 👈' : ''}${p.role === 'admin' ? ' <span style="font-size:10px;color:var(--text-tertiary);font-weight:500">admin</span>' : ''}</div>
             ${p.streak_quotidien > 0 ? `<div style="font-size:11px;color:var(--text-tertiary)">🔥 ${p.streak_quotidien} jours</div>` : ''}
           </div>
           ${canKick ? `<button class="kick-btn" data-uid="${p.id}" style="background:none;border:1px solid var(--danger);color:var(--danger);border-radius:8px;padding:4px 8px;font-size:11px;cursor:pointer;margin-right:8px">Exclure</button>` : ''}

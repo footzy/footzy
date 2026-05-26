@@ -126,22 +126,28 @@
   border-top: 1px solid var(--border-glass);
   display: flex;
   z-index: 100;
+  /* iPhone home indicator */
+  padding-bottom: env(safe-area-inset-bottom);
 }
 .bottom-nav a {
   flex: 1;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  gap: 4px; padding: 10px 0 16px;
+  gap: 4px; padding: 10px 0 14px;
   font-size: 10px; font-weight: 600;
   letter-spacing: 0.05em;
   color: var(--text-tertiary);
   transition: color 0.15s;
+  /* Larger touch target */
+  min-height: 56px;
 }
 .bottom-nav a.active { color: var(--green-accent); }
 .bottom-nav a svg    { width: 22px; height: 22px; }
 
 /* ── Page padding for bottom nav ── */
-.page-content { padding-bottom: 90px; }
+.page-content {
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+}
 
 /* ── Input ── */
 .input-field {

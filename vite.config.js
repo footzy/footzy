@@ -12,6 +12,7 @@ export default defineConfig({
         register: resolve(__dirname, 'src/pages/register.html'),
         login: resolve(__dirname, 'src/pages/login.html'),
         onboarding: resolve(__dirname, 'src/pages/onboarding.html'),
+        accueil: resolve(__dirname, 'src/pages/accueil.html'),
         home: resolve(__dirname, 'src/pages/home.html'),
         match: resolve(__dirname, 'src/pages/match.html'),
         pronostic: resolve(__dirname, 'src/pages/pronostic.html'),

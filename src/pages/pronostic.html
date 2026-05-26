@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Footzy — Pronostic</title>
+  <link rel="stylesheet" href="/src/css/tokens.css" />
+  <link rel="stylesheet" href="/src/css/components.css" />
+  <link rel="stylesheet" href="/src/css/pages.css" />
+</head>
+<body>
+  <div class="page-content">
+    <div class="page-header">
+      <button class="back-btn" onclick="history.back()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      </button>
+      <h1>Mon pronostic</h1>
+    </div>
+
+    <!-- Match mini header -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:8px 20px 20px;font-size:20px">
+      <span id="home-flag">🏳</span>
+      <span style="font-size:14px;font-weight:700;text-transform:uppercase" id="home-name">—</span>
+      <span style="color:var(--text-tertiary)">vs</span>
+      <span style="font-size:14px;font-weight:700;text-transform:uppercase" id="away-name">—</span>
+      <span id="away-flag">🏳</span>
+    </div>
+
+    <!-- Groupe selector -->
+    <div class="prono-section">
+      <p class="prono-label">Pour le groupe</p>
+      <select class="input-field" id="groupe-select" style="appearance:none">
+        <option value="">Chargement...</option>
+      </select>
+    </div>
+
+    <!-- Score stepper -->
+    <div class="prono-section">
+      <p class="prono-label">Score final</p>
+      <div class="score-inputs">
+        <div class="score-input-wrap">
+          <span class="score-input-label" id="home-label">Équipe dom.</span>
+          <div class="score-stepper">
+            <button class="stepper-btn" id="home-plus">+</button>
+            <span class="stepper-value" id="home-score-val">0</span>
+            <button class="stepper-btn" id="home-minus">−</button>
+          </div>
+        </div>
+        <span class="score-dash">–</span>
+        <div class="score-input-wrap">
+          <span class="score-input-label" id="away-label">Équipe ext.</span>
+          <div class="score-stepper">
+            <button class="stepper-btn" id="away-plus">+</button>
+            <span class="stepper-value" id="away-score-val">0</span>
+            <button class="stepper-btn" id="away-minus">−</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Buteurs -->
+    <div class="prono-section">
+      <p class="prono-label">Buteurs (3 max)</p>
+      <div class="glass-card" style="padding:12px 16px">
+        <div class="buteur-slot" id="buteur-1">
+          <span class="buteur-number">1</span>
+          <div class="buteur-input" style="flex:1">
+            <input class="input-field" placeholder="Nom du buteur..." data-slot="0" autocomplete="off" style="border:none;background:none;padding:8px 0" />
+            <div class="player-suggestions" style="display:none"></div>
+          </div>
+        </div>
+        <div class="buteur-slot" id="buteur-2">
+          <span class="buteur-number">2</span>
+          <div class="buteur-input" style="flex:1">
+            <input class="input-field" placeholder="Nom du buteur..." data-slot="1" autocomplete="off" style="border:none;background:none;padding:8px 0" />
+            <div class="player-suggestions" style="display:none"></div>
+          </div>
+        </div>
+        <div class="buteur-slot" id="buteur-3">
+          <span class="buteur-number">3</span>
+          <div class="buteur-input" style="flex:1">
+            <input class="input-field" placeholder="Nom du buteur..." data-slot="2" autocomplete="off" style="border:none;background:none;padding:8px 0" />
+            <div class="player-suggestions" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm -->
+    <div style="padding:0 16px 24px">
+      <div id="error-msg" style="color:var(--danger);font-size:13px;margin-bottom:10px;display:none"></div>
+      <button class="cta-primary" id="confirm-btn">Confirmer le pronostic</button>
+      <p style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:10px">Modifiable jusqu'au coup d'envoi</p>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <a href="/src/pages/home.html"><span style="font-size:22px">🏠</span><span>Accueil</span></a>
+    <a href="/src/pages/home.html"><span style="font-size:22px">⚽</span><span>Matchs</span></a>
+    <a href="/src/pages/pronostic.html" class="active"><span style="font-size:22px">🎯</span><span>Pronos</span></a>
+    <a href="/src/pages/groupe.html"><span style="font-size:22px">👥</span><span>Groupe</span></a>
+    <a href="/src/pages/profil.html"><span style="font-size:22px">👤</span><span>Profil</span></a>
+  </nav>
+
+  <script type="module">
+    import { supabase, requireAuth } from '/src/js/lib/supabase.js';
+    import { searchPlayer } from '/src/js/lib/football-api.js';
+    import { isBeforeKickoff, toast } from '/src/js/lib/utils.js';
+
+    const user = await requireAuth();
+    if (!user) throw new Error('not authed');
+
+    const params = new URLSearchParams(location.search);
+    const matchId = params.get('id');
+    if (!matchId) { window.location.href = '/src/pages/home.html'; throw new Error(); }
+
+    const { data: match } = await supabase.from('matchs').select('*').eq('id', matchId).single();
+    if (!match || !isBeforeKickoff(match.kickoff_at)) {
+      window.location.href = '/src/pages/match.html?id=' + matchId;
+      throw new Error();
+    }
+
+    document.getElementById('home-flag').textContent = match.home_flag;
+    document.getElementById('home-name').textContent = match.home_team;
+    document.getElementById('away-flag').textContent = match.away_flag;
+    document.getElementById('away-name').textContent = match.away_team;
+    document.getElementById('home-label').textContent = match.home_team;
+    document.getElementById('away-label').textContent = match.away_team;
+
+    // Load groups
+    const { data: memberships } = await supabase.from('groupe_membres').select('groupe_id, groupes(id,nom)').eq('user_id', user.id);
+    const groupeSelect = document.getElementById('groupe-select');
+    if (!memberships?.length) {
+      groupeSelect.innerHTML = '<option value="">Rejoins d\'abord un groupe</option>';
+    } else {
+      groupeSelect.innerHTML = memberships.map(m => `<option value="${m.groupes.id}">${m.groupes.nom}</option>`).join('');
+    }
+
+    // Check existing prono
+    async function loadExistingProno() {
+      const groupeId = groupeSelect.value;
+      if (!groupeId) return;
+      const { data } = await supabase.from('pronostics').select('*')
+        .eq('user_id', user.id).eq('match_id', matchId).eq('groupe_id', groupeId).maybeSingle();
+      if (data) {
+        homeScore = data.home_score; awayScore = data.away_score;
+        document.getElementById('home-score-val').textContent = homeScore;
+        document.getElementById('away-score-val').textContent = awayScore;
+        buteurs = data.buteurs || [];
+        buteurs.forEach((b, i) => {
+          const inp = document.querySelector(`[data-slot="${i}"]`);
+          if (inp) inp.value = b;
+        });
+        document.getElementById('confirm-btn').textContent = 'Modifier le pronostic';
+        existingPronoId = data.id;
+      }
+    }
+    groupeSelect.addEventListener('change', loadExistingProno);
+
+    // Score steppers
+    let homeScore = 0, awayScore = 0;
+    let existingPronoId = null;
+    let buteurs = ['', '', ''];
+
+    document.getElementById('home-plus').addEventListener('click', () => {
+      homeScore = Math.min(20, homeScore + 1);
+      document.getElementById('home-score-val').textContent = homeScore;
+    });
+    document.getElementById('home-minus').addEventListener('click', () => {
+      homeScore = Math.max(0, homeScore - 1);
+      document.getElementById('home-score-val').textContent = homeScore;
+    });
+    document.getElementById('away-plus').addEventListener('click', () => {
+      awayScore = Math.min(20, awayScore + 1);
+      document.getElementById('away-score-val').textContent = awayScore;
+    });
+    document.getElementById('away-minus').addEventListener('click', () => {
+      awayScore = Math.max(0, awayScore - 1);
+      document.getElementById('away-score-val').textContent = awayScore;
+    });
+
+    // Player search
+    document.querySelectorAll('[data-slot]').forEach(input => {
+      let searchTimeout;
+      const slot = parseInt(input.dataset.slot);
+      const suggestionsEl = input.nextElementSibling;
+
+      input.addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        const q = input.value.trim();
+        if (q.length < 2) { suggestionsEl.style.display = 'none'; return; }
+        searchTimeout = setTimeout(async () => {
+          const results = await searchPlayer(q);
+          if (!results.length) { suggestionsEl.style.display = 'none'; return; }
+          suggestionsEl.style.display = 'block';
+          suggestionsEl.innerHTML = results.slice(0, 5).map(p => {
+            const name = p.name || p.player?.name || p.strPlayer || String(p);
+            return `<div class="player-suggestion-item" data-name="${name}">${name}</div>`;
+          }).join('');
+          suggestionsEl.querySelectorAll('.player-suggestion-item').forEach(item => {
+            item.addEventListener('click', () => {
+              input.value = item.dataset.name;
+              buteurs[slot] = item.dataset.name;
+              suggestionsEl.style.display = 'none';
+            });
+          });
+        }, 350);
+      });
+      input.addEventListener('blur', () => {
+        setTimeout(() => { suggestionsEl.style.display = 'none'; }, 200);
+        buteurs[slot] = input.value.trim();
+      });
+    });
+
+    // Confirm
+    document.getElementById('confirm-btn').addEventListener('click', async () => {
+      const groupeId = groupeSelect.value;
+      const errEl = document.getElementById('error-msg');
+      errEl.style.display = 'none';
+      if (!groupeId) { errEl.textContent = 'Sélectionne un groupe.'; errEl.style.display = 'block'; return; }
+
+      const buteursFiltered = buteurs.filter(Boolean);
+      const btn = document.getElementById('confirm-btn');
+      btn.disabled = true; btn.textContent = 'Enregistrement...';
+
+      const pronoData = { user_id: user.id, match_id: matchId, groupe_id: groupeId, home_score: homeScore, away_score: awayScore, buteurs: buteursFiltered };
+
+      let error;
+      if (existingPronoId) {
+        ({ error } = await supabase.from('pronostics').update(pronoData).eq('id', existingPronoId));
+      } else {
+        ({ error } = await supabase.from('pronostics').insert(pronoData));
+      }
+
+      if (error) {
+        errEl.textContent = 'Erreur: ' + error.message;
+        errEl.style.display = 'block';
+        btn.disabled = false; btn.textContent = 'Confirmer le pronostic';
+        return;
+      }
+
+      toast('Pronostic enregistré ! 🎯');
+      setTimeout(() => window.location.href = '/src/pages/match.html?id=' + matchId, 1000);
+    });
+
+    await loadExistingProno();
+  </script>
+</body>
+</html>

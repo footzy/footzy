@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Footzy — Verdict</title>
+  <link rel="stylesheet" href="/src/css/tokens.css" />
+  <link rel="stylesheet" href="/src/css/components.css" />
+  <link rel="stylesheet" href="/src/css/pages.css" />
+</head>
+<body>
+  <div class="page-content">
+    <div class="page-header">
+      <button class="back-btn" onclick="window.location.href='/src/pages/home.html'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      </button>
+      <h1>Verdict</h1>
+    </div>
+
+    <!-- Match result -->
+    <div style="text-align:center;padding:16px 20px 24px;background:radial-gradient(ellipse at 50% 0%,rgba(0,255,106,0.08) 0%,transparent 70%)">
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:nowrap;margin-bottom:16px">
+        <div style="text-align:center">
+          <div style="font-size:40px" id="home-flag">🏳</div>
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-top:6px" id="home-name">—</div>
+        </div>
+        <div style="font-size:64px;font-weight:700;font-style:italic;flex-shrink:0" id="final-score">— – —</div>
+        <div style="text-align:center">
+          <div style="font-size:40px" id="away-flag">🏳</div>
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-top:6px" id="away-name">—</div>
+        </div>
+      </div>
+      <span style="font-size:12px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.1em">Résultat final</span>
+    </div>
+
+    <!-- Mon verdict -->
+    <div style="padding:0 16px 16px" id="my-verdict">
+      <div class="glass-card">
+        <div style="text-align:center;padding:8px 0">Chargement de ton résultat...</div>
+      </div>
+    </div>
+
+    <!-- Buteurs -->
+    <p class="section-title" id="buteurs-section-title" style="display:none">Buteurs</p>
+    <div id="buteurs-list" style="padding:0 16px 16px"></div>
+
+    <!-- Pronos du groupe -->
+    <p class="section-title">Pronos du groupe</p>
+    <div id="group-results" style="padding:0 16px 16px">
+      <div style="text-align:center;padding:16px;color:var(--text-tertiary)">Chargement...</div>
+    </div>
+
+    <!-- Share -->
+    <div style="padding:0 16px 24px">
+      <button class="cta-secondary" id="share-btn" style="font-size:13px;height:44px">📤 Partager mon résultat</button>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <a href="/src/pages/home.html"><span style="font-size:22px">🏠</span><span>Accueil</span></a>
+    <a href="/src/pages/home.html" class="active"><span style="font-size:22px">⚽</span><span>Matchs</span></a>
+    <a href="/src/pages/pronostic.html"><span style="font-size:22px">🎯</span><span>Pronos</span></a>
+    <a href="/src/pages/groupe.html"><span style="font-size:22px">👥</span><span>Groupe</span></a>
+    <a href="/src/pages/profil.html"><span style="font-size:22px">👤</span><span>Profil</span></a>
+  </nav>
+
+  <script type="module">
+    import { supabase, requireAuth } from '/src/js/lib/supabase.js';
+    import { calculerPoints } from '/src/js/lib/points.js';
+    import { toast } from '/src/js/lib/utils.js';
+
+    const user = await requireAuth();
+    if (!user) throw new Error('not authed');
+
+    const params = new URLSearchParams(location.search);
+    const matchId = params.get('id');
+    if (!matchId) { window.location.href = '/src/pages/home.html'; throw new Error(); }
+
+    const { data: match } = await supabase.from('matchs').select('*').eq('id', matchId).single();
+    if (!match) { window.location.href = '/src/pages/home.html'; throw new Error(); }
+
+    document.getElementById('home-flag').textContent = match.home_flag;
+    document.getElementById('home-name').textContent = match.home_team;
+    document.getElementById('away-flag').textContent = match.away_flag;
+    document.getElementById('away-name').textContent = match.away_team;
+    document.getElementById('final-score').textContent = `${match.home_score} – ${match.away_score}`;
+
+    // Buteurs
+    if (match.buteurs?.length) {
+      document.getElementById('buteurs-section-title').style.display = 'block';
+      document.getElementById('buteurs-list').innerHTML = `<div class="glass-card" style="padding:12px 16px">` +
+        match.buteurs.map(b => `<div style="padding:8px 0;border-bottom:1px solid var(--border-glass);font-size:14px">⚽ ${b}</div>`).join('') +
+        `</div>`;
+    }
+
+    // My prono
+    const { data: memberships } = await supabase.from('groupe_membres').select('groupe_id').eq('user_id', user.id);
+    const groupIds = memberships?.map(m => m.groupe_id) || [];
+
+    const { data: myPronos } = await supabase.from('pronostics').select('*, profiles(pseudo)')
+      .eq('user_id', user.id).eq('match_id', matchId)
+      .in('groupe_id', groupIds.length ? groupIds : ['__none__']);
+
+    const myProno = myPronos?.[0];
+    const verdictEl = document.getElementById('my-verdict');
+
+    if (!myProno) {
+      verdictEl.innerHTML = `<div class="glass-card" style="text-align:center;padding:20px;color:var(--text-secondary)">Tu n'avais pas pronostiqué ce match</div>`;
+    } else {
+      const points = myProno.points || calculerPoints(myProno, match);
+      const won = points > 0;
+      verdictEl.innerHTML = `<div class="glass-card" style="text-align:center;padding:24px">
+        <div class="verdict-result-big ${won ? 'win' : 'lose'}">${won ? '✓' : '✗'}</div>
+        <p style="font-size:22px;font-weight:700;margin-bottom:4px;font-style:italic">${myProno.home_score} – ${myProno.away_score}</p>
+        <p style="font-size:14px;color:var(--text-secondary);margin-bottom:12px">Ton pronostic</p>
+        ${won ? `<div class="badge-pill" style="font-size:18px;padding:8px 20px">+${points} pts</div>` : `<p style="color:var(--text-tertiary)">0 point cette fois</p>`}
+        ${myProno.buteurs?.length ? `<p style="margin-top:12px;font-size:12px;color:var(--text-tertiary)">Tes buteurs : ${myProno.buteurs.join(', ')}</p>` : ''}
+      </div>`;
+    }
+
+    // Group results
+    if (groupIds.length) {
+      const { data: groupPronos } = await supabase.from('pronostics').select('*, profiles(pseudo)')
+        .eq('match_id', matchId).in('groupe_id', groupIds).order('points', { ascending: false });
+      const grEl = document.getElementById('group-results');
+      if (!groupPronos?.length) {
+        grEl.innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:16px">Aucun prono dans ton groupe</div>';
+      } else {
+        grEl.innerHTML = groupPronos.map((p, i) => {
+          const isMe = p.user_id === user.id;
+          const pts = p.points || calculerPoints(p, match);
+          return `<div class="glass-card" style="display:flex;align-items:center;gap:10px;margin-bottom:8px;padding:12px 14px${isMe?';border-color:rgba(0,255,106,0.3)':''}">
+            <span style="font-size:14px;font-weight:700;color:var(--text-tertiary);min-width:24px">${i+1}</span>
+            <span style="flex:1;font-size:14px;font-weight:${isMe?'700':'400'}">${p.profiles?.pseudo || 'Joueur'}${isMe?' 👈':''}</span>
+            <span style="font-size:15px;font-weight:700;font-style:italic;margin-right:8px">${p.home_score} – ${p.away_score}</span>
+            <span style="font-size:14px;font-weight:700;color:${pts>0?'var(--green-accent)':'var(--text-tertiary)'}">${pts>0?'+'+pts:'0'} pts</span>
+          </div>`;
+        }).join('');
+      }
+    }
+
+    // Share
+    document.getElementById('share-btn').addEventListener('click', async () => {
+      const pts = myProno ? (myProno.points || calculerPoints(myProno, match)) : 0;
+      const text = `${match.home_flag} ${match.home_team} ${match.home_score}–${match.away_score} ${match.away_team} ${match.away_flag}\nMon prono : ${myProno ? `${myProno.home_score}–${myProno.away_score} (+${pts} pts)` : 'Pas pronostiqué'}\nfootzy.app`;
+      if (navigator.share) { try { await navigator.share({ title: 'Footzy', text }); return; } catch {} }
+      await navigator.clipboard.writeText(text);
+      toast('Résultat copié ! 📋');
+    });
+  </script>
+</body>
+</html>

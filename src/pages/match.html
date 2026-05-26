@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Footzy — Match</title>
+  <link rel="stylesheet" href="/src/css/tokens.css" />
+  <link rel="stylesheet" href="/src/css/components.css" />
+  <link rel="stylesheet" href="/src/css/pages.css" />
+</head>
+<body>
+  <div class="page-content">
+    <!-- Hero -->
+    <div class="match-hero" id="match-hero">
+      <div class="match-hero-header">
+        <button class="back-btn" onclick="history.back()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        </button>
+      </div>
+      <div class="match-hero-teams" id="hero-teams">
+        <div class="match-hero-team">
+          <span class="match-hero-flag" id="home-flag">🏳</span>
+          <span class="match-hero-name" id="home-name">—</span>
+        </div>
+        <div class="match-hero-score" id="hero-score">
+          <span id="score-home">0</span>
+          <span class="sep">–</span>
+          <span id="score-away">0</span>
+        </div>
+        <div class="match-hero-team">
+          <span class="match-hero-flag" id="away-flag">🏳</span>
+          <span class="match-hero-name" id="away-name">—</span>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:12px" id="match-status-row">
+        <span id="status-chip" class="live-chip" style="display:none"><span class="live-dot"></span><span id="match-minute">0</span>'</span>
+        <span id="kickoff-display" style="font-size:14px;color:var(--text-secondary)"></span>
+      </div>
+    </div>
+
+    <!-- CTA Pronostiquer -->
+    <div style="padding:16px" id="prono-cta-wrap">
+      <button class="cta-primary" id="prono-cta">🎯 Pronostiquer ce match</button>
+    </div>
+
+    <!-- Boost CTA (Mid+ ou lock) -->
+    <div style="padding:0 16px 4px;display:flex;gap:8px" id="boost-row" style="display:none">
+      <button class="cta-secondary" id="btn-boost-x2" style="font-size:13px">⚡ Bonus ×2</button>
+      <button class="cta-secondary" id="btn-boost-joker" style="font-size:13px">🃏 Joker</button>
+      <button class="cta-secondary" id="btn-boost-malus" style="font-size:13px">💀 Malus</button>
+    </div>
+
+    <!-- Stats -->
+    <p class="section-title">Statistiques</p>
+    <div class="glass-card" style="margin:0 16px 12px" id="stats-card">
+      <div class="stat-bar-wrapper" id="stats-wrapper">
+        <div style="color:var(--text-tertiary);font-size:13px;text-align:center">Stats disponibles en direct</div>
+      </div>
+    </div>
+
+    <!-- Oracle IA -->
+    <p class="section-title">Oracle IA</p>
+    <div style="position:relative;margin:0 16px 12px" id="oracle-wrap">
+      <div class="glass-card oracle-card oracle-blurred" id="oracle-content">
+        <div style="margin-bottom:12px">
+          <span style="font-size:11px;font-weight:700;color:var(--green-accent);text-transform:uppercase;letter-spacing:0.1em">Analyse IA</span>
+        </div>
+        <p style="font-size:15px;font-weight:600;margin-bottom:8px" id="oracle-prediction">Score prédit : 2 – 1 (73% confiance)</p>
+        <p style="font-size:13px;color:var(--text-secondary)" id="oracle-buteurs">Buteurs probables : Mbappé, Kane</p>
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border-glass)">
+          <p style="font-size:12px;color:var(--text-tertiary)">Head to Head · 5 dernières rencontres</p>
+          <div id="h2h-list" style="margin-top:8px;display:flex;flex-direction:column;gap:4px"></div>
+        </div>
+      </div>
+      <div class="oracle-lock-overlay" id="oracle-lock">
+        <div style="font-size:32px">🔮</div>
+        <p style="font-size:14px;font-weight:600">Oracle IA Mid</p>
+        <p class="oracle-teaser" id="oracle-teaser">"Forte tendance vers une équipe ce soir..."</p>
+        <button class="cta-primary" id="oracle-unlock-btn" style="width:auto;padding:0 24px">Débloquer — 5,99€/mois</button>
+      </div>
+    </div>
+
+    <!-- Pronos du groupe -->
+    <p class="section-title">Pronos du groupe</p>
+    <div id="group-pronos" style="padding:0 16px 16px">
+      <div style="color:var(--text-tertiary);font-size:13px;text-align:center;padding:16px">Chargement...</div>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <a href="/src/pages/home.html"><span style="font-size:22px">🏠</span><span>Accueil</span></a>
+    <a href="/src/pages/home.html" class="active"><span style="font-size:22px">⚽</span><span>Matchs</span></a>
+    <a href="/src/pages/pronostic.html"><span style="font-size:22px">🎯</span><span>Pronos</span></a>
+    <a href="/src/pages/groupe.html"><span style="font-size:22px">👥</span><span>Groupe</span></a>
+    <a href="/src/pages/profil.html"><span style="font-size:22px">👤</span><span>Profil</span></a>
+  </nav>
+
+  <!-- Boost Modal -->
+  <div class="modal-overlay" id="boost-modal">
+    <div class="modal-sheet">
+      <h2 style="font-size:18px;font-weight:700;margin-bottom:4px">⚡ Activer un Boost</h2>
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:20px" id="boost-timing-label"></p>
+      <div style="display:flex;flex-direction:column;gap:10px" id="boost-options"></div>
+      <button style="margin-top:16px;color:var(--text-tertiary);font-size:13px;width:100%;text-align:center" onclick="closeModal('boost-modal')">Annuler</button>
+    </div>
+  </div>
+
+  <!-- Upgrade Modal -->
+  <div class="modal-overlay" id="upgrade-modal">
+    <div class="modal-sheet">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:40px;margin-bottom:8px">🔮</div>
+        <h2 style="font-size:20px;font-weight:700;margin-bottom:6px">Oracle IA Mid</h2>
+        <p style="font-size:14px;color:var(--text-secondary)">Accède aux prédictions IA, buteurs probables et analyses pré-match</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button class="cta-primary" id="upgrade-monthly-btn">Mid Mensuel — 5,99€/mois</button>
+        <button class="cta-secondary" id="upgrade-cdm-btn" style="border-color:rgba(0,255,106,0.3);color:var(--green-accent)">Mid CdM — 9,99€ accès complet</button>
+      </div>
+      <p style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:12px">Accès jusqu'au 19 juillet 2026 avec le pass CdM</p>
+      <button style="margin-top:12px;color:var(--text-tertiary);font-size:13px;width:100%;text-align:center" onclick="closeModal('upgrade-modal')">Pas maintenant</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
+    import { startLivePolling } from '/src/js/lib/football-api.js';
+    import { checkMidAccess, createCheckout, getBoostPrice, getBoostTiming, PLANS } from '/src/js/lib/whop.js';
+    import { calculerStatutLive, formatStatut } from '/src/js/lib/points.js';
+    import { formatKickoff, isBeforeKickoff, toast } from '/src/js/lib/utils.js';
+
+    const user = await requireAuth();
+    if (!user) throw new Error('not authed');
+    const profile = await getCurrentProfile();
+
+    const params = new URLSearchParams(location.search);
+    const matchId = params.get('id');
+    if (!matchId) { window.location.href = '/src/pages/home.html'; throw new Error('no match id'); }
+
+    const { data: match } = await supabase.from('matchs').select('*').eq('id', matchId).single();
+    if (!match) { window.location.href = '/src/pages/home.html'; throw new Error('match not found'); }
+
+    // Render hero
+    document.getElementById('home-flag').textContent = match.home_flag;
+    document.getElementById('home-name').textContent = match.home_team;
+    document.getElementById('away-flag').textContent = match.away_flag;
+    document.getElementById('away-name').textContent = match.away_team;
+    document.getElementById('score-home').textContent = match.home_score;
+    document.getElementById('score-away').textContent = match.away_score;
+    document.title = `${match.home_team} vs ${match.away_team} — Footzy`;
+
+    const statusChip = document.getElementById('status-chip');
+    const kickoffDisplay = document.getElementById('kickoff-display');
+
+    function updateStatus(m) {
+      if (m.status === 'live') {
+        statusChip.style.display = 'inline-flex';
+        document.getElementById('match-minute').textContent = m.minute || 0;
+        kickoffDisplay.textContent = '';
+      } else if (m.status === 'halftime') {
+        statusChip.style.display = 'inline-flex';
+        document.getElementById('match-minute').textContent = 'MT';
+        kickoffDisplay.textContent = '';
+      } else if (m.status === 'finished') {
+        statusChip.style.display = 'none';
+        kickoffDisplay.textContent = 'Match terminé';
+      } else {
+        statusChip.style.display = 'none';
+        kickoffDisplay.textContent = formatKickoff(m.kickoff_at);
+      }
+    }
+    updateStatus(match);
+
+    // Pronostiquer CTA
+    const pronoCta = document.getElementById('prono-cta');
+    if (!isBeforeKickoff(match.kickoff_at) && match.status === 'finished') {
+      pronoCta.textContent = '📊 Voir le verdict';
+      pronoCta.addEventListener('click', () => window.location.href = `/src/pages/verdict.html?id=${matchId}`);
+    } else if (!isBeforeKickoff(match.kickoff_at) && match.status !== 'scheduled') {
+      pronoCta.textContent = '🔒 Pronos fermés';
+      pronoCta.disabled = true;
+    } else {
+      pronoCta.addEventListener('click', () => window.location.href = `/src/pages/pronostic.html?id=${matchId}`);
+    }
+
+    // Stats
+    if (match.possession_home != null) {
+      document.getElementById('stats-wrapper').innerHTML = `
+        <div class="stat-bar-row">
+          <span class="stat-bar-label">${match.possession_home}%</span>
+          <div class="stat-bar-track"><div class="stat-bar-fill home" style="width:${match.possession_home}%"></div></div>
+          <span class="stat-bar-label" style="text-align:left;color:var(--text-tertiary);font-size:9px">POSS</span>
+          <div class="stat-bar-track"><div class="stat-bar-fill away" style="width:${match.possession_away}%"></div></div>
+          <span class="stat-bar-label">${match.possession_away}%</span>
+        </div>
+        ${match.shots_home != null ? `<div class="stat-bar-row">
+          <span class="stat-bar-label">${match.shots_home}</span>
+          <div class="stat-bar-track"><div class="stat-bar-fill home" style="width:${Math.min(100, match.shots_home*10)}%"></div></div>
+          <span class="stat-bar-label" style="text-align:left;color:var(--text-tertiary);font-size:9px">TIRS</span>
+          <div class="stat-bar-track"><div class="stat-bar-fill away" style="width:${Math.min(100, match.shots_away*10)}%"></div></div>
+          <span class="stat-bar-label">${match.shots_away}</span>
+        </div>` : ''}
+      `;
+    }
+
+    // Oracle
+    const hasMid = await checkMidAccess(profile);
+    if (hasMid) {
+      document.getElementById('oracle-lock').style.display = 'none';
+      document.getElementById('oracle-content').classList.remove('oracle-blurred');
+    } else {
+      document.getElementById('oracle-unlock-btn').addEventListener('click', () => {
+        closeModal('boost-modal');
+        openModal('upgrade-modal');
+      });
+    }
+
+    document.getElementById('upgrade-monthly-btn').addEventListener('click', () => createCheckout(PLANS.mid_monthly, user.id));
+    document.getElementById('upgrade-cdm-btn').addEventListener('click', () => createCheckout(PLANS.mid_cdm, user.id));
+
+    // Boost row
+    if (isBeforeKickoff(match.kickoff_at) || match.status === 'live') {
+      document.getElementById('boost-row').style.display = 'flex';
+      const timing = getBoostTiming(match.kickoff_at);
+      document.getElementById('boost-timing-label').textContent =
+        timing === 'j-24h' ? 'Prix standard (plus de 1h avant)' :
+        timing === 'j-1h' ? 'Prix dernière heure' : 'Prix live (jusqu\'à 15\')';
+
+      ['boost-x2','boost-joker','boost-malus'].forEach(id => {
+        document.getElementById('btn-' + id).addEventListener('click', () => openModal('boost-modal'));
+      });
+
+      const boostOptions = document.getElementById('boost-options');
+      const boosts = [
+        { type: 'x2', label: '⚡ Bonus ×2', desc: 'Double les points si correct (max 1/match)' },
+        { type: 'joker', label: '🃏 Joker Score', desc: 'Modifier ton prono jusqu\'à 15\' (max 1/match)' },
+        { type: 'malus', label: '💀 Malus Adversaire', desc: '-50 pts à un rival du groupe (max 1/rival/match)' },
+        { type: 'boost_buteur', label: '🎯 Boost Buteur', desc: 'Triple les points d\'un buteur désigné' },
+      ];
+      boostOptions.innerHTML = boosts.map(b => {
+        const price = getBoostPrice(b.type, match.kickoff_at);
+        return `<button class="glass-card" style="text-align:left;padding:14px;cursor:pointer;width:100%;border:1px solid var(--border-glass);border-radius:12px"
+          onclick="buyBoost('${b.type}','${matchId}','${user.id}')">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:14px;font-weight:600">${b.label}</span>
+            <span style="font-size:14px;font-weight:700;color:var(--green-accent)">${(price/100).toFixed(2)}€</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">${b.desc}</div>
+        </button>`;
+      }).join('');
+    }
+
+    // Group pronos
+    const { data: groupMemberships } = await supabase.from('groupe_membres').select('groupe_id').eq('user_id', user.id);
+    const groupIds = groupMemberships?.map(g => g.groupe_id) || [];
+    if (groupIds.length > 0) {
+      const { data: pronos } = await supabase
+        .from('pronostics')
+        .select('*, profiles(pseudo)')
+        .eq('match_id', matchId)
+        .in('groupe_id', groupIds);
+
+      const gpEl = document.getElementById('group-pronos');
+      if (!pronos || pronos.length === 0) {
+        gpEl.innerHTML = `<div style="color:var(--text-tertiary);font-size:13px;text-align:center;padding:16px">Aucun prono pour ce match dans ton groupe</div>`;
+      } else {
+        gpEl.innerHTML = pronos.map(p => {
+          const statut = calculerStatutLive(p, match);
+          const isMe = p.user_id === user.id;
+          return `<div class="glass-card" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;margin-bottom:8px${isMe ? ';border-color:rgba(0,255,106,0.3)' : ''}">
+            <span style="font-size:14px;font-weight:${isMe?'700':'400'}">${p.profiles?.pseudo || 'Joueur'}${isMe?' (toi)':''}</span>
+            <span style="font-size:15px;font-weight:700;font-style:italic">${p.home_score} – ${p.away_score}</span>
+            <span style="font-size:12px" class="status-${statut}">${formatStatut(statut)}</span>
+          </div>`;
+        }).join('');
+      }
+    } else {
+      document.getElementById('group-pronos').innerHTML = `<div style="color:var(--text-tertiary);font-size:13px;text-align:center;padding:16px"><a href="/src/pages/onboarding.html" style="color:var(--green-accent)">Rejoins un groupe</a> pour voir les pronos</div>`;
+    }
+
+    // Live polling
+    if (match.status === 'live') {
+      startLivePolling(matchId, match.home_team, match.away_team, supabase, (upd) => {
+        document.getElementById('score-home').textContent = upd.home_score;
+        document.getElementById('score-away').textContent = upd.away_score;
+        document.getElementById('match-minute').textContent = upd.minute;
+      });
+    }
+
+    // Supabase realtime
+    supabase.channel('match-' + matchId)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matchs', filter: `id=eq.${matchId}` }, ({ new: m }) => {
+        document.getElementById('score-home').textContent = m.home_score;
+        document.getElementById('score-away').textContent = m.away_score;
+        updateStatus(m);
+      })
+      .subscribe();
+
+    // Modal helpers
+    window.openModal = (id) => document.getElementById(id).classList.add('open');
+    window.closeModal = (id) => document.getElementById(id).classList.remove('open');
+    window.buyBoost = (type, mId, uId) => {
+      closeModal('boost-modal');
+      createCheckout('boost_' + type + '_' + getBoostTiming(match.kickoff_at), uId, { match_id: mId });
+    };
+
+    document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => {
+      if (e.target === m) m.classList.remove('open');
+    }));
+  </script>
+</body>
+</html>

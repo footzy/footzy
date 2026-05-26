@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Footzy — Bienvenue</title>
+  <link rel="stylesheet" href="/src/css/tokens.css" />
+  <link rel="stylesheet" href="/src/css/components.css" />
+  <link rel="stylesheet" href="/src/css/pages.css" />
+</head>
+<body>
+  <main style="padding:32px 20px 40px;min-height:100vh;display:flex;flex-direction:column">
+    <div style="text-align:center;margin-bottom:40px">
+      <div style="font-size:48px;margin-bottom:12px">🏆</div>
+      <h1 style="font-size:26px;font-weight:700;margin-bottom:8px">Bienvenue sur Footzy !</h1>
+      <p style="color:var(--text-secondary);font-size:15px">Rejoins ou crée un groupe pour commencer à pronostiquer</p>
+    </div>
+
+    <!-- Rejoindre un groupe -->
+    <div class="glass-card" style="margin-bottom:16px">
+      <h2 style="font-size:16px;font-weight:700;margin-bottom:4px">Rejoindre un groupe</h2>
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">Entre le code de 6 lettres partagé par un ami</p>
+      <div style="display:flex;gap:8px">
+        <input class="input-field" id="join-code" placeholder="EX : ABC123" maxlength="6"
+               style="text-transform:uppercase;letter-spacing:0.2em;font-weight:700;font-size:18px;text-align:center" />
+        <button class="cta-primary" id="join-btn" style="width:auto;padding:0 20px;flex-shrink:0">Rejoindre</button>
+      </div>
+      <div id="join-error" style="color:var(--danger);font-size:13px;margin-top:8px;display:none"></div>
+    </div>
+
+    <div style="text-align:center;color:var(--text-tertiary);font-size:13px;margin:8px 0">— ou —</div>
+
+    <!-- Créer un groupe -->
+    <div class="glass-card" style="margin-bottom:32px">
+      <h2 style="font-size:16px;font-weight:700;margin-bottom:4px">Créer un groupe</h2>
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">Invite tes amis avec un code unique</p>
+      <input class="input-field" id="group-name" placeholder="Nom du groupe (ex: Les Footeux)" maxlength="30" style="margin-bottom:10px" />
+      <button class="cta-primary" id="create-btn">Créer mon groupe</button>
+      <div id="create-error" style="color:var(--danger);font-size:13px;margin-top:8px;display:none"></div>
+    </div>
+
+    <a href="/src/pages/home.html" style="text-align:center;color:var(--text-tertiary);font-size:13px">Passer pour l'instant →</a>
+  </main>
+
+  <script type="module">
+    import { supabase, requireAuth } from '/src/js/lib/supabase.js';
+
+    const user = await requireAuth();
+    if (!user) throw new Error('not authed');
+
+    document.getElementById('join-code').addEventListener('input', e => {
+      e.target.value = e.target.value.toUpperCase();
+    });
+
+    document.getElementById('join-btn').addEventListener('click', async () => {
+      const code = document.getElementById('join-code').value.trim();
+      const errEl = document.getElementById('join-error');
+      errEl.style.display = 'none';
+      if (code.length !== 6) { errEl.textContent = 'Le code fait 6 caractères.'; errEl.style.display = 'block'; return; }
+
+      const { data: groupes } = await supabase.rpc('find_group_by_code', { p_code: code });
+      const groupe = groupes?.[0];
+      if (!groupe) { errEl.textContent = 'Groupe introuvable.'; errEl.style.display = 'block'; return; }
+
+      const { error } = await supabase.from('groupe_membres').insert({ groupe_id: groupe.id, user_id: user.id });
+      if (error && !error.message.includes('unique')) {
+        errEl.textContent = 'Erreur lors de l\'adhésion.'; errEl.style.display = 'block'; return;
+      }
+      window.location.href = '/src/pages/groupe.html?id=' + groupe.id;
+    });
+
+    document.getElementById('create-btn').addEventListener('click', async () => {
+      const nom = document.getElementById('group-name').value.trim();
+      const errEl = document.getElementById('create-error');
+      errEl.style.display = 'none';
+      if (!nom) { errEl.textContent = 'Donne un nom à ton groupe.'; errEl.style.display = 'block'; return; }
+
+      const { data: groupe, error } = await supabase.from('groupes').insert({ nom, created_by: user.id }).select().single();
+      if (error) { errEl.textContent = 'Erreur à la création.'; errEl.style.display = 'block'; return; }
+
+      await supabase.from('groupe_membres').insert({ groupe_id: groupe.id, user_id: user.id });
+      window.location.href = '/src/pages/groupe.html?id=' + groupe.id;
+    });
+  </script>
+</body>
+</html>

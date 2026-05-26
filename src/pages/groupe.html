@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Footzy — Groupe</title>
+  <link rel="stylesheet" href="/src/css/tokens.css" />
+  <link rel="stylesheet" href="/src/css/components.css" />
+  <link rel="stylesheet" href="/src/css/pages.css" />
+</head>
+<body>
+  <div class="page-content">
+    <div class="page-header" style="justify-content:space-between">
+      <h1 id="group-name">Groupe</h1>
+      <button class="back-btn" id="share-btn" title="Partager le code" style="width:auto;padding:0 12px;border-radius:20px;gap:6px;font-size:13px;font-weight:600">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        Partager
+      </button>
+    </div>
+
+    <!-- Code + Groupe switcher -->
+    <div style="padding:0 16px 12px;display:flex;align-items:center;gap:8px">
+      <span id="group-code" style="font-size:13px;color:var(--text-tertiary);letter-spacing:0.15em"></span>
+      <select id="groupe-switcher" class="input-field" style="flex:1;appearance:none;padding:8px 12px;height:auto;font-size:13px">
+        <option>Chargement...</option>
+      </select>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="groupe">Mon groupe</button>
+      <button class="tab-btn" data-tab="mondial">Leaderboard mondial</button>
+    </div>
+
+    <!-- Groupe tab -->
+    <div id="tab-groupe">
+      <div id="groupe-leaderboard">
+        <div style="text-align:center;padding:32px;color:var(--text-tertiary)">Chargement...</div>
+      </div>
+    </div>
+
+    <!-- Mondial tab -->
+    <div id="tab-mondial" style="display:none">
+      <div id="mondial-leaderboard">
+        <div style="text-align:center;padding:32px;color:var(--text-tertiary)">Chargement...</div>
+      </div>
+    </div>
+
+    <!-- Rejoindre / Créer -->
+    <div style="padding:16px">
+      <button class="cta-secondary" id="join-autre-btn" style="font-size:13px;height:44px">+ Rejoindre un autre groupe</button>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <a href="/src/pages/home.html"><span style="font-size:22px">🏠</span><span>Accueil</span></a>
+    <a href="/src/pages/home.html"><span style="font-size:22px">⚽</span><span>Matchs</span></a>
+    <a href="/src/pages/pronostic.html"><span style="font-size:22px">🎯</span><span>Pronos</span></a>
+    <a href="/src/pages/groupe.html" class="active"><span style="font-size:22px">👥</span><span>Groupe</span></a>
+    <a href="/src/pages/profil.html"><span style="font-size:22px">👤</span><span>Profil</span></a>
+  </nav>
+
+  <!-- Join modal -->
+  <div class="modal-overlay" id="join-modal">
+    <div class="modal-sheet">
+      <h2 style="font-size:18px;font-weight:700;margin-bottom:16px">Rejoindre un groupe</h2>
+      <input class="input-field" id="join-code-input" placeholder="Code du groupe (6 lettres)" maxlength="6"
+             style="text-transform:uppercase;letter-spacing:0.2em;font-weight:700;font-size:18px;text-align:center;margin-bottom:10px" />
+      <div id="join-modal-error" style="color:var(--danger);font-size:13px;margin-bottom:10px;display:none"></div>
+      <button class="cta-primary" id="join-modal-btn">Rejoindre</button>
+      <button style="margin-top:12px;color:var(--text-tertiary);font-size:13px;width:100%;text-align:center" onclick="document.getElementById('join-modal').classList.remove('open')">Annuler</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
+    import { shareCode, toast } from '/src/js/lib/utils.js';
+
+    const user = await requireAuth();
+    if (!user) throw new Error('not authed');
+    const profile = await getCurrentProfile();
+
+    const params = new URLSearchParams(location.search);
+    let currentGroupeId = params.get('id');
+
+    // Load groups
+    const { data: memberships } = await supabase
+      .from('groupe_membres')
+      .select('groupe_id, groupes(id,nom,code)')
+      .eq('user_id', user.id);
+
+    const switcher = document.getElementById('groupe-switcher');
+    if (!memberships?.length) {
+      switcher.innerHTML = '<option>Aucun groupe</option>';
+      document.getElementById('groupe-leaderboard').innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-tertiary)"><a href="/src/pages/onboarding.html" style="color:var(--green-accent)">Rejoins un groupe</a> pour voir le classement</div>`;
+    } else {
+      switcher.innerHTML = memberships.map(m => `<option value="${m.groupes.id}" ${m.groupes.id === currentGroupeId ? 'selected' : ''}>${m.groupes.nom}</option>`).join('');
+      if (!currentGroupeId) currentGroupeId = memberships[0].groupes.id;
+      switcher.addEventListener('change', () => { currentGroupeId = switcher.value; loadGroupe(); });
+      await loadGroupe();
+    }
+
+    async function loadGroupe() {
+      const { data: groupe } = await supabase.from('groupes').select('*').eq('id', currentGroupeId).single();
+      if (!groupe) return;
+      document.getElementById('group-name').textContent = groupe.nom;
+      document.getElementById('group-code').textContent = `Code : ${groupe.code}`;
+
+      // Share
+      document.getElementById('share-btn').addEventListener('click', async () => {
+        const result = await shareCode(groupe.code, groupe.nom);
+        toast(result === 'copied' ? 'Code copié ! 📋' : 'Partagé !');
+      });
+
+      // Load members + their points (via pronostics in this groupe)
+      const { data: membres } = await supabase
+        .from('groupe_membres')
+        .select('user_id, profiles(id,pseudo,points_totaux,streak_quotidien)')
+        .eq('groupe_id', currentGroupeId);
+
+      const sorted = (membres || [])
+        .map(m => m.profiles)
+        .filter(Boolean)
+        .sort((a, b) => (b.points_totaux || 0) - (a.points_totaux || 0));
+
+      const lb = document.getElementById('groupe-leaderboard');
+      lb.innerHTML = sorted.map((p, i) => {
+        const rank = i + 1;
+        const isMe = p.id === user.id;
+        const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+        return `<div class="leaderboard-item${isMe ? ' me' : ''}">
+          <div class="rank-badge ${rankClass}">${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank}</div>
+          <div style="flex:1">
+            <div class="leaderboard-pseudo">${p.pseudo}${isMe ? ' 👈' : ''}</div>
+            ${p.streak_quotidien > 0 ? `<div style="font-size:11px;color:var(--text-tertiary)">🔥 ${p.streak_quotidien} jours</div>` : ''}
+          </div>
+          <div class="leaderboard-points">${p.points_totaux || 0} pts</div>
+        </div>`;
+      }).join('');
+
+      // Realtime updates
+      supabase.channel('groupe-' + currentGroupeId)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'pronostics', filter: `groupe_id=eq.${currentGroupeId}` }, () => loadGroupe())
+        .subscribe();
+    }
+
+    // Mondial leaderboard
+    async function loadMondial() {
+      const { data: top } = await supabase
+        .from('profiles')
+        .select('id,pseudo,points_totaux,plan')
+        .order('points_totaux', { ascending: false })
+        .limit(50);
+
+      const mondialEl = document.getElementById('mondial-leaderboard');
+      if (!top?.length) { mondialEl.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-tertiary)">Aucun joueur encore</div>'; return; }
+
+      mondialEl.innerHTML = top.map((p, i) => {
+        const rank = i + 1;
+        const isMe = p.id === user.id;
+        const showPseudo = rank <= 3 || p.plan === 'mid' || isMe;
+        const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+        return `<div class="leaderboard-item${isMe ? ' me' : ''}">
+          <div class="rank-badge ${rankClass}">${rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : rank}</div>
+          <div class="leaderboard-pseudo">${showPseudo ? p.pseudo : '• • • • •'}${isMe ? ' 👈' : ''}</div>
+          <div class="leaderboard-points">${p.points_totaux || 0} pts</div>
+        </div>`;
+      }).join('');
+    }
+
+    // Tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-groupe').style.display = btn.dataset.tab === 'groupe' ? 'block' : 'none';
+        document.getElementById('tab-mondial').style.display = btn.dataset.tab === 'mondial' ? 'block' : 'none';
+        if (btn.dataset.tab === 'mondial') loadMondial();
+      });
+    });
+
+    // Join another group
+    document.getElementById('join-autre-btn').addEventListener('click', () => {
+      document.getElementById('join-modal').classList.add('open');
+    });
+    document.getElementById('join-code-input').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase(); });
+    document.getElementById('join-modal-btn').addEventListener('click', async () => {
+      const code = document.getElementById('join-code-input').value.trim();
+      const errEl = document.getElementById('join-modal-error');
+      errEl.style.display = 'none';
+      const { data: groupes } = await supabase.rpc('find_group_by_code', { p_code: code });
+      const g = groupes?.[0];
+      if (!g) { errEl.textContent = 'Groupe introuvable.'; errEl.style.display = 'block'; return; }
+      await supabase.from('groupe_membres').insert({ groupe_id: g.id, user_id: user.id });
+      toast('Groupe rejoint !');
+      document.getElementById('join-modal').classList.remove('open');
+      window.location.href = '/src/pages/groupe.html?id=' + g.id;
+    });
+    document.getElementById('join-modal').addEventListener('click', e => {
+      if (e.target === document.getElementById('join-modal')) document.getElementById('join-modal').classList.remove('open');
+    });
+  </script>
+</body>
+</html>

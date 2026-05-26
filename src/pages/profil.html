@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Footzy — Profil</title>
+  <link rel="stylesheet" href="/src/css/tokens.css" />
+  <link rel="stylesheet" href="/src/css/components.css" />
+  <link rel="stylesheet" href="/src/css/pages.css" />
+</head>
+<body>
+  <div class="page-content">
+    <!-- Header -->
+    <div class="profil-header">
+      <div class="profil-avatar" id="avatar-el">👤</div>
+      <p class="profil-pseudo" id="pseudo-el">—</p>
+      <div id="plan-badge" style="margin-top:6px"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="glass-card stat-card">
+        <div class="stat-value" id="stat-points">0</div>
+        <div class="stat-label">Points</div>
+      </div>
+      <div class="glass-card stat-card">
+        <div class="stat-value" id="stat-rang">—</div>
+        <div class="stat-label">Rang mondial</div>
+      </div>
+      <div class="glass-card stat-card">
+        <div class="stat-value" id="stat-exacts">0</div>
+        <div class="stat-label">Scores exacts</div>
+      </div>
+      <div class="glass-card stat-card">
+        <div class="stat-value" id="stat-streak">0🔥</div>
+        <div class="stat-label">Streak quotidien</div>
+      </div>
+    </div>
+
+    <!-- Pronostic vainqueur -->
+    <p class="section-title">Vainqueur CdM prédit</p>
+    <div style="padding:0 16px 4px">
+      <div class="glass-card" id="vainqueur-card" style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:36px" id="vainqueur-flag">❓</span>
+        <div>
+          <p id="vainqueur-team" style="font-size:16px;font-weight:700">Non encore défini</p>
+          <p style="font-size:12px;color:var(--text-tertiary)">Ton pronostic vainqueur CdM 2026</p>
+        </div>
+        <button id="edit-vainqueur-btn" style="margin-left:auto;color:var(--green-accent);font-size:13px;font-weight:600">Modifier</button>
+      </div>
+    </div>
+
+    <!-- Badges -->
+    <p class="section-title">Badges</p>
+    <div class="badges-grid" id="badges-grid"></div>
+
+    <!-- Historique pronos -->
+    <p class="section-title">Derniers pronostics</p>
+    <div id="pronos-history" style="padding:0 16px 8px">
+      <div style="text-align:center;padding:16px;color:var(--text-tertiary)">Chargement...</div>
+    </div>
+
+    <!-- Mid upgrade -->
+    <div id="mid-cta-wrap" style="padding:0 16px 8px;display:none">
+      <div class="glass-card" style="background:linear-gradient(135deg,rgba(0,255,106,0.08),rgba(27,67,50,0.5));border-color:rgba(0,255,106,0.2);text-align:center;padding:24px">
+        <div style="font-size:32px;margin-bottom:8px">🔮</div>
+        <p style="font-size:16px;font-weight:700;margin-bottom:6px">Passe au plan Mid</p>
+        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">Oracle IA, Boosts et analyses pré-match</p>
+        <button class="cta-primary" id="upgrade-mid-btn">Débloquer — 5,99€/mois</button>
+      </div>
+    </div>
+
+    <!-- Logout -->
+    <div style="text-align:center;padding:16px 20px 8px">
+      <button id="logout-btn" style="color:var(--text-tertiary);font-size:13px;background:none;border:none;cursor:pointer">Se déconnecter</button>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <a href="/src/pages/home.html"><span style="font-size:22px">🏠</span><span>Accueil</span></a>
+    <a href="/src/pages/home.html"><span style="font-size:22px">⚽</span><span>Matchs</span></a>
+    <a href="/src/pages/pronostic.html"><span style="font-size:22px">🎯</span><span>Pronos</span></a>
+    <a href="/src/pages/groupe.html"><span style="font-size:22px">👥</span><span>Groupe</span></a>
+    <a href="/src/pages/profil.html" class="active"><span style="font-size:22px">👤</span><span>Profil</span></a>
+  </nav>
+
+  <!-- Vainqueur Modal -->
+  <div class="modal-overlay" id="vainqueur-modal">
+    <div class="modal-sheet">
+      <h2 style="font-size:18px;font-weight:700;margin-bottom:16px">🏆 Vainqueur CdM 2026</h2>
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">Pour quel groupe ? (une seule prédiction par groupe)</p>
+      <select id="vainqueur-groupe" class="input-field" style="margin-bottom:12px;appearance:none"></select>
+      <input class="input-field" id="vainqueur-equipe" placeholder="Équipe (ex: France 🇫🇷)" style="margin-bottom:10px" />
+      <button class="cta-primary" id="save-vainqueur-btn">Enregistrer</button>
+      <button style="margin-top:12px;color:var(--text-tertiary);font-size:13px;width:100%;text-align:center" onclick="document.getElementById('vainqueur-modal').classList.remove('open')">Annuler</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
+    import { checkMidAccess, createCheckout, PLANS } from '/src/js/lib/whop.js';
+    import { formatDate, toast } from '/src/js/lib/utils.js';
+
+    const user = await requireAuth();
+    if (!user) throw new Error('not authed');
+    const profile = await getCurrentProfile();
+
+    // Render profile
+    document.getElementById('avatar-el').textContent = profile?.pseudo?.[0]?.toUpperCase() || '👤';
+    document.getElementById('pseudo-el').textContent = profile?.pseudo || '';
+    document.getElementById('stat-points').textContent = profile?.points_totaux || 0;
+    document.getElementById('stat-exacts').textContent = profile?.scores_exacts || 0;
+    document.getElementById('stat-streak').textContent = (profile?.streak_quotidien || 0) + '🔥';
+
+    const hasMid = await checkMidAccess(profile);
+    if (hasMid) {
+      document.getElementById('plan-badge').innerHTML = '<span class="badge-pill">⭐ Plan Mid</span>';
+    } else {
+      document.getElementById('plan-badge').innerHTML = '<span class="badge-pill" style="background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.1);color:var(--text-secondary)">Free</span>';
+      document.getElementById('mid-cta-wrap').style.display = 'block';
+      document.getElementById('upgrade-mid-btn').addEventListener('click', () => createCheckout(PLANS.mid_monthly, user.id));
+    }
+
+    // World rank
+    const { count } = await supabase.from('profiles').select('id', { count: 'exact', head: true })
+      .gt('points_totaux', profile?.points_totaux || 0);
+    document.getElementById('stat-rang').textContent = '#' + ((count || 0) + 1);
+
+    // Badges
+    const BADGES = [
+      { code: 'footeux_og', emoji: '⭐', name: 'Footeux OG' },
+      { code: 'oracle', emoji: '🔮', name: 'Oracle' },
+      { code: 'hat_trick', emoji: '🎩', name: 'Hat-trick' },
+      { code: 'kamikaze', emoji: '💥', name: 'Kamikaze' },
+      { code: 'contre_pied', emoji: '🔄', name: 'Contre-pied' },
+      { code: 'intraitable', emoji: '🛡️', name: 'Intraitable' },
+      { code: 'hall_of_fame', emoji: '👑', name: 'Hall of Fame' },
+      { code: 'footix', emoji: '🐓', name: 'Footix' },
+    ];
+    const { data: userBadges } = await supabase.from('badges_utilisateur').select('badge_code').eq('user_id', user.id);
+    const earnedCodes = new Set(userBadges?.map(b => b.badge_code) || []);
+    document.getElementById('badges-grid').innerHTML = BADGES.map(b => `
+      <div class="glass-card badge-card ${earnedCodes.has(b.code) ? '' : 'locked'}" title="${b.name}">
+        <span class="badge-emoji">${b.emoji}</span>
+        <span class="badge-name">${b.name}</span>
+      </div>`).join('');
+
+    // Vainqueur
+    const { data: memberships } = await supabase.from('groupe_membres').select('groupe_id, groupes(id,nom)').eq('user_id', user.id);
+    if (memberships?.length) {
+      const vainqueurGroupeSelect = document.getElementById('vainqueur-groupe');
+      vainqueurGroupeSelect.innerHTML = memberships.map(m => `<option value="${m.groupes.id}">${m.groupes.nom}</option>`).join('');
+
+      const firstGroupeId = memberships[0].groupes.id;
+      const { data: vainqueur } = await supabase.from('pronostics_vainqueur').select('*').eq('user_id', user.id).eq('groupe_id', firstGroupeId).maybeSingle();
+      if (vainqueur) {
+        document.getElementById('vainqueur-flag').textContent = vainqueur.flag || '🏳';
+        document.getElementById('vainqueur-team').textContent = vainqueur.equipe;
+      }
+    }
+
+    document.getElementById('edit-vainqueur-btn').addEventListener('click', () => {
+      document.getElementById('vainqueur-modal').classList.add('open');
+    });
+    document.getElementById('save-vainqueur-btn').addEventListener('click', async () => {
+      const groupeId = document.getElementById('vainqueur-groupe').value;
+      const equipe = document.getElementById('vainqueur-equipe').value.trim();
+      if (!equipe) return;
+      const flagMatch = equipe.match(/\p{Emoji_Presentation}/u);
+      const flag = flagMatch ? flagMatch[0] : '🏳';
+      await supabase.from('pronostics_vainqueur').upsert({ user_id: user.id, groupe_id: groupeId, equipe, flag }, { onConflict: 'user_id,groupe_id' });
+      document.getElementById('vainqueur-flag').textContent = flag;
+      document.getElementById('vainqueur-team').textContent = equipe;
+      document.getElementById('vainqueur-modal').classList.remove('open');
+      toast('Vainqueur enregistré ! 🏆');
+    });
+    document.getElementById('vainqueur-modal').addEventListener('click', e => {
+      if (e.target === document.getElementById('vainqueur-modal')) document.getElementById('vainqueur-modal').classList.remove('open');
+    });
+
+    // Pronos history
+    const { data: pronos } = await supabase
+      .from('pronostics')
+      .select('*, matchs(home_team,away_team,home_flag,away_flag,home_score,away_score,status,kickoff_at)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    const histEl = document.getElementById('pronos-history');
+    if (!pronos?.length) {
+      histEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-tertiary)">Aucun pronostic encore</div>';
+    } else {
+      histEl.innerHTML = pronos.map(p => {
+        const m = p.matchs;
+        const statusColor = p.status === 'won' ? 'var(--green-accent)' : p.status === 'lost' ? 'var(--text-tertiary)' : 'var(--text-secondary)';
+        return `<div class="glass-card" style="display:flex;align-items:center;gap:10px;margin-bottom:8px;padding:12px 14px">
+          <span style="font-size:18px">${m?.home_flag || ''} ${m?.away_flag || ''}</span>
+          <div style="flex:1;min-width:0">
+            <p style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m?.home_team || ''} vs ${m?.away_team || ''}</p>
+            <p style="font-size:11px;color:var(--text-tertiary)">${formatDate(m?.kickoff_at || '')}</p>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <p style="font-size:15px;font-weight:700;font-style:italic">${p.home_score} – ${p.away_score}</p>
+            <p style="font-size:11px;color:${statusColor}">${p.status === 'won' ? '+' + p.points + ' pts' : p.status === 'lost' ? '0 pts' : 'En attente'}</p>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // Logout
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      window.location.href = '/';
+    });
+  </script>
+</body>
+</html>

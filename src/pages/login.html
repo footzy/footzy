@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Footzy — Connexion</title>
+  <link rel="stylesheet" href="/src/css/tokens.css" />
+  <link rel="stylesheet" href="/src/css/components.css" />
+  <link rel="stylesheet" href="/src/css/pages.css" />
+</head>
+<body>
+  <main class="auth-page">
+    <a href="/" style="color:var(--green-accent);font-weight:700;font-size:18px;margin-bottom:32px;display:block">← Footzy</a>
+    <h1>Content de te revoir</h1>
+    <p class="subtitle">Connecte-toi pour accéder à tes pronos</p>
+
+    <form class="auth-form" id="login-form">
+      <input class="input-field" type="email" name="email" placeholder="Adresse email" required autocomplete="email" />
+      <input class="input-field" type="password" name="password" placeholder="Mot de passe" required autocomplete="current-password" />
+      <div id="error-msg" style="color:var(--danger);font-size:13px;display:none"></div>
+      <button type="submit" class="cta-primary" id="submit-btn">Se connecter</button>
+    </form>
+
+    <p class="auth-footer">Pas encore de compte ? <a href="/src/pages/register.html">S'inscrire</a></p>
+  </main>
+
+  <script type="module">
+    import { supabase } from '/src/js/lib/supabase.js';
+
+    const form = document.getElementById('login-form');
+    const errorMsg = document.getElementById('error-msg');
+    const submitBtn = document.getElementById('submit-btn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMsg.style.display = 'none';
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Connexion...';
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email: form.email.value.trim(),
+        password: form.password.value,
+      });
+
+      if (error) {
+        errorMsg.textContent = 'Email ou mot de passe incorrect.';
+        errorMsg.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Se connecter';
+        return;
+      }
+
+      window.location.href = '/src/pages/home.html';
+    });
+  </script>
+</body>
+</html>

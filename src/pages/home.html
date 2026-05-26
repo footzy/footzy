@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Footzy — Accueil</title>
+  <link rel="stylesheet" href="/src/css/tokens.css" />
+  <link rel="stylesheet" href="/src/css/components.css" />
+  <link rel="stylesheet" href="/src/css/pages.css" />
+</head>
+<body>
+  <div class="page-content">
+    <!-- Header -->
+    <div class="home-header">
+      <span class="home-logo">Footzy</span>
+      <div id="user-info" style="display:flex;align-items:center;gap:8px">
+        <span id="user-streak" style="font-size:13px;color:var(--text-secondary)"></span>
+        <div id="user-avatar" style="width:34px;height:34px;border-radius:50%;background:var(--green-primary);border:1px solid var(--green-soft);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer" onclick="window.location.href='/src/pages/profil.html'">👤</div>
+      </div>
+    </div>
+
+    <!-- Défi quotidien -->
+    <p class="section-title">Défi du jour</p>
+    <div id="defi-container" style="padding:0 16px 4px"></div>
+
+    <!-- Matchs du jour -->
+    <p class="section-title" id="today-label">Matchs d'aujourd'hui</p>
+    <div id="match-list" class="match-list">
+      <div style="text-align:center;padding:40px 20px;color:var(--text-tertiary)">Chargement...</div>
+    </div>
+
+    <!-- Prochains matchs -->
+    <p class="section-title" id="upcoming-label" style="display:none">Prochains matchs</p>
+    <div id="upcoming-list" class="match-list" style="margin-bottom:16px"></div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <a href="/src/pages/home.html" class="active"><span style="font-size:22px">🏠</span><span>Accueil</span></a>
+    <a href="/src/pages/home.html#matchs"><span style="font-size:22px">⚽</span><span>Matchs</span></a>
+    <a href="/src/pages/pronostic.html"><span style="font-size:22px">🎯</span><span>Pronos</span></a>
+    <a href="/src/pages/groupe.html"><span style="font-size:22px">👥</span><span>Groupe</span></a>
+    <a href="/src/pages/profil.html"><span style="font-size:22px">👤</span><span>Profil</span></a>
+  </nav>
+
+  <script type="module">
+    import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
+    import { formatKickoff, formatTime } from '/src/js/lib/utils.js';
+
+    const user = await requireAuth();
+    if (!user) throw new Error('not authed');
+    const profile = await getCurrentProfile();
+
+    // User avatar
+    if (profile) {
+      document.getElementById('user-avatar').textContent = profile.pseudo?.[0]?.toUpperCase() || '👤';
+      if (profile.streak_quotidien > 0) {
+        document.getElementById('user-streak').textContent = `🔥 ${profile.streak_quotidien}`;
+      }
+    }
+
+    // Load today's matches
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
+
+    const { data: matchsToday } = await supabase
+      .from('matchs')
+      .select('*')
+      .gte('kickoff_at', today.toISOString())
+      .lt('kickoff_at', tomorrow.toISOString())
+      .order('kickoff_at');
+
+    const matchList = document.getElementById('match-list');
+
+    function matchCardHTML(m) {
+      const isLive = m.status === 'live' || m.status === 'halftime';
+      const isFinished = m.status === 'finished';
+      const centerContent = isLive
+        ? `<div class="live-chip"><span class="live-dot"></span>${m.minute}'</div><div class="match-score-display">${m.home_score} – ${m.away_score}</div>`
+        : isFinished
+        ? `<div class="match-score-display">${m.home_score} – ${m.away_score}</div><div class="match-time" style="color:var(--text-tertiary)">Terminé</div>`
+        : `<div class="match-kickoff">${formatTime(m.kickoff_at)}</div><div class="match-time">${m.phase === 'groupes' ? 'Groupe ' + (m.groupe||'') : m.phase}</div>`;
+
+      return `
+        <div class="glass-card match-card" onclick="window.location.href='/src/pages/match.html?id=${m.id}'">
+          <div class="team-block">
+            <span class="team-flag">${m.home_flag}</span>
+            <span class="team-label">${m.home_team}</span>
+          </div>
+          <div class="match-center">${centerContent}</div>
+          <div class="team-block away">
+            <span class="team-flag">${m.away_flag}</span>
+            <span class="team-label">${m.away_team}</span>
+          </div>
+        </div>`;
+    }
+
+    if (!matchsToday || matchsToday.length === 0) {
+      matchList.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-tertiary)">Aucun match aujourd'hui</div>`;
+      // Show upcoming
+      const { data: upcoming } = await supabase
+        .from('matchs').select('*').gt('kickoff_at', tomorrow.toISOString())
+        .order('kickoff_at').limit(5);
+      if (upcoming?.length) {
+        document.getElementById('upcoming-label').style.display = 'block';
+        document.getElementById('upcoming-list').innerHTML = upcoming.map(matchCardHTML).join('');
+      }
+    } else {
+      matchList.innerHTML = matchsToday.map(matchCardHTML).join('');
+    }
+
+    // Load défi du jour
+    const todayStr = new Date().toISOString().slice(0,10);
+    const { data: defi } = await supabase
+      .from('defis_quotidiens')
+      .select('*')
+      .eq('date', todayStr)
+      .maybeSingle();
+
+    const defiContainer = document.getElementById('defi-container');
+    if (!defi) {
+      defiContainer.innerHTML = `<div class="glass-card defi-card" style="text-align:center;color:var(--text-tertiary);padding:20px">Pas de défi aujourd'hui</div>`;
+    } else {
+      const { data: alreadyAnswered } = await supabase
+        .from('reponses_defi').select('id,correcte,points').eq('user_id', user.id).eq('defi_id', defi.id).maybeSingle();
+
+      const reponses = Array.isArray(defi.reponses) ? defi.reponses : Object.values(defi.reponses);
+
+      defiContainer.innerHTML = `
+        <div class="glass-card defi-card">
+          <div class="defi-header">
+            <span class="defi-badge">⚡ Défi du jour</span>
+            <span class="badge-pill">+50 pts</span>
+          </div>
+          <p class="defi-question">${defi.question}</p>
+          <div class="defi-options" id="defi-options">
+            ${reponses.map((r, i) => `<button class="defi-option ${alreadyAnswered ? (i === defi.bonne_reponse ? 'correct' : (alreadyAnswered.reponse === i && !alreadyAnswered.correcte ? 'wrong' : '')) : ''}" data-idx="${i}" ${alreadyAnswered ? 'disabled' : ''}>${r}</button>`).join('')}
+          </div>
+          ${alreadyAnswered ? `<p style="margin-top:12px;font-size:13px;color:${alreadyAnswered.correcte ? 'var(--green-accent)' : 'var(--danger)'}">
+            ${alreadyAnswered.correcte ? `✓ Bonne réponse ! +${alreadyAnswered.points} pts` : '✗ Mauvaise réponse'}
+          </p>` : ''}
+        </div>`;
+
+      if (!alreadyAnswered) {
+        document.getElementById('defi-options').addEventListener('click', async (e) => {
+          const btn = e.target.closest('.defi-option');
+          if (!btn) return;
+          const idx = parseInt(btn.dataset.idx);
+          const correcte = idx === defi.bonne_reponse;
+          const points = correcte ? 50 : 0;
+
+          await supabase.from('reponses_defi').insert({ user_id: user.id, defi_id: defi.id, reponse: idx, correcte, points });
+          if (correcte) await supabase.from('profiles').update({ points_totaux: (profile.points_totaux||0) + points }).eq('id', user.id);
+
+          document.querySelectorAll('.defi-option').forEach((b, i) => {
+            b.disabled = true;
+            if (i === defi.bonne_reponse) b.classList.add('correct');
+            else if (i === idx && !correcte) b.classList.add('wrong');
+          });
+        });
+      }
+    }
+  </script>
+</body>
+</html>

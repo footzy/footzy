@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Footzy — Paiement confirmé</title>
+  <link rel="stylesheet" href="/src/css/tokens.css" />
+  <link rel="stylesheet" href="/src/css/components.css" />
+</head>
+<body>
+  <main style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center">
+    <div style="font-size:64px;margin-bottom:16px" id="result-icon">⏳</div>
+    <h1 style="font-size:24px;font-weight:700;margin-bottom:8px" id="result-title">Traitement en cours...</h1>
+    <p style="color:var(--text-secondary);margin-bottom:32px" id="result-msg">Ton accès va être activé dans quelques secondes.</p>
+    <a href="/src/pages/home.html" class="cta-primary" style="max-width:280px;display:flex">Retour à l'accueil</a>
+  </main>
+
+  <script type="module">
+    import { supabase } from '/src/js/lib/supabase.js';
+
+    const iconEl = document.getElementById('result-icon');
+    const titleEl = document.getElementById('result-title');
+    const msgEl = document.getElementById('result-msg');
+
+    // Poll for profile update (webhook may be slightly delayed)
+    let attempts = 0;
+    const poll = setInterval(async () => {
+      attempts++;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { clearInterval(poll); return; }
+
+      const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user.id).single();
+      if (profile?.plan === 'mid') {
+        clearInterval(poll);
+        iconEl.textContent = '✅';
+        titleEl.textContent = 'Accès Mid activé !';
+        msgEl.textContent = 'L\'Oracle IA et tous les Boosts sont maintenant disponibles.';
+      }
+
+      if (attempts > 15) {
+        clearInterval(poll);
+        iconEl.textContent = '🕐';
+        titleEl.textContent = 'En cours d\'activation';
+        msgEl.textContent = 'Ton accès sera activé dans quelques minutes. Rafraîchis la page si nécessaire.';
+      }
+    }, 2000);
+  </script>
+</body>
+</html>

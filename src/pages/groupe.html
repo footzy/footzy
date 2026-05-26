@@ -30,7 +30,6 @@
     <div class="tabs">
       <button class="tab-btn active" data-tab="groupe">Classement</button>
       <button class="tab-btn" data-tab="pronos">Pronos</button>
-      <button class="tab-btn" data-tab="mondial">Mondial</button>
     </div>
 
     <!-- Groupe tab -->
@@ -47,12 +46,6 @@
       </div>
     </div>
 
-    <!-- Mondial tab -->
-    <div id="tab-mondial" style="display:none">
-      <div id="mondial-leaderboard">
-        <div style="text-align:center;padding:32px;color:var(--text-tertiary)">Chargement...</div>
-      </div>
-    </div>
 
     <!-- Actions groupe (admin = supprimer / membre = quitter) -->
     <div id="groupe-actions-zone" style="display:none;padding:12px 16px 4px">
@@ -329,8 +322,6 @@
         btn.classList.add('active');
         document.getElementById('tab-groupe').style.display = btn.dataset.tab === 'groupe' ? 'block' : 'none';
         document.getElementById('tab-pronos').style.display = btn.dataset.tab === 'pronos' ? 'block' : 'none';
-        document.getElementById('tab-mondial').style.display = btn.dataset.tab === 'mondial' ? 'block' : 'none';
-        if (btn.dataset.tab === 'mondial') loadMondial();
         if (btn.dataset.tab === 'pronos') loadGroupePronos();
       });
     });

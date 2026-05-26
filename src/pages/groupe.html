@@ -47,8 +47,9 @@
     </div>
 
     <!-- Rejoindre / Créer -->
-    <div style="padding:16px">
-      <button class="cta-secondary" id="join-autre-btn" style="font-size:13px;height:44px">+ Rejoindre un autre groupe</button>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:10px">
+      <button class="cta-primary" id="create-groupe-btn" style="font-size:13px;height:44px">+ Créer un groupe</button>
+      <button class="cta-secondary" id="join-autre-btn" style="font-size:13px;height:44px">Rejoindre avec un code</button>
     </div>
   </div>
 
@@ -60,6 +61,17 @@
     <a href="/src/pages/groupe.html" class="active"><span style="font-size:22px">👥</span><span>Groupe</span></a>
     <a href="/src/pages/profil.html"><span style="font-size:22px">👤</span><span>Profil</span></a>
   </nav>
+
+  <!-- Create modal -->
+  <div class="modal-overlay" id="create-modal">
+    <div class="modal-sheet">
+      <h2 style="font-size:18px;font-weight:700;margin-bottom:16px">Créer un groupe</h2>
+      <input class="input-field" id="create-nom-input" placeholder="Nom du groupe (ex: Les Footeux)" maxlength="30" style="margin-bottom:10px" />
+      <div id="create-modal-error" style="color:var(--danger);font-size:13px;margin-bottom:10px;display:none"></div>
+      <button class="cta-primary" id="create-modal-btn">Créer</button>
+      <button style="margin-top:12px;color:var(--text-tertiary);font-size:13px;width:100%;text-align:center" onclick="document.getElementById('create-modal').classList.remove('open')">Annuler</button>
+    </div>
+  </div>
 
   <!-- Join modal -->
   <div class="modal-overlay" id="join-modal">
@@ -178,6 +190,26 @@
         document.getElementById('tab-mondial').style.display = btn.dataset.tab === 'mondial' ? 'block' : 'none';
         if (btn.dataset.tab === 'mondial') loadMondial();
       });
+    });
+
+    // Create group
+    document.getElementById('create-groupe-btn').addEventListener('click', () => {
+      document.getElementById('create-modal').classList.add('open');
+    });
+    document.getElementById('create-modal-btn').addEventListener('click', async () => {
+      const nom = document.getElementById('create-nom-input').value.trim();
+      const errEl = document.getElementById('create-modal-error');
+      errEl.style.display = 'none';
+      if (!nom) { errEl.textContent = 'Donne un nom à ton groupe.'; errEl.style.display = 'block'; return; }
+      const { data: groupe, error } = await supabase.from('groupes').insert({ nom, created_by: user.id }).select().single();
+      if (error) { errEl.textContent = 'Erreur à la création.'; errEl.style.display = 'block'; return; }
+      await supabase.from('groupe_membres').insert({ groupe_id: groupe.id, user_id: user.id });
+      toast('Groupe créé ! 🎉');
+      document.getElementById('create-modal').classList.remove('open');
+      window.location.href = '/src/pages/groupe.html?id=' + groupe.id;
+    });
+    document.getElementById('create-modal').addEventListener('click', e => {
+      if (e.target === document.getElementById('create-modal')) document.getElementById('create-modal').classList.remove('open');
     });
 
     // Join another group

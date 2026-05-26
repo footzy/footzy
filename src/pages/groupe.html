@@ -602,8 +602,16 @@
         setTimeout(() => { window.location.href = '/src/pages/groupe.html'; }, 1000);
       };
 
+      // Calculer les bonus/malus depuis la table (plus fiable que bonus_malus_pts)
+      const { data: allBM } = await supabase
+        .from('bonus_malus')
+        .select('to_user_id, points')
+        .eq('groupe_id', currentGroupeId);
+      const bmTotaux = {};
+      (allBM || []).forEach(b => { bmTotaux[b.to_user_id] = (bmTotaux[b.to_user_id] || 0) + b.points; });
+
       const sorted = (membres || [])
-        .map(m => ({ ...m.profiles, role: m.role, bm_pts: m.bonus_malus_pts || 0 }))
+        .map(m => ({ ...m.profiles, role: m.role, bm_pts: bmTotaux[m.user_id] ?? 0 }))
         .filter(Boolean)
         .sort((a, b) => ((b.points_totaux||0)+(b.bm_pts||0)) - ((a.points_totaux||0)+(a.bm_pts||0)));
 
@@ -701,26 +709,18 @@
           document.getElementById('bm-modal').classList.remove('open');
 
           // Sauvegarder en DB
-          await supabase.from('bonus_malus').insert({
+          const { error: bmErr } = await supabase.from('bonus_malus').insert({
             groupe_id: currentGroupeId,
             from_user_id: user.id,
             to_user_id: tid,
             points: o.pts,
             label: o.label,
           });
+          if (bmErr) { toast('Erreur ❌ ' + bmErr.message); return; }
 
-          // Mettre à jour bonus_malus_pts du membre ciblé
-          const { data: cur } = await supabase
-            .from('groupe_membres').select('bonus_malus_pts')
-            .eq('groupe_id', currentGroupeId).eq('user_id', tid).single();
-          await supabase.from('groupe_membres')
-            .update({ bonus_malus_pts: (cur?.bonus_malus_pts || 0) + o.pts })
-            .eq('groupe_id', currentGroupeId).eq('user_id', tid);
-
-          // Notifier la cible
+          // Notifier la cible (sans révéler l'expéditeur)
           const ch = supabase.channel(`notif-${tid}`);
           await ch.send({ type: 'broadcast', event: 'bonus_malus', payload: {
-            from_pseudo: profile.pseudo,
             label: o.label,
             pts: o.pts,
           }});
@@ -732,16 +732,21 @@
       });
     }
 
-    function showBMNotif({ from_pseudo, label, pts }) {
-      const overlay = document.getElementById('bm-notif-overlay');
-      const icon    = label.split(' ')[0];
-      const name    = label.substring(label.indexOf(' ')+1);
-      const isBonus = pts > 0;
+    function showBMNotif({ label, pts }) {
+      const overlay  = document.getElementById('bm-notif-overlay');
+      const icon     = label.split(' ')[0];
+      const name     = label.substring(label.indexOf(' ')+1);
+      const isBonus  = pts > 0;
+      const ptsStr   = `${isBonus ? '+' : ''}${pts} pts`;
+      const mystery  = isBonus
+        ? ['Un inconnu te booste 👀', 'Quelqu\'un t\'apprécie... 🤫', 'Un allié mystérieux ⚡'][Math.floor(Math.random()*3)]
+        : ['Quelqu\'un te sabote... 👀', 'Un ennemi dans l\'ombre 🕵️', 'Mystère total... 😈'][Math.floor(Math.random()*3)];
+
       document.getElementById('bm-notif-icon').textContent  = icon;
       document.getElementById('bm-notif-label').textContent = name;
       document.getElementById('bm-notif-label').style.color = isBonus ? 'var(--green-accent)' : 'var(--danger)';
-      document.getElementById('bm-notif-from').textContent  = `${from_pseudo} t'envoie ça...`;
-      document.getElementById('bm-notif-pts').textContent   = `${isBonus ? '+' : ''}${pts} pts`;
+      document.getElementById('bm-notif-from').textContent  = mystery;
+      document.getElementById('bm-notif-pts').textContent   = ptsStr;
       document.getElementById('bm-notif-pts').style.color   = isBonus ? 'var(--green-accent)' : 'var(--danger)';
       overlay.style.display = 'flex';
       loadGroupe(true);

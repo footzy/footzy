@@ -232,8 +232,13 @@
       switcher.addEventListener('change', () => { currentGroupeId = switcher.value; loadGroupe(); subscribeRealtime(); });
       await loadGroupe();
       subscribeRealtime();
-      // Polling fallback toutes les 5s (au cas où le realtime rate un event)
-      setInterval(() => loadGroupe(), 5000);
+      // Polling fallback toutes les 5s selon l'onglet actif
+      setInterval(() => {
+        const activeTab = document.querySelector('.tab-btn.active')?.dataset?.tab;
+        if (activeTab === 'pronos') loadGroupePronos();
+        else if (activeTab === 'tous') loadTousPronos();
+        else loadGroupe();
+      }, 5000);
       // Masquer "Créer un groupe" pour tout le monde déjà dans un groupe
       isAlreadyInGroup = true;
       document.getElementById('create-groupe-btn').style.display = 'none';
@@ -356,7 +361,12 @@
     function subscribeRealtime() {
       if (realtimeChannel) supabase.removeChannel(realtimeChannel);
       realtimeChannel = supabase.channel('groupe-' + currentGroupeId)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'pronostics', filter: `groupe_id=eq.${currentGroupeId}` }, () => loadGroupe())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'pronostics', filter: `groupe_id=eq.${currentGroupeId}` }, () => {
+          const activeTab = document.querySelector('.tab-btn.active')?.dataset?.tab;
+          if (activeTab === 'pronos') loadGroupePronos();
+          else if (activeTab === 'tous') loadTousPronos();
+          else loadGroupe();
+        })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'groupe_membres' }, (payload) => {
           const id = payload.new?.groupe_id ?? payload.old?.groupe_id;
           if (id === currentGroupeId) loadGroupe();

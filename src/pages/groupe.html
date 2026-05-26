@@ -28,13 +28,21 @@
 
     <!-- Tabs -->
     <div class="tabs">
-      <button class="tab-btn active" data-tab="groupe">Mon groupe</button>
-      <button class="tab-btn" data-tab="mondial">Leaderboard mondial</button>
+      <button class="tab-btn active" data-tab="groupe">Classement</button>
+      <button class="tab-btn" data-tab="pronos">Pronos</button>
+      <button class="tab-btn" data-tab="mondial">Mondial</button>
     </div>
 
     <!-- Groupe tab -->
     <div id="tab-groupe">
       <div id="groupe-leaderboard">
+        <div style="text-align:center;padding:32px;color:var(--text-tertiary)">Chargement...</div>
+      </div>
+    </div>
+
+    <!-- Pronos tab -->
+    <div id="tab-pronos" style="display:none">
+      <div id="groupe-pronos">
         <div style="text-align:center;padding:32px;color:var(--text-tertiary)">Chargement...</div>
       </div>
     </div>
@@ -290,10 +298,87 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById('tab-groupe').style.display = btn.dataset.tab === 'groupe' ? 'block' : 'none';
+        document.getElementById('tab-pronos').style.display = btn.dataset.tab === 'pronos' ? 'block' : 'none';
         document.getElementById('tab-mondial').style.display = btn.dataset.tab === 'mondial' ? 'block' : 'none';
         if (btn.dataset.tab === 'mondial') loadMondial();
+        if (btn.dataset.tab === 'pronos') loadGroupePronos();
       });
     });
+
+    // Pronos du groupe
+    async function loadGroupePronos() {
+      const el = document.getElementById('groupe-pronos');
+      el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-tertiary)">Chargement...</div>';
+
+      // Prochains matchs
+      const { data: matchs } = await supabase
+        .from('matchs')
+        .select('id,equipe1,equipe2,date_match,phase')
+        .gte('date_match', new Date().toISOString())
+        .order('date_match', { ascending: true })
+        .limit(15);
+
+      // Pronos existants de l'utilisateur
+      const { data: mesPronos } = await supabase
+        .from('pronostics')
+        .select('match_id,prediction')
+        .eq('user_id', user.id);
+      const pronoMap = Object.fromEntries((mesPronos || []).map(p => [p.match_id, p.prediction]));
+
+      if (!matchs?.length) {
+        el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-tertiary)">Aucun match à venir</div>';
+        return;
+      }
+
+      el.innerHTML = matchs.map(m => {
+        const d = new Date(m.date_match);
+        const dateStr = d.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' });
+        const timeStr = d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+        const pred = pronoMap[m.id];
+        const btn = (val, label) => `
+          <button class="prono-btn" data-match="${m.id}" data-val="${val}"
+            style="flex:1;padding:8px 4px;border-radius:10px;border:1.5px solid ${pred === val ? 'var(--green-accent)' : 'var(--border)'};
+            background:${pred === val ? 'rgba(0,255,100,0.1)' : 'transparent'};
+            color:${pred === val ? 'var(--green-accent)' : 'var(--text-secondary)'};
+            font-size:12px;font-weight:700;cursor:pointer;transition:all .15s">
+            ${label}
+          </button>`;
+        return `
+          <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
+            <div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px">${dateStr} · ${timeStr} · <span style="text-transform:uppercase;letter-spacing:.05em">${m.phase || ''}</span></div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+              <span style="flex:1;text-align:right;font-weight:700;font-size:14px">${m.equipe1}</span>
+              <span style="font-size:11px;color:var(--text-tertiary);font-weight:600">VS</span>
+              <span style="flex:1;text-align:left;font-weight:700;font-size:14px">${m.equipe2}</span>
+            </div>
+            <div style="display:flex;gap:8px">
+              ${btn('1', m.equipe1.split(' ').slice(-1)[0])}
+              ${btn('N', 'Nul')}
+              ${btn('2', m.equipe2.split(' ').slice(-1)[0])}
+            </div>
+          </div>`;
+      }).join('');
+
+      // Gestion des clics sur les boutons de prono
+      el.querySelectorAll('.prono-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const matchId = btn.dataset.match;
+          const val = btn.dataset.val;
+          await supabase.from('pronostics').upsert(
+            { user_id: user.id, match_id: matchId, prediction: val, groupe_id: currentGroupeId },
+            { onConflict: 'user_id,match_id' }
+          );
+          // Mise à jour visuelle immédiate
+          el.querySelectorAll(`.prono-btn[data-match="${matchId}"]`).forEach(b => {
+            const active = b.dataset.val === val;
+            b.style.borderColor = active ? 'var(--green-accent)' : 'var(--border)';
+            b.style.background = active ? 'rgba(0,255,100,0.1)' : 'transparent';
+            b.style.color = active ? 'var(--green-accent)' : 'var(--text-secondary)';
+          });
+          toast('Prono enregistré ✅');
+        });
+      });
+    }
 
     // Create group
     document.getElementById('create-groupe-btn').addEventListener('click', () => {

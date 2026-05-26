@@ -410,11 +410,11 @@
 
       const premiumIds = premiumProfiles.map(p => p.id);
 
+      // 2a. Load pronos (join matchs only — no direct FK to profiles)
       const { data: pronos, error } = await supabase
         .from('pronostics')
         .select(`
           id, user_id, home_score, away_score, status, points, created_at,
-          profiles ( pseudo, plan ),
           matchs ( id, home_team, away_team, home_flag, away_flag, kickoff_at, status, home_score, away_score )
         `)
         .in('user_id', premiumIds)
@@ -425,6 +425,15 @@
         feedList.innerHTML = emptyState('📭', 'Feed vide', 'Aucun pronostic premium publié pour l\'instant. Appuie sur + pour poster le tien !');
         return;
       }
+
+      // 2b. Load profiles separately and merge
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, pseudo, plan')
+        .in('id', premiumIds);
+      const profilesMap = {};
+      profilesData?.forEach(p => { profilesMap[p.id] = p; });
+      pronos.forEach(p => { p.profiles = profilesMap[p.user_id] || null; });
 
       const pronoIds = pronos.map(p => p.id);
 

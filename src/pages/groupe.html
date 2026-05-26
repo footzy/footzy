@@ -590,15 +590,17 @@
       };
 
       relaunchBtn.onclick = async () => {
-        const ok = await showConfirm({ icon: '🔄', title: 'Nouvelle partie ?', message: 'Les points bonus/malus et les pronostics seront remis à zéro. Prêt pour une nouvelle manche !', label: '🔄 C\'est parti !', danger: false });
+        const ok = await showConfirm({ icon: '🔄', title: 'Nouvelle partie ?', message: 'Les points de tous les joueurs seront remis à zéro. Prêt pour une nouvelle manche !', label: '🔄 C\'est parti !', danger: false });
         if (!ok) return;
+        // RPC SECURITY DEFINER → contourne RLS, reset tous les points du groupe
+        const { error } = await supabase.rpc('reset_groupe_points', {
+          p_groupe_id: currentGroupeId,
+          p_admin_id: user.id,
+        });
+        if (error) { toast('Erreur reset points ❌ ' + error.message); return; }
         // Remettre le statut en attente
         await supabase.from('groupes').update({ statut: 'attente' }).eq('id', currentGroupeId);
-        // Supprimer tous les bonus/malus du groupe (reset des pts BM)
-        await supabase.from('bonus_malus').delete().eq('groupe_id', currentGroupeId);
-        // Remettre les points de pronostics à 0 pour ce groupe
-        await supabase.from('pronostics').update({ points: 0, status: 'pending' }).eq('groupe_id', currentGroupeId);
-        toast('Nouvelle partie lancée ! Points remis à zéro 🔄');
+        toast('Nouvelle partie ! Points remis à zéro 🔄');
         loadGroupe(true);
       };
 

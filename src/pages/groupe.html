@@ -407,12 +407,13 @@
       el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-tertiary)">Chargement...</div>';
 
       // Prochains matchs depuis Supabase (vrais noms de colonnes)
-      let { data: matchs } = await supabase
+      let { data: matchs, error: matchsErr } = await supabase
         .from('matchs')
         .select('id,home_team,away_team,home_flag,away_flag,kickoff_at,phase')
         .gte('kickoff_at', new Date().toISOString())
         .order('kickoff_at', { ascending: true })
         .limit(15);
+      if (matchsErr) console.error('[Pronos] matchs query error:', matchsErr);
 
       // Fallback visuel si pas encore de matchs en base
       if (!matchs?.length) {
@@ -573,12 +574,13 @@
         .eq('groupe_id', currentGroupeId);
 
       // Prochains matchs (vrais noms de colonnes)
-      let { data: matchs } = await supabase
+      let { data: matchs, error: matchsErr2 } = await supabase
         .from('matchs')
         .select('id,home_team,away_team,home_flag,away_flag,kickoff_at,phase')
         .gte('kickoff_at', new Date().toISOString())
         .order('kickoff_at', { ascending: true })
         .limit(20);
+      if (matchsErr2) console.error('[TousPronos] matchs query error:', matchsErr2);
 
       // Fallback démo si pas de vrais matchs
       if (!matchs?.length) {

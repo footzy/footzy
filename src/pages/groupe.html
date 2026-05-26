@@ -113,6 +113,11 @@
           🏁 Terminer le jeu
         </button>
 
+        <!-- Relancer le jeu (admin, statut=termine) -->
+        <button id="relaunch-game-btn" class="cta-primary" style="display:none;margin-top:14px;font-size:15px;font-weight:700">
+          🔄 Relancer le jeu
+        </button>
+
       </div>
 
       <div id="groupe-leaderboard">
@@ -319,6 +324,7 @@
     let realtimeChannel = null;
     let kickedFromGroup = false;
     let isAlreadyInGroup = false;
+    let currentGroupeStatut = 'attente'; // suivi du statut pour verrouiller les pronos
 
     // Écouter les notifications personnelles (kick + suppression groupe)
     supabase.channel(`notif-${user.id}`)
@@ -426,14 +432,16 @@
       const isAdmin = myMembership?.role === 'admin';
 
       // ── Gage + statut ──
-      const gageSection  = document.getElementById('gage-section');
-      const statusBadge  = document.getElementById('game-status-badge');
-      const gageDisplay  = document.getElementById('gage-display');
-      const gageInput    = document.getElementById('gage-input');
-      const gageEditBtn  = document.getElementById('gage-edit-btn');
-      const launchBtn    = document.getElementById('launch-game-btn');
-      const endBtn       = document.getElementById('end-game-btn');
+      const gageSection     = document.getElementById('gage-section');
+      const statusBadge     = document.getElementById('game-status-badge');
+      const gageDisplay     = document.getElementById('gage-display');
+      const gageInput       = document.getElementById('gage-input');
+      const gageEditBtn     = document.getElementById('gage-edit-btn');
+      const launchBtn       = document.getElementById('launch-game-btn');
+      const endBtn          = document.getElementById('end-game-btn');
+      const relaunchBtn     = document.getElementById('relaunch-game-btn');
       gageSection.style.display = 'block';
+      currentGroupeStatut = groupe.statut || 'attente';
 
       // Badge statut
       const statusMap = {
@@ -468,9 +476,10 @@
         };
       }
 
-      // Admin : boutons lancer / terminer
-      launchBtn.style.display = (isAdmin && groupe.statut === 'attente') ? '' : 'none';
-      endBtn.style.display    = (isAdmin && groupe.statut === 'en_cours') ? '' : 'none';
+      // Admin : boutons lancer / terminer / relancer
+      launchBtn.style.display    = (isAdmin && groupe.statut === 'attente')  ? '' : 'none';
+      endBtn.style.display       = (isAdmin && groupe.statut === 'en_cours') ? '' : 'none';
+      relaunchBtn.style.display  = (isAdmin && groupe.statut === 'termine')  ? '' : 'none';
 
       launchBtn.onclick = async () => {
         if (!groupe.gage) {
@@ -491,10 +500,18 @@
       };
 
       endBtn.onclick = async () => {
-        const ok = await showConfirm({ icon: '🏁', title: 'Terminer le jeu ?', message: 'Le classement sera figé. Action irréversible.', label: 'Terminer', danger: true });
+        const ok = await showConfirm({ icon: '🏁', title: 'Terminer le jeu ?', message: 'Le classement sera figé. Les pronos seront définitivement verrouillés.', label: 'Terminer', danger: true });
         if (!ok) return;
         await supabase.from('groupes').update({ statut: 'termine' }).eq('id', currentGroupeId);
         toast('Jeu terminé ! 🏁');
+        loadGroupe(true);
+      };
+
+      relaunchBtn.onclick = async () => {
+        const ok = await showConfirm({ icon: '🔄', title: 'Relancer le jeu ?', message: 'Le statut repasse en "En attente". Les membres pourront à nouveau modifier leurs pronos.', label: '🔄 Relancer', danger: false });
+        if (!ok) return;
+        await supabase.from('groupes').update({ statut: 'attente' }).eq('id', currentGroupeId);
+        toast('Jeu remis en attente 🔄');
         loadGroupe(true);
       };
 
@@ -721,9 +738,10 @@
           const phase = phaseLabel[m.phase] || m.phase;
           const pred = pronoMap[m.id];
           const hasPred = pred != null;
+          const locked = currentGroupeStatut !== 'attente'; // pronos verrouillés si jeu lancé
           return `
           <div class="match-card" data-match-id="${m.id}"
-            style="padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s">
+            style="padding:12px 16px;border-bottom:1px solid var(--border);cursor:${locked ? 'default' : 'pointer'};transition:background .15s;${locked ? 'opacity:0.85' : ''}">
 
             <!-- Ligne 1 : heure + phase -->
             <div style="text-align:center;margin-bottom:10px">
@@ -751,10 +769,14 @@
 
             <!-- Ligne 3 : action -->
             <div style="text-align:center;margin-top:10px">
-              ${hasPred
-                ? `<div style="font-size:10px;color:var(--green-accent);margin-bottom:4px">✓ prédit</div>
-                   <button class="delete-prono-btn" data-match-id="${m.id}" style="background:none;border:none;cursor:pointer;font-size:10px;color:var(--text-tertiary);padding:2px 8px;border-radius:4px">🗑 supprimer</button>`
-                : `<div style="display:inline-block;font-size:11px;font-weight:700;color:var(--green-accent);border:1px solid var(--green-accent);border-radius:8px;padding:5px 14px">Pronostiquer →</div>`
+              ${locked
+                ? hasPred
+                  ? `<div style="font-size:10px;color:var(--green-accent)">✓ prédit · <span style="color:var(--text-tertiary)">🔒 verrouillé</span></div>`
+                  : `<div style="font-size:10px;color:var(--text-tertiary)">🔒 Pronos verrouillés</div>`
+                : hasPred
+                  ? `<div style="font-size:10px;color:var(--green-accent);margin-bottom:4px">✓ prédit</div>
+                     <button class="delete-prono-btn" data-match-id="${m.id}" style="background:none;border:none;cursor:pointer;font-size:10px;color:var(--text-tertiary);padding:2px 8px;border-radius:4px">🗑 supprimer</button>`
+                  : `<div style="display:inline-block;font-size:11px;font-weight:700;color:var(--green-accent);border:1px solid var(--green-accent);border-radius:8px;padding:5px 14px">Pronostiquer →</div>`
               }
             </div>
 
@@ -783,9 +805,13 @@
         });
       });
 
-      // Clic sur une carte → ouvre le modal
+      // Clic sur une carte → ouvre le modal (bloqué si jeu lancé)
       el.querySelectorAll('.match-card').forEach(card => {
         card.addEventListener('click', () => {
+          if (currentGroupeStatut !== 'attente') {
+            toast('🔒 Les pronos sont verrouillés — le jeu est lancé !');
+            return;
+          }
           const matchId = card.dataset.matchId;
           const m = matchs.find(x => x.id === matchId);
           if (!m) return;

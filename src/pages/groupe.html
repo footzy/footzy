@@ -608,7 +608,6 @@
       const phaseLabel = { groupes:'Groupes', huitiemes:'Huitièmes', quarts:'Quarts', demis:'Demis', finale:'Finale' };
 
       el.innerHTML = matchs.map(m => {
-        const flag1 = m.equipe1.split(' ')[0];
         const d = new Date(m.kickoff_at);
         const dateStr = d.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' });
         const timeStr = d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });

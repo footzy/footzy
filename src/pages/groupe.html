@@ -540,6 +540,12 @@
 
     document.getElementById('save-prono-btn').addEventListener('click', async () => {
       if (!modalCurrentMatch) return;
+      // Données de démo (IDs non-UUID) — pas de sauvegarde
+      if (!/^[0-9a-f-]{36}$/.test(modalCurrentMatch.id)) {
+        toast('🏆 Les vrais matchs arrivent le 14 juin — données de démo pour l\'instant !');
+        document.getElementById('match-prono-modal').classList.remove('open');
+        return;
+      }
       const btn = document.getElementById('save-prono-btn');
       btn.disabled = true; btn.textContent = 'Enregistrement...';
       const { error } = await supabase.from('pronostics').upsert({

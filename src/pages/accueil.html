@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Footzy — Accueil</title>
+  <link rel="stylesheet" href="/src/css/tokens.css" />
+  <link rel="stylesheet" href="/src/css/components.css" />
+  <link rel="stylesheet" href="/src/css/pages.css" />
+  <style>
+    /* ── Feed card ── */
+    .feed-card {
+      background: var(--bg-card-elevated);
+      border: 1px solid var(--border-glass);
+      border-radius: 20px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .feed-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px 10px;
+    }
+    .feed-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--green-dim);
+      border: 1px solid var(--green-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--green-accent);
+      flex-shrink: 0;
+    }
+    .feed-user-info { flex: 1; min-width: 0; }
+    .feed-pseudo {
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .feed-plan-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #FFD700;
+      background: rgba(255,215,0,0.10);
+      border: 1px solid rgba(255,215,0,0.22);
+      border-radius: 50px;
+      padding: 2px 8px;
+      margin-top: 3px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .feed-status-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 50px;
+      flex-shrink: 0;
+    }
+    .feed-status-badge.won   { background: var(--green-dim); color: var(--green-accent); border: 1px solid var(--green-border); }
+    .feed-status-badge.exact { background: rgba(255,215,0,0.1); color: var(--gold); border: 1px solid rgba(255,215,0,0.25); }
+    .feed-status-badge.lost  { background: rgba(255,68,68,0.08); color: var(--danger); border: 1px solid rgba(255,68,68,0.18); }
+
+    .feed-match-info {
+      padding: 0 16px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .feed-match-flags { font-size: 20px; flex-shrink: 0; }
+    .feed-match-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+    .feed-match-date {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 1px;
+    }
+
+    .feed-prono-display {
+      margin: 0 16px 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border-glass);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .feed-prono-team {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+    }
+    .feed-prono-team .flag  { font-size: 24px; }
+    .feed-prono-team .name  { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); }
+    .feed-prono-score {
+      font-size: 36px;
+      font-weight: 900;
+      font-style: italic;
+      letter-spacing: -0.03em;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .feed-prono-score .sep { font-size: 22px; opacity: 0.25; font-style: normal; font-weight: 400; }
+
+    .feed-reactions {
+      padding: 0 16px 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .reaction-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border-glass);
+      border-radius: 50px;
+      padding: 5px 11px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.18s;
+      user-select: none;
+    }
+    .reaction-btn .count {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+    .reaction-btn.active {
+      background: var(--green-dim);
+      border-color: var(--green-border);
+    }
+    .reaction-btn.active .count { color: var(--green-accent); }
+    .reaction-btn:active { transform: scale(0.92); }
+
+    /* ── Empty / placeholder states ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 24px 40px;
+      color: var(--text-tertiary);
+    }
+    .empty-state .icon   { font-size: 52px; margin-bottom: 14px; }
+    .empty-state h3      { font-size: 16px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; }
+    .empty-state p       { font-size: 13px; line-height: 1.7; }
+
+    /* ── Actualité placeholder ── */
+    .actu-coming-soon {
+      margin: 16px;
+      background: var(--bg-card-elevated);
+      border: 1px solid var(--border-glass);
+      border-radius: 20px;
+      padding: 32px 24px;
+      text-align: center;
+    }
+    .actu-coming-soon .icon  { font-size: 44px; margin-bottom: 12px; }
+    .actu-coming-soon h3     { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
+    .actu-coming-soon p      { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="page-content">
+
+    <!-- Header -->
+    <div class="home-header">
+      <span class="home-logo">Footzy</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="user-streak" style="font-size:13px;color:var(--text-secondary)"></span>
+        <div id="user-avatar"
+          style="width:34px;height:34px;border-radius:50%;background:var(--green-primary);border:1px solid var(--green-soft);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer"
+          onclick="window.location.href='/src/pages/profil.html'">👤</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs" style="margin-top:16px">
+      <button class="tab-btn active" id="tab-actu"  onclick="switchTab('actu')">Actualité</button>
+      <button class="tab-btn"        id="tab-feed"  onclick="switchTab('feed')">Feed ⭐</button>
+    </div>
+
+    <!-- ── Actualité tab ── -->
+    <div id="panel-actu">
+      <div class="actu-coming-soon">
+        <div class="icon">📰</div>
+        <h3>Actualité CdM 2026</h3>
+        <p>Les dernières news, résultats et analyses de la Coupe du Monde arrivent très bientôt. Reste connecté !</p>
+      </div>
+    </div>
+
+    <!-- ── Feed tab ── -->
+    <div id="panel-feed" style="display:none">
+      <div id="feed-list" style="display:flex;flex-direction:column;gap:10px;padding:0 16px 16px">
+        <div style="text-align:center;padding:48px 20px;color:var(--text-tertiary)">Chargement…</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <a href="/src/pages/accueil.html" class="active"><span style="font-size:22px">🏠</span><span>Accueil</span></a>
+    <a href="/src/pages/home.html"><span style="font-size:22px">⚽</span><span>Matchs</span></a>
+    <a href="/src/pages/pronostic.html"><span style="font-size:22px">🎯</span><span>Pronos</span></a>
+    <a href="/src/pages/groupe.html"><span style="font-size:22px">👥</span><span>Groupe</span></a>
+    <a href="/src/pages/profil.html"><span style="font-size:22px">👤</span><span>Profil</span></a>
+  </nav>
+
+  <script type="module">
+    import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
+    import { formatDate } from '/src/js/lib/utils.js';
+
+    const user    = await requireAuth();
+    if (!user) throw new Error('not authed');
+    const profile = await getCurrentProfile();
+
+    // ── Avatar / streak ──
+    if (profile) {
+      document.getElementById('user-avatar').textContent = profile.pseudo?.[0]?.toUpperCase() || '👤';
+      if (profile.streak_quotidien > 0)
+        document.getElementById('user-streak').textContent = `🔥 ${profile.streak_quotidien}`;
+    }
+
+    // ── Tab switching ──
+    let feedLoaded = false;
+    window.switchTab = (tab) => {
+      document.getElementById('tab-actu').classList.toggle('active', tab === 'actu');
+      document.getElementById('tab-feed').classList.toggle('active', tab === 'feed');
+      document.getElementById('panel-actu').style.display = tab === 'actu' ? '' : 'none';
+      document.getElementById('panel-feed').style.display = tab === 'feed' ? '' : 'none';
+      if (tab === 'feed' && !feedLoaded) loadFeed();
+    };
+
+    // ── My reactions cache ──
+    let myReactions = {}; // pronoId → emoji
+
+    // ── Load feed ──
+    async function loadFeed() {
+      feedLoaded = true;
+      const feedList = document.getElementById('feed-list');
+
+      // 1. Get IDs of premium users
+      const { data: premiumProfiles } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('plan', 'mid');
+
+      if (!premiumProfiles?.length) {
+        feedList.innerHTML = emptyState('⭐', 'Aucun membre Premium', 'Sois le premier à passer Premium pour que tes pronos apparaissent ici !');
+        return;
+      }
+
+      const premiumIds = premiumProfiles.map(p => p.id);
+
+      // 2. Load their pronostics + match info + profile
+      const { data: pronos, error } = await supabase
+        .from('pronostics')
+        .select(`
+          id, user_id, home_score, away_score, status, points, created_at,
+          profiles ( pseudo, plan ),
+          matchs ( id, home_team, away_team, home_flag, away_flag, kickoff_at, status, home_score, away_score, phase, groupe )
+        `)
+        .in('user_id', premiumIds)
+        .order('created_at', { ascending: false })
+        .limit(30);
+
+      if (error || !pronos?.length) {
+        feedList.innerHTML = emptyState('📭', 'Feed vide', 'Aucun pronostic premium publié pour l\'instant.');
+        return;
+      }
+
+      // 3. Load my reactions
+      const pronoIds = pronos.map(p => p.id);
+      const { data: myRxData } = await supabase
+        .from('feed_reactions')
+        .select('prono_id, emoji')
+        .eq('user_id', user.id)
+        .in('prono_id', pronoIds);
+
+      myReactions = {};
+      myRxData?.forEach(r => { myReactions[r.prono_id] = r.emoji; });
+
+      // 4. Load all reaction counts
+      const { data: allRxData } = await supabase
+        .from('feed_reactions')
+        .select('prono_id, emoji')
+        .in('prono_id', pronoIds);
+
+      const rxCounts = {}; // pronoId → { emoji → count }
+      allRxData?.forEach(r => {
+        if (!rxCounts[r.prono_id]) rxCounts[r.prono_id] = {};
+        rxCounts[r.prono_id][r.emoji] = (rxCounts[r.prono_id][r.emoji] || 0) + 1;
+      });
+
+      // 5. Render
+      feedList.innerHTML = pronos.map(p => renderCard(p, rxCounts[p.id] || {})).join('');
+
+      // 6. Attach reaction listeners
+      feedList.querySelectorAll('.reaction-btn').forEach(btn =>
+        btn.addEventListener('click', handleReaction)
+      );
+    }
+
+    // ── Render one feed card ──
+    function renderCard(p, counts) {
+      const m    = p.matchs;
+      const prof = p.profiles;
+      const init = (prof?.pseudo?.[0] || '?').toUpperCase();
+
+      // Status badge
+      let statusBadge = '';
+      if (p.status === 'won' || p.status === 'en-vie-exact')
+        statusBadge = `<span class="feed-status-badge won">+${p.points} pts</span>`;
+      else if (p.status === 'en-vie-exact')
+        statusBadge = `<span class="feed-status-badge exact">⭐ Exact</span>`;
+      else if (p.status === 'lost')
+        statusBadge = `<span class="feed-status-badge lost">0 pt</span>`;
+
+      // Match date
+      const dateLabel = m ? formatDate(m.kickoff_at) : '';
+
+      // Reaction buttons
+      const EMOJIS = ['🔥', '👏', '😱', '🎯'];
+      const rxHTML = EMOJIS.map(emoji => {
+        const cnt    = counts[emoji] || 0;
+        const active = myReactions[p.id] === emoji;
+        return `<button class="reaction-btn${active ? ' active' : ''}" data-prono="${p.id}" data-emoji="${emoji}">
+          ${emoji}${cnt > 0 ? ` <span class="count">${cnt}</span>` : ''}
+        </button>`;
+      }).join('');
+
+      return `
+        <div class="feed-card">
+          <div class="feed-card-header">
+            <div class="feed-avatar">${init}</div>
+            <div class="feed-user-info">
+              <div class="feed-pseudo">${prof?.pseudo || '???'}</div>
+              <div><span class="feed-plan-badge">⭐ Premium</span></div>
+            </div>
+            ${statusBadge}
+          </div>
+
+          <div class="feed-match-info">
+            <span class="feed-match-flags">${m?.home_flag || ''}${m?.away_flag || ''}</span>
+            <div>
+              <div class="feed-match-name">${m?.home_team || '?'} vs ${m?.away_team || '?'}</div>
+              <div class="feed-match-date">${dateLabel}</div>
+            </div>
+          </div>
+
+          <div class="feed-prono-display">
+            <div class="feed-prono-team">
+              <span class="flag">${m?.home_flag || ''}</span>
+              <span class="name">${m?.home_team || '?'}</span>
+            </div>
+            <div class="feed-prono-score">
+              <span>${p.home_score}</span>
+              <span class="sep">–</span>
+              <span>${p.away_score}</span>
+            </div>
+            <div class="feed-prono-team">
+              <span class="flag">${m?.away_flag || ''}</span>
+              <span class="name">${m?.away_team || '?'}</span>
+            </div>
+          </div>
+
+          <div class="feed-reactions">${rxHTML}</div>
+        </div>`;
+    }
+
+    // ── Handle reaction click ──
+    async function handleReaction(e) {
+      const btn     = e.currentTarget;
+      const pronoId = btn.dataset.prono;
+      const emoji   = btn.dataset.emoji;
+      const card    = btn.closest('.feed-card');
+
+      if (myReactions[pronoId] === emoji) {
+        // Toggle off
+        await supabase.from('feed_reactions')
+          .delete()
+          .eq('prono_id', pronoId)
+          .eq('user_id', user.id);
+        delete myReactions[pronoId];
+      } else {
+        // Upsert (one reaction per user per prono)
+        await supabase.from('feed_reactions').upsert(
+          { prono_id: pronoId, user_id: user.id, emoji },
+          { onConflict: 'prono_id,user_id' }
+        );
+        myReactions[pronoId] = emoji;
+      }
+
+      // Refresh counts for this card
+      const { data: fresh } = await supabase
+        .from('feed_reactions')
+        .select('emoji')
+        .eq('prono_id', pronoId);
+
+      const freshCounts = {};
+      fresh?.forEach(r => { freshCounts[r.emoji] = (freshCounts[r.emoji] || 0) + 1; });
+
+      const EMOJIS = ['🔥', '👏', '😱', '🎯'];
+      const allBtns = [...card.querySelectorAll('.reaction-btn')];
+      allBtns.forEach((b, i) => {
+        const em     = EMOJIS[i];
+        const cnt    = freshCounts[em] || 0;
+        const active = myReactions[pronoId] === em;
+        const newBtn = b.cloneNode(false);
+        newBtn.className = 'reaction-btn' + (active ? ' active' : '');
+        newBtn.dataset.prono = pronoId;
+        newBtn.dataset.emoji = em;
+        newBtn.innerHTML = `${em}${cnt > 0 ? ` <span class="count">${cnt}</span>` : ''}`;
+        newBtn.addEventListener('click', handleReaction);
+        b.replaceWith(newBtn);
+      });
+    }
+
+    function emptyState(icon, title, text) {
+      return `<div class="empty-state"><div class="icon">${icon}</div><h3>${title}</h3><p>${text}</p></div>`;
+    }
+  </script>
+</body>
+</html>

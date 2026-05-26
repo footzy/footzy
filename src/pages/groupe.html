@@ -85,6 +85,16 @@
     </div>
   </div>
 
+  <!-- Kicked modal -->
+  <div class="modal-overlay" id="kicked-modal">
+    <div class="modal-sheet" style="text-align:center">
+      <div style="font-size:48px;margin-bottom:16px">👋</div>
+      <h2 id="kicked-title" style="font-size:18px;font-weight:700;margin-bottom:8px">Vous avez été exclu</h2>
+      <p id="kicked-msg" style="font-size:14px;color:var(--text-tertiary);margin-bottom:24px"></p>
+      <button class="cta-primary" onclick="window.location.href='/src/pages/groupe.html'">OK</button>
+    </div>
+  </div>
+
   <script type="module">
     import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
     import { shareCode, toast } from '/src/js/lib/utils.js';
@@ -96,6 +106,17 @@
     const params = new URLSearchParams(location.search);
     let currentGroupeId = params.get('id');
     let realtimeChannel = null;
+    let kickedFromGroup = false;
+
+    // Écouter les notifications personnelles (kick)
+    supabase.channel(`notif-${user.id}`)
+      .on('broadcast', { event: 'kicked' }, ({ payload }) => {
+        kickedFromGroup = true;
+        document.getElementById('kicked-title').textContent = `${payload.admin_pseudo} vous a exclu`;
+        document.getElementById('kicked-msg').textContent = `Vous avez été retiré du groupe "${payload.groupe_nom}".`;
+        document.getElementById('kicked-modal').classList.add('open');
+      })
+      .subscribe();
 
     // Load groups
     const { data: memberships } = await supabase
@@ -136,6 +157,17 @@
         .eq('groupe_id', currentGroupeId);
 
       const myMembership = membres?.find(m => m.user_id === user.id);
+
+      // Utilisateur exclu (détecté via polling)
+      if (!myMembership && !kickedFromGroup) {
+        kickedFromGroup = true;
+        document.getElementById('kicked-title').textContent = 'Vous avez été exclu';
+        document.getElementById('kicked-msg').textContent = 'Un admin vous a retiré de ce groupe.';
+        document.getElementById('kicked-modal').classList.add('open');
+        return;
+      }
+      if (kickedFromGroup) return;
+
       const isAdmin = myMembership?.role === 'admin';
 
       const sorted = (membres || [])
@@ -173,6 +205,11 @@
             .eq('groupe_id', currentGroupeId)
             .eq('user_id', uid);
           if (error) { toast('Erreur lors de l\'exclusion ❌'); btn.disabled = false; return; }
+          // Notifier l'exclu en temps réel
+          const notifCh = supabase.channel(`notif-${uid}`);
+          await notifCh.subscribe();
+          await notifCh.send({ type: 'broadcast', event: 'kicked', payload: { admin_pseudo: profile.pseudo, groupe_nom: groupe.nom } });
+          supabase.removeChannel(notifCh);
           toast(`${name} a été exclu 👋`);
           loadGroupe();
         });

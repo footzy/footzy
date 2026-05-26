@@ -7,6 +7,28 @@
   <link rel="stylesheet" href="/src/css/tokens.css" />
   <link rel="stylesheet" href="/src/css/components.css" />
   <link rel="stylesheet" href="/src/css/pages.css" />
+  <style>
+    /* Modal pronostique — bottom sheet mobile, dialog centré desktop */
+    #match-prono-modal { align-items: flex-end; padding: 0; }
+    #match-prono-modal > div {
+      width: 100%;
+      border-radius: 20px 20px 0 0;
+      max-height: 92vh;
+      overflow-y: auto;
+    }
+    @media (min-width: 600px) {
+      #match-prono-modal {
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      #match-prono-modal > div {
+        max-width: 480px;
+        border-radius: 20px;
+        max-height: 88vh;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="page-content">
@@ -112,8 +134,8 @@
   </div>
 
   <!-- Match pronostique bottom sheet -->
-  <div class="modal-overlay" id="match-prono-modal" style="align-items:flex-end;padding:0">
-    <div style="background:var(--surface-1);border-radius:20px 20px 0 0;width:100%;max-height:92vh;overflow-y:auto;padding-bottom:calc(16px + env(safe-area-inset-bottom))">
+  <div class="modal-overlay" id="match-prono-modal">
+    <div style="background:var(--surface-1);padding-bottom:calc(16px + env(safe-area-inset-bottom))">
       <!-- Drag handle + close -->
       <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 16px 8px">
         <h2 style="font-size:17px;font-weight:700">Mon pronostique</h2>

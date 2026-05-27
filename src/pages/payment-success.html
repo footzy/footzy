@@ -12,39 +12,56 @@
   <main style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center">
     <div style="font-size:64px;margin-bottom:16px" id="result-icon">⏳</div>
     <h1 style="font-size:24px;font-weight:700;margin-bottom:8px" id="result-title">Traitement en cours...</h1>
-    <p style="color:var(--text-secondary);margin-bottom:32px" id="result-msg">Ton accès va être activé dans quelques secondes.</p>
-    <a href="/src/pages/home.html" class="cta-primary" style="max-width:280px;display:flex">Retour à l'accueil</a>
+    <p style="color:var(--fg-muted);margin-bottom:32px" id="result-msg">Ton accès va être activé dans quelques secondes.</p>
+    <a href="/src/pages/accueil.html" class="fz-btn fz-btn--primary" style="max-width:280px" id="cta-btn">Retour à l'accueil</a>
   </main>
 
   <script type="module">
     import { supabase } from '/src/js/lib/supabase.js';
 
-    const iconEl = document.getElementById('result-icon');
+    const iconEl  = document.getElementById('result-icon');
     const titleEl = document.getElementById('result-title');
-    const msgEl = document.getElementById('result-msg');
+    const msgEl   = document.getElementById('result-msg');
+    const ctaBtn  = document.getElementById('cta-btn');
 
-    // Poll for profile update (webhook may be slightly delayed)
-    let attempts = 0;
-    const poll = setInterval(async () => {
-      attempts++;
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { clearInterval(poll); return; }
+    // Cas spécial : retour après paiement "Modifier vainqueur"
+    const isPendingVainqueur = localStorage.getItem('footzy_pending_change_vainqueur') === '1';
+    if (isPendingVainqueur) {
+      // Le flag sera consommé par profil.html au retour
+      iconEl.textContent  = '✅';
+      titleEl.textContent = 'Paiement confirmé !';
+      msgEl.textContent   = 'Tu peux maintenant modifier ton pronostic vainqueur.';
+      ctaBtn.textContent  = 'Modifier ma prédiction';
+      ctaBtn.href         = '/src/pages/profil.html';
+      // (le localStorage flag reste pour que profil.html ouvre le modal)
+    } else {
+      // Cas standard : abonnement Premium — on poll le profil
+      let attempts = 0;
+      const poll = setInterval(async () => {
+        attempts++;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { clearInterval(poll); return; }
 
-      const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user.id).single();
-      if (profile?.plan === 'premium') {
-        clearInterval(poll);
-        iconEl.textContent = '✅';
-        titleEl.textContent = 'Accès Premium activé !';
-        msgEl.textContent = 'L\'Oracle IA et tous les Boosts sont maintenant disponibles.';
-      }
+        const { data: profile } = await supabase
+          .from('profiles').select('plan').eq('id', user.id).single();
 
-      if (attempts > 15) {
-        clearInterval(poll);
-        iconEl.textContent = '🕐';
-        titleEl.textContent = 'En cours d\'activation';
-        msgEl.textContent = 'Ton accès sera activé dans quelques minutes. Rafraîchis la page si nécessaire.';
-      }
-    }, 2000);
+        if (profile?.plan === 'premium') {
+          clearInterval(poll);
+          iconEl.textContent  = '✅';
+          titleEl.textContent = 'Accès Premium activé ! 🎉';
+          msgEl.textContent   = 'Oracle IA, Feed Premium et Boosts sont maintenant disponibles.';
+          ctaBtn.textContent  = 'Découvrir l\'Oracle 🔮';
+          ctaBtn.href         = '/src/pages/oracle.html';
+        }
+
+        if (attempts > 15) {
+          clearInterval(poll);
+          iconEl.textContent  = '🕐';
+          titleEl.textContent = 'Activation en cours...';
+          msgEl.textContent   = 'Ton accès sera actif dans quelques minutes. Rafraîchis si nécessaire.';
+        }
+      }, 2000);
+    }
   </script>
 </body>
 </html>

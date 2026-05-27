@@ -6,83 +6,111 @@
   <title>Footzy — Profil</title>
   <link rel="stylesheet" href="/src/css/tokens.css" />
   <link rel="stylesheet" href="/src/css/components.css" />
+  <link rel="stylesheet" href="/src/css/fz-components.css" />
   <link rel="stylesheet" href="/src/css/pages.css" />
 </head>
 <body>
   <div class="page-content">
-    <!-- Header -->
-    <div class="profil-header">
-      <div class="profil-avatar" id="avatar-el">👤</div>
-      <p class="profil-pseudo" id="pseudo-el">—</p>
-      <div id="plan-badge" style="margin-top:6px"></div>
+    <!-- Centered identity -->
+    <div style="padding:12px 20px 18px;display:flex;flex-direction:column;align-items:center;gap:10px">
+      <div style="position:relative">
+        <div class="fz-avatar fz-avatar--lg fz-avatar--accent" id="avatar-el">?</div>
+        <span id="premium-star" style="display:none;position:absolute;bottom:-2px;right:-2px;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#FFE08A,#D4A100);border:3px solid var(--bg);display:flex;align-items:center;justify-content:center;font-size:11px">⭐</span>
+      </div>
+      <h2 style="margin:4px 0 0;font-size:22px;font-weight:800;letter-spacing:-0.025em" id="pseudo-el">—</h2>
+      <div id="plan-badge"></div>
     </div>
 
-    <!-- Stats -->
-    <div class="stats-grid">
-      <div class="glass-card stat-card">
-        <div class="stat-value" id="stat-points">0</div>
-        <div class="stat-label">Points</div>
-      </div>
-      <div class="glass-card stat-card">
-        <div class="stat-value" id="stat-rang">—</div>
-        <div class="stat-label">Rang mondial</div>
-      </div>
-      <div class="glass-card stat-card">
-        <div class="stat-value" id="stat-exacts">0</div>
-        <div class="stat-label">Scores exacts</div>
-      </div>
-      <div class="glass-card stat-card">
-        <div class="stat-value" id="stat-streak">0🔥</div>
-        <div class="stat-label">Streak quotidien</div>
+    <!-- Stats 2×2 -->
+    <div style="padding:0 20px 18px">
+      <div class="fz-stat-grid">
+        <div class="fz-stat-tile">
+          <div class="fz-stat-tile__num accent" id="stat-points">0</div>
+          <div class="fz-stat-tile__label">Points totaux</div>
+        </div>
+        <div class="fz-stat-tile">
+          <div class="fz-stat-tile__num" id="stat-rang">—</div>
+          <div class="fz-stat-tile__label">Rang mondial</div>
+        </div>
+        <div class="fz-stat-tile">
+          <div class="fz-stat-tile__num" id="stat-exacts">0</div>
+          <div class="fz-stat-tile__label">Scores exacts</div>
+        </div>
+        <div class="fz-stat-tile">
+          <div class="fz-stat-tile__num" id="stat-streak" style="display:inline-flex;align-items:baseline;gap:4px">0<span style="font-size:20px">🔥</span></div>
+          <div class="fz-stat-tile__label">Streak quotidien</div>
+        </div>
       </div>
     </div>
 
     <!-- Pronostic vainqueur -->
-    <p class="section-title">Vainqueur CdM prédit</p>
-    <div style="padding:0 16px 4px">
-      <div class="glass-card" id="vainqueur-card" style="display:flex;align-items:center;gap:12px">
-        <span style="font-size:36px" id="vainqueur-flag">❓</span>
-        <div>
-          <p id="vainqueur-team" style="font-size:16px;font-weight:700">Non encore défini</p>
-          <p style="font-size:12px;color:var(--text-tertiary)">Ton pronostic vainqueur CdM 2026</p>
+    <div class="fz-section-h"><span class="fz-section-h__dot"></span><span class="fz-section-h__title">Mon pronostic vainqueur</span></div>
+    <div style="padding:0 20px 18px">
+      <div class="fz-card" id="vainqueur-card" style="display:flex;align-items:center;gap:14px;padding:14px">
+        <span style="font-size:38px;line-height:1" id="vainqueur-flag">❓</span>
+        <div style="flex:1">
+          <div style="font-size:11px;font-weight:700;color:var(--fg-faint);text-transform:uppercase;letter-spacing:0.06em">Coupe du Monde 2026</div>
+          <div style="font-size:17px;font-weight:800;letter-spacing:-0.015em" id="vainqueur-team">Non encore défini</div>
         </div>
-        <button id="edit-vainqueur-btn" style="margin-left:auto;color:var(--green-accent);font-size:13px;font-weight:600">Modifier</button>
+        <button id="edit-vainqueur-btn" class="fz-btn fz-btn--ghost" style="padding:8px 14px;font-size:13px">Modifier</button>
       </div>
     </div>
 
     <!-- Badges -->
-    <p class="section-title">Badges</p>
-    <div class="badges-grid" id="badges-grid"></div>
-
-    <!-- Historique pronos -->
-    <p class="section-title">Mes pronos publics</p>
-    <div id="pronos-history" style="padding:0 16px 8px">
-      <div style="text-align:center;padding:16px;color:var(--text-tertiary)">Chargement...</div>
+    <div class="fz-section-h"><span class="fz-section-h__dot"></span><span class="fz-section-h__title">Badges</span></div>
+    <div style="padding:0 20px 18px">
+      <div class="fz-bgrid" id="badges-grid"></div>
     </div>
 
-    <!-- Mid upgrade -->
-    <div id="mid-cta-wrap" style="padding:0 16px 8px;display:none">
-      <div class="glass-card" style="background:linear-gradient(135deg,rgba(0,255,106,0.08),rgba(27,67,50,0.5));border-color:rgba(0,255,106,0.2);text-align:center;padding:24px">
-        <div style="font-size:32px;margin-bottom:8px">🔮</div>
-        <p style="font-size:16px;font-weight:700;margin-bottom:6px">Passe au plan Mid</p>
-        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">Oracle IA, Boosts et analyses pré-match</p>
-        <button class="cta-primary" id="upgrade-mid-btn">Débloquer — 5,99€/mois</button>
+    <!-- Historique pronos -->
+    <div class="fz-section-h"><span class="fz-section-h__dot"></span><span class="fz-section-h__title">Mes pronos publics</span></div>
+    <div id="pronos-history" class="fz-stack fz-stack--sm" style="margin-bottom:18px">
+      <div style="text-align:center;padding:16px;color:var(--fg-faint)">Chargement...</div>
+    </div>
+
+    <!-- Mid upgrade CTA -->
+    <div id="mid-cta-wrap" style="padding:0 20px 16px;display:none">
+      <div class="fz-card" style="padding:18px;background:linear-gradient(135deg,rgba(0,224,90,0.10) 0%,var(--bg-card) 80%);border-color:var(--accent);position:relative;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="font-size:18px">✨</span>
+          <span style="font-size:12px;font-weight:800;color:var(--accent-strong);text-transform:uppercase;letter-spacing:0.06em">Passe Premium</span>
+        </div>
+        <h3 style="margin:0;font-size:19px;font-weight:800;letter-spacing:-0.02em;line-height:1.2">Débloque Oracle, Feed & Boosts</h3>
+        <p style="margin:6px 0 12px;font-size:13px;color:var(--fg-muted)">Tout Footzy, pour 5,99€/mois. Sans engagement.</p>
+        <button class="fz-btn fz-btn--primary fz-btn--block" id="upgrade-mid-btn">Passer au plan Mid</button>
       </div>
     </div>
 
     <!-- Logout -->
-    <div style="text-align:center;padding:16px 20px 8px">
-      <button id="logout-btn" style="color:var(--text-tertiary);font-size:13px;background:none;border:none;cursor:pointer">Se déconnecter</button>
+    <div style="padding:8px 20px 24px;display:flex;justify-content:center">
+      <button id="logout-btn" style="display:inline-flex;align-items:center;gap:6px;color:var(--fg-faint);font-size:13px;font-weight:600;padding:8px 12px">
+        Se déconnecter
+      </button>
     </div>
   </div>
 
   <!-- Bottom Nav -->
   <nav class="bottom-nav">
-    <a href="/src/pages/accueil.html"><span style="font-size:22px">🏠</span><span>Accueil</span></a>
-    <a href="/src/pages/home.html"><span style="font-size:22px">⚽</span><span>Matchs</span></a>
-    <a href="/src/pages/oracle.html"><span style="font-size:22px">🔮</span><span>Oracle</span></a>
-    <a href="/src/pages/groupe.html"><span style="font-size:22px">👥</span><span>Groupe</span></a>
-    <a href="/src/pages/profil.html" class="active"><span style="font-size:22px">👤</span><span>Profil</span></a>
+    <a href="/src/pages/accueil.html">
+      <span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+      <span>Accueil</span>
+    </a>
+    <a href="/src/pages/home.html">
+      <span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg></span>
+      <span>Matchs</span>
+    </a>
+    <a href="/src/pages/oracle.html">
+      <span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
+      <span>Oracle</span>
+    </a>
+    <a href="/src/pages/groupe.html">
+      <span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+      <span>Groupe</span>
+    </a>
+    <a href="/src/pages/profil.html" class="active">
+      <span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+      <span>Profil</span>
+    </a>
   </nav>
 
   <!-- Vainqueur Modal -->
@@ -107,17 +135,19 @@
     const profile = await getCurrentProfile();
 
     // Render profile
-    document.getElementById('avatar-el').textContent = profile?.pseudo?.[0]?.toUpperCase() || '👤';
+    document.getElementById('avatar-el').textContent = profile?.pseudo?.[0]?.toUpperCase() || '?';
     document.getElementById('pseudo-el').textContent = profile?.pseudo || '';
-    document.getElementById('stat-points').textContent = profile?.points_totaux || 0;
+    document.getElementById('stat-points').textContent = (profile?.points_totaux || 0).toLocaleString('fr-FR');
     document.getElementById('stat-exacts').textContent = profile?.scores_exacts || 0;
-    document.getElementById('stat-streak').textContent = (profile?.streak_quotidien || 0) + '🔥';
+    const streakEl = document.getElementById('stat-streak');
+    streakEl.innerHTML = `${profile?.streak_quotidien || 0}<span style="font-size:20px">🔥</span>`;
 
     const hasMid = await checkMidAccess(profile);
     if (hasMid) {
-      document.getElementById('plan-badge').innerHTML = '<span class="badge-pill">⭐ Plan Mid</span>';
+      document.getElementById('plan-badge').innerHTML = '<span class="fz-plan fz-plan--mid">⭐ Plan Mid</span>';
+      document.getElementById('premium-star').style.display = 'flex';
     } else {
-      document.getElementById('plan-badge').innerHTML = '<span class="badge-pill" style="background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.1);color:var(--text-secondary)">Free</span>';
+      document.getElementById('plan-badge').innerHTML = '<span class="fz-plan fz-plan--free">Plan Free</span>';
       document.getElementById('mid-cta-wrap').style.display = 'block';
       document.getElementById('upgrade-mid-btn').addEventListener('click', () => createCheckout(PLANS.mid_monthly, user.id));
     }
@@ -141,9 +171,9 @@
     const { data: userBadges } = await supabase.from('badges_utilisateur').select('badge_code').eq('user_id', user.id);
     const earnedCodes = new Set(userBadges?.map(b => b.badge_code) || []);
     document.getElementById('badges-grid').innerHTML = BADGES.map(b => `
-      <div class="glass-card badge-card ${earnedCodes.has(b.code) ? '' : 'locked'}" title="${b.name}">
-        <span class="badge-emoji">${b.emoji}</span>
-        <span class="badge-name">${b.name}</span>
+      <div class="fz-bcell ${earnedCodes.has(b.code) ? '' : 'is-locked'}" title="${b.name}">
+        <span class="fz-bcell__emoji">${b.emoji}</span>
+        <span class="fz-bcell__label">${b.name}</span>
       </div>`).join('');
 
     // Vainqueur
@@ -192,24 +222,21 @@
 
     function renderPronoCard(p) {
       const m = p.matchs;
-      const statusColor = p.status === 'won' ? 'var(--green-accent)' : p.status === 'lost' ? 'var(--text-tertiary)' : 'var(--text-secondary)';
-      return `<div class="glass-card" data-prono-id="${p.id}" style="display:flex;align-items:center;gap:10px;margin-bottom:8px;padding:12px 14px">
-        <span style="font-size:18px">${m?.home_flag || ''} ${m?.away_flag || ''}</span>
-        <div style="flex:1;min-width:0">
-          <p style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m?.home_team || ''} vs ${m?.away_team || ''}</p>
-          <p style="font-size:11px;color:var(--text-tertiary)">${formatDate(m?.kickoff_at || '')}</p>
-        </div>
-        <div style="text-align:right;flex-shrink:0">
-          <p style="font-size:15px;font-weight:700;font-style:italic">${p.home_score} – ${p.away_score}</p>
-          <p style="font-size:11px;color:${statusColor}">${p.status === 'won' ? '+' + p.points + ' pts' : p.status === 'lost' ? '0 pts' : 'En attente'}</p>
-        </div>
-        <button data-del="${p.id}" style="width:30px;height:30px;border-radius:50%;background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.18);color:#FF4444;font-size:13px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-left:4px">🗑</button>
+      const ptsClass = p.status === 'won' ? (p.points >= 5 ? 'fz-pts fz-pts--gold' : 'fz-pts') : p.status === 'lost' ? 'fz-pts fz-pts--zero' : 'fz-pts';
+      const ptsLabel = p.status === 'won' ? `+${p.points} pts` : p.status === 'lost' ? '0 pts' : 'En attente';
+      return `<div class="fz-card" data-prono-id="${p.id}" style="display:flex;align-items:center;gap:10px;padding:12px">
+        <span style="font-size:18px">${m?.home_flag || ''}</span>
+        <span style="font-size:13px;font-weight:600;color:var(--fg-muted)">vs</span>
+        <span style="font-size:18px">${m?.away_flag || ''}</span>
+        <span style="flex:1;font-size:13px;font-weight:700">${(m?.home_team||'').slice(0,3).toUpperCase()} ${p.home_score}—${p.away_score} ${(m?.away_team||'').slice(0,3).toUpperCase()}</span>
+        <span class="${ptsClass}">${ptsLabel}</span>
+        <button data-del="${p.id}" class="fz-iconbtn" style="width:30px;height:30px;color:#C42B36;flex-shrink:0" aria-label="Supprimer">🗑</button>
       </div>`;
     }
 
     function refreshHistoire() {
       if (!pronos?.length) {
-        histEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-tertiary)">Aucun pronostic public encore</div>';
+        histEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--fg-faint)">Aucun pronostic public encore</div>';
         return;
       }
       histEl.innerHTML = pronos.map(renderPronoCard).join('');
@@ -222,12 +249,12 @@
             const el = document.createElement('div');
             el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);display:flex;align-items:flex-end;justify-content:center';
             el.innerHTML = `
-              <div style="background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:28px 28px 0 0;width:100%;max-width:480px;padding:28px 20px calc(28px + env(safe-area-inset-bottom));text-align:center">
+              <div style="background:#FAFAF8;border:1px solid #E0DCD6;border-radius:28px 28px 0 0;width:100%;max-width:480px;padding:28px 20px calc(28px + env(safe-area-inset-bottom));text-align:center">
                 <div style="font-size:40px;margin-bottom:12px">🗑</div>
-                <div style="font-size:17px;font-weight:700;margin-bottom:6px">Supprimer ce pronostic ?</div>
-                <div style="font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:24px">Il disparaîtra du Feed et de ton profil.</div>
-                <button id="del-ok" style="background:#FF4444;color:#fff;border:none;border-radius:50px;height:50px;width:100%;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px">Supprimer</button>
-                <button id="del-no" style="background:rgba(255,255,255,0.06);color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:50px;height:50px;width:100%;font-size:15px;font-weight:600;cursor:pointer">Annuler</button>
+                <div style="font-size:17px;font-weight:700;margin-bottom:6px;color:#0F0F0E">Supprimer ce pronostic ?</div>
+                <div style="font-size:13px;color:#6B6560;margin-bottom:24px">Il disparaîtra du Feed et de ton profil.</div>
+                <button id="del-ok" style="background:#E63946;color:#FAFAF8;border:none;border-radius:50px;height:50px;width:100%;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px">Supprimer</button>
+                <button id="del-no" style="background:#E8E4DE;color:#0F0F0E;border:1px solid #E0DCD6;border-radius:50px;height:50px;width:100%;font-size:15px;font-weight:600;cursor:pointer">Annuler</button>
               </div>`;
             document.body.appendChild(el);
             el.querySelector('#del-ok').onclick = () => { el.remove(); resolve(true); };

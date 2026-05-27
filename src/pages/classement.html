@@ -6,332 +6,74 @@
   <title>Footzy — Classement Premium</title>
   <link rel="stylesheet" href="/src/css/tokens.css" />
   <link rel="stylesheet" href="/src/css/components.css" />
+  <link rel="stylesheet" href="/src/css/fz-components.css" />
   <link rel="stylesheet" href="/src/css/pages.css" />
-  <style>
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(12px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes podiumRise {
-      from { transform: scaleY(0); opacity: 0; }
-      to   { transform: scaleY(1); opacity: 1; }
-    }
-    @keyframes shimmer {
-      0%   { background-position: -200% center; }
-      100% { background-position:  200% center; }
-    }
-
-    /* ── Header ── */
-    .rank-header {
-      padding: 16px 20px 0;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .rank-header h1 {
-      font-size: 20px;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-    }
-
-    /* ── Rewards banner ── */
-    .rewards-banner {
-      margin: 16px 16px 0;
-      background: linear-gradient(135deg, rgba(255,215,0,0.10), rgba(255,140,0,0.08));
-      border: 1px solid rgba(255,215,0,0.25);
-      border-radius: 20px;
-      padding: 16px;
-      animation: fadeUp .4s ease both;
-    }
-    .rewards-title {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--gold);
-      margin-bottom: 12px;
-    }
-    .rewards-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 0;
-      border-bottom: 1px solid rgba(255,215,0,0.10);
-    }
-    .rewards-row:last-child { border-bottom: none; }
-    .rewards-medal { font-size: 22px; flex-shrink: 0; width: 28px; text-align: center; }
-    .rewards-text  { flex: 1; font-size: 13px; font-weight: 600; color: var(--text-primary); line-height: 1.4; }
-    .rewards-text span { font-size: 11px; color: var(--text-tertiary); font-weight: 400; display: block; }
-
-    /* ── Free user CTA banner ── */
-    .free-cta {
-      margin: 16px 16px 0;
-      background: linear-gradient(135deg, rgba(255,215,0,0.12), rgba(255,140,0,0.10));
-      border: 1px solid rgba(255,215,0,0.30);
-      border-radius: 20px;
-      padding: 18px 16px;
-      animation: fadeUp .4s ease both;
-    }
-    .free-cta-shimmer {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.10em;
-      background: linear-gradient(90deg, var(--gold), #fff, var(--gold));
-      background-size: 200% auto;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: shimmer 2.5s linear infinite;
-      margin-bottom: 6px;
-    }
-    .free-cta p {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text-primary);
-      line-height: 1.5;
-      margin-bottom: 12px;
-    }
-    .free-cta-btn {
-      background: var(--gold);
-      color: #080808;
-      border: none;
-      border-radius: 50px;
-      height: 46px;
-      width: 100%;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      letter-spacing: -0.01em;
-    }
-
-    /* ── Podium ── */
-    .podium-wrap {
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      gap: 8px;
-      padding: 24px 20px 0;
-      animation: fadeUp .5s .1s ease both;
-    }
-    .podium-col {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      flex: 1;
-    }
-    .podium-avatar {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      font-weight: 700;
-      position: relative;
-    }
-    .podium-avatar.gold   { background: rgba(255,215,0,0.18); border: 2px solid var(--gold);    color: var(--gold); }
-    .podium-avatar.silver { background: rgba(200,200,200,0.12); border: 2px solid #C0C0C0;      color: #C0C0C0; }
-    .podium-avatar.bronze { background: rgba(205,127,50,0.12); border: 2px solid #CD7F32;       color: #CD7F32; }
-    .podium-crown {
-      position: absolute;
-      top: -14px;
-      font-size: 18px;
-    }
-    .podium-pseudo {
-      font-size: 12px;
-      font-weight: 700;
-      text-align: center;
-      color: var(--text-primary);
-      max-width: 80px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .podium-pts {
-      font-size: 11px;
-      color: var(--text-tertiary);
-      font-weight: 600;
-    }
-    .podium-bar {
-      width: 100%;
-      border-radius: 10px 10px 0 0;
-      transform-origin: bottom;
-      animation: podiumRise .6s cubic-bezier(.32,.72,0,1) both;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      padding-top: 8px;
-    }
-    .podium-bar.gold   { background: linear-gradient(180deg, rgba(255,215,0,0.30), rgba(255,215,0,0.08)); height: 80px; animation-delay: .2s; }
-    .podium-bar.silver { background: linear-gradient(180deg, rgba(200,200,200,0.20), rgba(200,200,200,0.05)); height: 56px; animation-delay: .35s; }
-    .podium-bar.bronze { background: linear-gradient(180deg, rgba(205,127,50,0.20), rgba(205,127,50,0.05)); height: 42px; animation-delay: .45s; }
-    .podium-rank { font-size: 18px; }
-
-    /* ── Section title ── */
-    .rank-section-title {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--text-tertiary);
-      padding: 20px 20px 10px;
-    }
-
-    /* ── Leaderboard rows ── */
-    .rank-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 20px;
-      border-bottom: 1px solid var(--border-glass);
-      animation: fadeUp .35s ease both;
-    }
-    .rank-row:last-child { border-bottom: none; }
-    .rank-row.me {
-      background: var(--green-dim);
-      border-color: var(--green-border);
-      border-radius: 14px;
-      margin: 0 12px;
-    }
-    .rank-num {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-tertiary);
-      width: 28px;
-      text-align: center;
-      flex-shrink: 0;
-    }
-    .rank-avatar-sm {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: var(--bg-card-elevated);
-      border: 1px solid var(--border-glass);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 15px;
-      font-weight: 700;
-      flex-shrink: 0;
-    }
-    .rank-info    { flex: 1; min-width: 0; }
-    .rank-pseudo  { font-size: 14px; font-weight: 700; }
-    .rank-plan-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      font-size: 9px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      border-radius: 50px;
-      padding: 1px 6px;
-      margin-top: 2px;
-    }
-    .rank-plan-badge.mid   { background: rgba(255,215,0,0.10); color: var(--gold); border: 1px solid rgba(255,215,0,0.22); }
-    .rank-plan-badge.elite { background: rgba(182,109,255,0.12); color: #C98FFF; border: 1px solid rgba(182,109,255,0.25); }
-    .rank-points  { font-size: 16px; font-weight: 700; color: var(--green-accent); flex-shrink: 0; }
-    .rank-trophy  { font-size: 16px; flex-shrink: 0; }
-
-    /* ── Sticky my position ── */
-    .my-rank-sticky {
-      position: fixed;
-      bottom: calc(0px + env(safe-area-inset-bottom));
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100%;
-      max-width: 430px;
-      background: rgba(8,8,8,0.96);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid var(--green-border);
-      padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
-      display: none;
-      align-items: center;
-      gap: 12px;
-      z-index: 50;
-    }
-    .my-rank-sticky .label {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.10em;
-      color: var(--text-tertiary);
-    }
-    .my-rank-sticky .pos   { font-size: 22px; font-weight: 900; font-style: italic; color: var(--green-accent); }
-    .my-rank-sticky .pts   { font-size: 14px; font-weight: 700; color: var(--text-primary); }
-
-    /* page padding with sticky */
-    .has-sticky { padding-bottom: calc(90px + env(safe-area-inset-bottom)); }
-  </style>
 </head>
 <body>
-  <div class="page-content" id="page">
+  <div class="page-content fz-page-enter" id="page" style="padding-bottom:24px">
 
     <!-- Header -->
-    <div class="rank-header">
-      <button class="back-btn" onclick="history.back()">
+    <div style="padding:8px 20px 12px;display:flex;align-items:center;gap:12px">
+      <button class="fz-back" onclick="history.back()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
       </button>
-      <h1>🏆 Classement Premium</h1>
+      <h1 style="margin:0;font-size:18px;font-weight:800;letter-spacing:-0.02em">🏆 Classement Premium</h1>
     </div>
 
-    <!-- Récompenses -->
-    <div class="rewards-banner">
-      <div class="rewards-title">🎁 Récompenses fin du Mondial</div>
-      <div class="rewards-row">
-        <span class="rewards-medal">🥇</span>
-        <div class="rewards-text">5 000 € + Voyage 2 pers. + Maillot signé<span>1er au classement final</span></div>
+    <!-- Récompenses banner -->
+    <div class="fz-rewards" style="margin:0 20px 16px">
+      <div class="fz-rewards__title">🎁 Récompenses CdM 2026</div>
+      <div class="fz-rewards__row">
+        <span class="fz-rewards__medal">🥇</span>
+        <span class="fz-rewards__txt"><b>5 000€</b> · Voyage · Maillot signé <span style="font-size:11px;color:#7A5500;font-weight:400">— 1er au classement final</span></span>
       </div>
-      <div class="rewards-row">
-        <span class="rewards-medal">🥈</span>
-        <div class="rewards-text">2 000 € + Maillot signé + 1 an Elite offert<span>2ème au classement final</span></div>
+      <div class="fz-rewards__row">
+        <span class="fz-rewards__medal">🥈</span>
+        <span class="fz-rewards__txt"><b>2 000€</b> · Maillot signé <span style="font-size:11px;color:#7A5500;font-weight:400">— 2ème</span></span>
       </div>
-      <div class="rewards-row">
-        <span class="rewards-medal">🥉</span>
-        <div class="rewards-text">1 000 € + Ballon signé + 6 mois Elite offert<span>3ème au classement final</span></div>
+      <div class="fz-rewards__row">
+        <span class="fz-rewards__medal">🥉</span>
+        <span class="fz-rewards__txt"><b>1 000€</b> · Ballon signé <span style="font-size:11px;color:#7A5500;font-weight:400">— 3ème</span></span>
       </div>
-      <div class="rewards-row">
-        <span class="rewards-medal">🎽</span>
-        <div class="rewards-text">Maillots & goodies chaque semaine<span>Top 10 hebdomadaire • Top 50 = tirage au sort</span></div>
+      <div class="fz-rewards__row" style="opacity:0.85">
+        <span class="fz-rewards__medal">🎽</span>
+        <span class="fz-rewards__txt">Goodies hebdo — <b>Top 10</b> · Top 50 tirage au sort</span>
       </div>
     </div>
 
     <!-- CTA gratuit (affiché si pas premium) -->
-    <div class="free-cta" id="free-cta" style="display:none">
-      <div class="free-cta-shimmer">⚡ Tu n'es pas dans la course</div>
-      <p>Rejoins le Classement Premium et tente de gagner <strong>5 000 €</strong> + un voyage pour 2 !</p>
-      <button class="free-cta-btn" id="join-btn">Rejoindre — 6,99 €/mois</button>
+    <div style="padding:0 20px 16px" id="free-cta" style="display:none">
+      <button class="fz-btn fz-btn--block fz-shimmer" id="join-btn" style="padding:16px 22px;font-weight:800;font-size:14px;letter-spacing:-0.01em">
+        <span style="position:relative;z-index:1">👑 Rejoins le Classement Premium · 6,99€/mois</span>
+      </button>
     </div>
 
     <!-- Podium top 3 -->
-    <p class="rank-section-title">Podium</p>
-    <div class="podium-wrap" id="podium">
-      <div style="text-align:center;padding:32px;color:var(--text-tertiary);width:100%">Chargement…</div>
+    <div class="fz-section-h" style="padding-top:8px"><span class="fz-section-h__dot"></span><span class="fz-section-h__title">Podium</span></div>
+    <div class="fz-podium" id="podium">
+      <div style="text-align:center;padding:32px;color:var(--fg-faint);grid-column:1/-1">Chargement…</div>
     </div>
 
     <!-- Liste 4-100 -->
-    <p class="rank-section-title">Classement complet</p>
-    <div id="rank-list"></div>
+    <div class="fz-section-h" style="margin-top:22px"><span class="fz-section-h__dot"></span><span class="fz-section-h__title">Classement complet</span></div>
+    <div class="fz-stack fz-stack--sm" id="rank-list" style="margin-bottom:16px"></div>
 
-  </div>
+    <!-- Ma position (sticky bas, premium seulement) -->
+    <div class="fz-stickybar" id="my-rank-sticky" style="display:none">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.10em;color:var(--fg-on-dark-muted)">Ma position</span>
+        <span style="font-size:22px;font-weight:900;font-style:italic;color:var(--accent)" id="my-pos">—</span>
+      </div>
+      <div style="flex:1;padding:0 12px">
+        <div style="font-size:13px;font-weight:700" id="my-pseudo">—</div>
+        <div style="font-size:12px;color:var(--fg-on-dark-muted)" id="my-pts">— pts</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:10px;color:var(--fg-on-dark-muted);font-weight:600">Prochaine récompense</div>
+        <div id="my-next-reward" style="font-size:11px;font-weight:700;color:var(--accent)">—</div>
+      </div>
+    </div>
 
-  <!-- Ma position (sticky bas, abonnés seulement) -->
-  <div class="my-rank-sticky" id="my-rank-sticky">
-    <div>
-      <div class="label">Ma position</div>
-      <div class="pos" id="my-pos">—</div>
-    </div>
-    <div style="flex:1">
-      <div style="font-size:12px;font-weight:700" id="my-pseudo">—</div>
-      <div class="pts" id="my-pts">— pts</div>
-    </div>
-    <div style="text-align:right">
-      <div style="font-size:10px;color:var(--text-tertiary);font-weight:600">Prochaine récompense</div>
-      <div id="my-next-reward" style="font-size:11px;font-weight:700;color:var(--gold)">—</div>
-    </div>
   </div>
 
   <script type="module">
@@ -347,7 +89,8 @@
 
     // Show CTA for free users
     if (!isPremium) {
-      document.getElementById('free-cta').style.display = 'block';
+      const freeCta = document.getElementById('free-cta');
+      freeCta.style.display = 'block';
       document.getElementById('join-btn').addEventListener('click', () => createCheckout(PLANS.mid_monthly, user.id));
     }
 
@@ -361,9 +104,9 @@
 
     if (!players?.length) {
       document.getElementById('podium').innerHTML = `
-        <div style="text-align:center;padding:40px 20px;color:var(--text-tertiary)">
+        <div style="text-align:center;padding:40px 20px;color:var(--fg-faint);grid-column:1/-1">
           <div style="font-size:48px;margin-bottom:12px">🏆</div>
-          <div style="font-weight:700;color:var(--text-secondary)">Aucun membre Premium encore</div>
+          <div style="font-weight:700;color:var(--fg-muted)">Aucun membre Premium encore</div>
           <div style="font-size:13px;margin-top:6px">Sois le premier à rejoindre la compétition !</div>
         </div>`;
       document.getElementById('rank-list').innerHTML = '';
@@ -372,38 +115,37 @@
 
     // ── Podium (top 3) ──
     const top3 = players.slice(0, 3);
-    const order = [1, 0, 2]; // display order: 2nd, 1st, 3rd
-    const medals = ['gold', 'silver', 'bronze'];
-    const crowns  = ['👑', '', ''];
-    const rankEmojis = ['🥇', '🥈', '🥉'];
-    // Reorder for display (2nd left, 1st center, 3rd right)
+    // Display order: 2nd left, 1st center, 3rd right
     const displayed = [top3[1], top3[0], top3[2]].filter(Boolean);
     const displayMedals = ['silver', 'gold', 'bronze'];
-    const displayCrowns = ['', '👑', ''];
-    const displayRanks  = ['🥈', '🥇', '🥉'];
+    const displayBars   = ['--2', '--1', '--3'];
+    const displayCrowns = ['🥈', '👑', '🥉'];
+    const avatarStyles = [
+      'background:linear-gradient(135deg,#DCDCDC,#9C9C9C);color:#0F0F0E;width:48px;height:48px;font-size:18px',
+      'background:linear-gradient(135deg,#FFE08A,#D4A100);color:#0F0F0E;width:60px;height:60px;font-size:24px;box-shadow:0 0 24px rgba(212,165,0,0.45)',
+      'background:linear-gradient(135deg,#E8B689,#A8682E);color:#fff;width:44px;height:44px;font-size:16px',
+    ];
 
-    function podiumCol(p, medal, crown, rankEmoji, animDelay) {
-      if (!p) return `<div class="podium-col"></div>`;
+    function podiumCol(p, barMod, crown, avatarStyle) {
+      if (!p) return `<div class="fz-podium__col"></div>`;
       const init = (p.pseudo?.[0] || '?').toUpperCase();
       const isMe = p.id === user.id;
       return `
-        <div class="podium-col">
-          <div class="podium-avatar ${medal}" style="${isMe ? 'box-shadow:0 0 0 3px var(--green-accent)' : ''}">
-            ${crown ? `<span class="podium-crown">${crown}</span>` : ''}
-            ${init}
+        <div class="fz-podium__col">
+          <div class="fz-podium__avatar-wrap">
+            <span class="fz-avatar" style="${avatarStyle}${isMe ? ';box-shadow:0 0 0 3px var(--accent-strong)' : ''}">${init}</span>
+            <span class="fz-podium__crown" style="${barMod==='--1'?'font-size:28px':''}">${crown}</span>
           </div>
-          <div class="podium-pseudo">${p.pseudo || '???'}${isMe ? ' 👈' : ''}</div>
-          <div class="podium-pts">${p.points_totaux || 0} pts</div>
-          <div class="podium-bar ${medal}" style="animation-delay:${animDelay}s">
-            <span class="podium-rank">${rankEmoji}</span>
-          </div>
+          <span class="fz-podium__pseudo" style="${barMod==='--1'?'font-weight:800':''}">${p.pseudo || '???'}${isMe ? ' 👈' : ''}</span>
+          <span class="fz-podium__pts">${(p.points_totaux||0).toLocaleString('fr-FR')} pts</span>
+          <div class="fz-podium__bar fz-podium__bar${barMod}">${barMod === '--1' ? '1' : barMod === '--2' ? '2' : '3'}</div>
         </div>`;
     }
 
     document.getElementById('podium').innerHTML =
-      podiumCol(displayed[0], displayMedals[0], displayCrowns[0], displayRanks[0], 0.35) +
-      podiumCol(displayed[1], displayMedals[1], displayCrowns[1], displayRanks[1], 0.20) +
-      podiumCol(displayed[2], displayMedals[2], displayCrowns[2], displayRanks[2], 0.45);
+      podiumCol(displayed[0], displayBars[0], displayCrowns[0], avatarStyles[0]) +
+      podiumCol(displayed[1], displayBars[1], displayCrowns[1], avatarStyles[1]) +
+      podiumCol(displayed[2], displayBars[2], displayCrowns[2], avatarStyles[2]);
 
     // ── Full list (4 → 100) ──
     const rest = players.slice(3);
@@ -419,16 +161,19 @@
       const isMe = p.id === user.id;
       const init = (p.pseudo?.[0] || '?').toUpperCase();
       const trophy = trophyForRank(rank);
+      const planBadge = p.plan === 'elite'
+        ? `<span class="fz-plan fz-plan--top">💎 Elite</span>`
+        : `<span class="fz-plan fz-plan--mid">⭐ Premium</span>`;
       return `
-        <div class="rank-row${isMe ? ' me' : ''}" style="animation-delay:${Math.min(i * 0.03, 0.5)}s">
-          <div class="rank-num">${rank}</div>
-          <div class="rank-avatar-sm" style="${isMe ? 'border-color:var(--green-accent);color:var(--green-accent)' : ''}">${init}</div>
-          <div class="rank-info">
-            <div class="rank-pseudo">${p.pseudo || '???'}${isMe ? ' 👈' : ''}</div>
-            <span class="rank-plan-badge ${p.plan}">${p.plan === 'elite' ? '💎 Elite' : '⭐ Premium'}</span>
+        <div class="fz-rank${isMe ? ' is-me' : ''}">
+          <span class="fz-rank__pos">#${rank}</span>
+          <span class="fz-avatar fz-avatar--sm${isMe ? ' fz-avatar--accent' : ''}">${init}</span>
+          <div class="fz-rank__main">
+            <div class="fz-rank__name">${p.pseudo || '???'}${isMe ? ' <span style="font-size:10px;color:var(--accent-strong);font-weight:800;text-transform:uppercase;letter-spacing:0.06em">moi</span>' : ''}</div>
+            ${planBadge}
           </div>
-          ${trophy ? `<div class="rank-trophy">${trophy}</div>` : ''}
-          <div class="rank-points">${p.points_totaux || 0}</div>
+          ${trophy ? `<span style="font-size:16px">${trophy}</span>` : ''}
+          <span class="fz-rank__pts"><b>${(p.points_totaux||0).toLocaleString('fr-FR')}</b> pts</span>
         </div>`;
     }).join('');
 
@@ -438,19 +183,17 @@
       if (myRank > 0) {
         const sticky = document.getElementById('my-rank-sticky');
         sticky.style.display = 'flex';
-        document.getElementById('page').classList.add('has-sticky');
         document.getElementById('my-pos').textContent    = `#${myRank}`;
         document.getElementById('my-pseudo').textContent  = profile.pseudo || '';
-        document.getElementById('my-pts').textContent     = `${profile.points_totaux || 0} pts`;
+        document.getElementById('my-pts').textContent     = `${(profile.points_totaux||0).toLocaleString('fr-FR')} pts`;
 
-        // Next reward
         let nextReward = '';
-        if      (myRank > 50) nextReward = `Top 50 → Tirage au sort 🎁`;
+        if      (myRank > 50) nextReward = `Top 50 → Tirage 🎁`;
         else if (myRank > 10) nextReward = `Top 10 → Maillot 🎽`;
         else if (myRank > 3)  nextReward = `Top 3 → Récompense 🏆`;
-        else if (myRank === 3) nextReward = `1 000 € + Ballon signé`;
-        else if (myRank === 2) nextReward = `2 000 € + Maillot signé`;
-        else                  nextReward  = `5 000 € + Voyage ✈️`;
+        else if (myRank === 3) nextReward = `1 000€ + Ballon signé`;
+        else if (myRank === 2) nextReward = `2 000€ + Maillot signé`;
+        else                  nextReward  = `5 000€ + Voyage ✈️`;
         document.getElementById('my-next-reward').textContent = nextReward;
       }
     }

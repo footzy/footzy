@@ -234,38 +234,57 @@
       document.getElementById('vainqueur-modal').classList.add('open');
     }
 
-    document.getElementById('save-vainqueur-btn').addEventListener('click', async () => {
-      const equipe = document.getElementById('vainqueur-equipe').value.trim();
-      if (!equipe) { toast('Entre le nom d\'une équipe.'); return; }
-      const flagMatch = equipe.match(/\p{Emoji_Presentation}/u);
-      const flag = flagMatch ? flagMatch[0] : '🏳';
-
-      const saveBtn = document.getElementById('save-vainqueur-btn');
-      saveBtn.disabled = true;
-      saveBtn.textContent = 'Enregistrement…';
-
-      // delete + insert pour gérer le NULL unique
+    // Sauvegarde effective (appelée après confirmation du warning)
+    async function saveVainqueur(equipe, flag) {
       await supabase.from('pronostics_vainqueur').delete().eq('user_id', user.id).is('groupe_id', null);
       const { error } = await supabase.from('pronostics_vainqueur').insert({ user_id: user.id, groupe_id: null, equipe, flag });
-
-      saveBtn.disabled = false;
-      saveBtn.textContent = 'Confirmer ma prédiction';
-
       if (error) { toast('Erreur : ' + error.message); return; }
-
       document.getElementById('vainqueur-flag').textContent = flag;
       document.getElementById('vainqueur-team').textContent = equipe;
       document.getElementById('vainqueur-modal').classList.remove('open');
-
-      // Après 1ère sauvegarde : remplacer "Modifier" par le bouton payant (ou cacher)
       if (canChangeForFee) {
         editBtn.textContent = 'Modifier (1,99€)';
         editBtn.style.fontSize = '12px';
       } else {
         editBtn.style.display = 'none';
       }
-
       toast('Vainqueur confirmé ! 🏆');
+    }
+
+    document.getElementById('save-vainqueur-btn').addEventListener('click', () => {
+      const equipe = document.getElementById('vainqueur-equipe').value.trim();
+      if (!equipe) { toast('Entre le nom d\'une équipe.'); return; }
+      const flagMatch = equipe.match(/\p{Emoji_Presentation}/u);
+      const flag = flagMatch ? flagMatch[0] : '🏳';
+
+      // ── Afficher le warning de confirmation ──
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(15,15,14,0.65);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center';
+      overlay.innerHTML = `
+        <div style="background:var(--bg-card);border-radius:28px 28px 0 0;width:100%;max-width:480px;padding:28px 20px calc(28px + env(safe-area-inset-bottom));text-align:center">
+          <div style="font-size:44px;margin-bottom:10px">⚠️</div>
+          <div style="font-size:17px;font-weight:800;letter-spacing:-0.02em;margin-bottom:8px;color:var(--fg)">Confirmation définitive</div>
+          <div style="font-size:14px;color:var(--fg-muted);margin-bottom:6px;line-height:1.5">
+            Tu es sur le point de choisir <b style="color:var(--fg)">${equipe}</b> comme vainqueur de la CdM 2026.
+          </div>
+          <div style="font-size:13px;color:var(--live);font-weight:600;background:rgba(230,57,70,0.08);border:1px solid rgba(230,57,70,0.20);border-radius:12px;padding:10px 14px;margin:14px 0 20px">
+            🔒 Une fois confirmé, tu ne pourras plus modifier cette prédiction (sauf paiement avant les quarts de finale).
+          </div>
+          <button id="warn-confirm-btn" style="background:var(--bg-dark);color:var(--fg-on-dark);border:none;border-radius:50px;height:52px;width:100%;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;box-shadow:var(--shadow-cta)">
+            Oui, je confirme ${equipe}
+          </button>
+          <button id="warn-cancel-btn" style="background:var(--bg-card-2);color:var(--fg-muted);border:1px solid var(--border);border-radius:50px;height:48px;width:100%;font-size:14px;font-weight:600;cursor:pointer">
+            Annuler
+          </button>
+        </div>`;
+      document.body.appendChild(overlay);
+
+      overlay.querySelector('#warn-confirm-btn').addEventListener('click', async () => {
+        overlay.remove();
+        await saveVainqueur(equipe, flag);
+      });
+      overlay.querySelector('#warn-cancel-btn').addEventListener('click', () => overlay.remove());
+      overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
     });
 
     document.getElementById('vainqueur-modal').addEventListener('click', e => {

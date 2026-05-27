@@ -492,7 +492,7 @@
     if (!user) throw new Error('not authed');
     const profile = await getCurrentProfile();
 
-    const isPremium = profile?.plan === 'mid';
+    const isPremium = profile?.plan === 'premium' || profile?.plan === 'mid';
     const fab = document.getElementById('fab-post');
 
     // ── Avatar / streak ──
@@ -687,7 +687,7 @@
       const feedList = document.getElementById('feed-list');
 
       const { data: premiumProfiles } = await supabase
-        .from('profiles').select('id').eq('plan', 'mid');
+        .from('profiles').select('id').in('plan', ['premium', 'mid']);
 
       if (!premiumProfiles?.length) {
         feedList.innerHTML = emptyState('⭐', 'Aucun membre Premium', 'Sois le premier à passer Premium pour que tes pronos apparaissent ici !');

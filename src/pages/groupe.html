@@ -899,7 +899,7 @@
       mondialEl.innerHTML = top.map((p, i) => {
         const rank = i + 1;
         const isMe = p.id === user.id;
-        const showPseudo = rank <= 3 || p.plan === 'mid' || isMe;
+        const showPseudo = rank <= 3 || p.plan === 'premium' || p.plan === 'mid' || isMe;
         const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
         return `<div class="leaderboard-item${isMe ? ' me' : ''}">
           <div class="rank-badge ${rankClass}">${rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : rank}</div>

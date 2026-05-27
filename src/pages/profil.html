@@ -76,8 +76,8 @@
           <span style="font-size:12px;font-weight:800;color:var(--accent-strong);text-transform:uppercase;letter-spacing:0.06em">Passe Premium</span>
         </div>
         <h3 style="margin:0;font-size:19px;font-weight:800;letter-spacing:-0.02em;line-height:1.2">Débloque Oracle, Feed & Boosts</h3>
-        <p style="margin:6px 0 12px;font-size:13px;color:var(--fg-muted)">Tout Footzy, pour 5,99€/mois. Sans engagement.</p>
-        <button class="fz-btn fz-btn--primary fz-btn--block" id="upgrade-mid-btn">Passer au plan Mid</button>
+        <p style="margin:6px 0 12px;font-size:13px;color:var(--fg-muted)">Oracle IA, Feed Premium & Boosts. Accès complet pour 9,99€.</p>
+        <button class="fz-btn fz-btn--primary fz-btn--block" id="upgrade-mid-btn">Passer Premium — 9,99€</button>
       </div>
     </div>
 
@@ -144,12 +144,12 @@
 
     const hasMid = await checkMidAccess(profile);
     if (hasMid) {
-      document.getElementById('plan-badge').innerHTML = '<span class="fz-plan fz-plan--mid">⭐ Plan Mid</span>';
+      document.getElementById('plan-badge').innerHTML = '<span class="fz-plan fz-plan--mid">⭐ Premium</span>';
       document.getElementById('premium-star').style.display = 'flex';
     } else {
-      document.getElementById('plan-badge').innerHTML = '<span class="fz-plan fz-plan--free">Plan Free</span>';
+      document.getElementById('plan-badge').innerHTML = '<span class="fz-plan fz-plan--free">Gratuit</span>';
       document.getElementById('mid-cta-wrap').style.display = 'block';
-      document.getElementById('upgrade-mid-btn').addEventListener('click', () => createCheckout(PLANS.mid_monthly, user.id));
+      document.getElementById('upgrade-mid-btn').addEventListener('click', () => createCheckout(PLANS.premium, user.id));
     }
 
     // World rank

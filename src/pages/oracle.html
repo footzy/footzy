@@ -410,23 +410,20 @@
 
   <script type="module">
     import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
-    import { createCheckout, PLANS } from '/src/js/lib/whop.js';
+    import { createCheckout, checkPremiumAccess, PLANS } from '/src/js/lib/whop.js';
     import { formatKickoff } from '/src/js/lib/utils.js';
 
     (async () => {
     const user    = await requireAuth();
     if (!user) throw new Error('not authed');
     const profile = await getCurrentProfile();
-    const isPremium = profile?.plan === 'mid' || profile?.plan === 'elite';
+    const isPremium = await checkPremiumAccess(profile);
 
     // Badge
     const badge = document.getElementById('plan-badge');
-    if (profile?.plan === 'elite') {
-      badge.textContent = '💎 Elite';
-      badge.style.cssText = 'display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#C98FFF;background:rgba(182,109,255,.10);border:1px solid rgba(182,109,255,.25);border-radius:50px;padding:4px 10px';
-    } else if (!isPremium) {
+    if (!isPremium) {
       badge.textContent = '🔒 Premium requis';
-      badge.style.color = 'var(--text-tertiary)';
+      badge.style.color = 'var(--fg-faint)';
     }
 
     const body = document.getElementById('oracle-body');
@@ -453,11 +450,11 @@
           <div class="oracle-gate-cta">
             <h3>🔮 Débloque l'Oracle IA</h3>
             <p>Analyses tactiques, score prédit, joueurs clés, buteur probable… L'IA analyse chaque match pour toi.</p>
-            <button class="cta-primary" id="unlock-btn">Passer Premium — 6,99 €/mois</button>
-            <p style="font-size:11px;color:var(--text-tertiary);margin-top:10px">Annulable à tout moment</p>
+            <button class="cta-primary" id="unlock-btn">Passer Premium — 9,99€</button>
+            <p style="font-size:11px;color:var(--text-tertiary);margin-top:10px">Accès complet · Sans engagement</p>
           </div>
         </div>`;
-      document.getElementById('unlock-btn').addEventListener('click', () => createCheckout(PLANS.mid_monthly, user.id));
+      document.getElementById('unlock-btn').addEventListener('click', () => createCheckout(PLANS.premium, user.id));
       return;
     }
 

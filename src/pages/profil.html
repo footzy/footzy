@@ -174,7 +174,7 @@
     } else {
       document.getElementById('plan-badge').innerHTML = '<span class="fz-plan fz-plan--free">Gratuit</span>';
       document.getElementById('mid-cta-wrap').style.display = 'block';
-      document.getElementById('upgrade-mid-btn').addEventListener('click', () => createCheckout(PLANS.premium, user.id));
+      document.getElementById('upgrade-mid-btn').addEventListener('click', () => createCheckout(PLANS.premium, user.id, {}, user.email));
     }
 
     // World rank
@@ -228,7 +228,7 @@
         editBtn.addEventListener('click', () => {
           // Mémoriser l'intention de changement avant redirection Whop
           localStorage.setItem('footzy_pending_change_vainqueur', '1');
-          createCheckout(PLANS.change_vainqueur, user.id);
+          createCheckout(PLANS.change_vainqueur, user.id, {}, user.email);
         });
       } else {
         // Après les quarts : verrouillé définitivement

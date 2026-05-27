@@ -47,17 +47,20 @@
 
 /* ── Home / Matchs ── */
 .home-header {
-  padding: 20px 20px 0;
+  padding: 8px 20px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 .home-logo {
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 900;
   letter-spacing: -0.04em;
-  color: var(--text-primary);
+  font-style: italic;
+  color: var(--fg);
+  line-height: 1;
 }
+.home-logo b { color: var(--accent-strong); font-style: normal; }
 
 /* ── Section title (style Aigocy — "• Titre") ── */
 .section-title {
@@ -305,17 +308,20 @@
 
 /* ── Accueil / Feed ── */
 .accueil-header {
-  padding: 20px 20px 0;
+  padding: 8px 20px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 .accueil-logo {
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 900;
   letter-spacing: -0.04em;
-  color: var(--text-primary);
+  font-style: italic;
+  color: var(--fg);
+  line-height: 1;
 }
+.accueil-logo b { color: var(--accent-strong); font-style: normal; }
 
 /* Feed FAB */
 .feed-fab {

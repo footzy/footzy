@@ -22,6 +22,7 @@
       50%  { transform: scale(1.1); opacity: 0.2; }
       100% { transform: scale(0.9); opacity: 0.6; }
     }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     body { background: #0F0F0E; margin: 0; }
 
@@ -50,57 +51,42 @@
       animation: pulse-ring 2.4s ease-in-out infinite;
     }
     .ps-icon {
-      width: 96px;
-      height: 96px;
+      width: 96px; height: 96px;
       border-radius: 50%;
       background: rgba(0,255,106,0.12);
       border: 2px solid rgba(0,255,106,0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       font-size: 44px;
-      animation: popIn 0.5s cubic-bezier(.32,.72,0,1) both;
     }
     .ps-icon--loading {
       background: rgba(255,255,255,0.05);
       border-color: rgba(255,255,255,0.1);
-      animation: none;
     }
+    .ps-icon--done { animation: popIn 0.5s cubic-bezier(.32,.72,0,1) both; }
 
     .ps-title {
-      font-size: 26px;
-      font-weight: 800;
-      color: #fff;
-      margin: 0 0 10px;
-      letter-spacing: -0.02em;
-      animation: fadeUp 0.4s 0.1s both ease-out;
+      font-size: 26px; font-weight: 800; color: #fff;
+      margin: 0 0 10px; letter-spacing: -0.02em;
     }
     .ps-msg {
-      font-size: 15px;
-      color: rgba(255,255,255,0.5);
-      margin: 0 0 36px;
-      line-height: 1.5;
-      max-width: 280px;
-      animation: fadeUp 0.4s 0.2s both ease-out;
+      font-size: 15px; color: rgba(255,255,255,0.5);
+      margin: 0 0 36px; line-height: 1.5; max-width: 280px;
     }
+
+    /* CTA caché jusqu'à confirmation */
     .ps-cta {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      background: #00ff6a;
-      color: #0F0F0E;
-      font-weight: 800;
-      font-size: 15px;
-      padding: 14px 32px;
-      border-radius: 14px;
-      text-decoration: none;
-      border: none;
-      cursor: pointer;
-      width: 100%;
-      max-width: 300px;
-      animation: fadeUp 0.4s 0.3s both ease-out;
-      transition: opacity 0.15s;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: #00ff6a; color: #0F0F0E;
+      font-weight: 800; font-size: 15px;
+      padding: 14px 32px; border-radius: 14px;
+      text-decoration: none; border: none; cursor: pointer;
+      width: 100%; max-width: 300px;
+      transition: opacity 0.15s, transform 0.3s;
+      opacity: 0; transform: translateY(12px); pointer-events: none;
+    }
+    .ps-cta--visible {
+      opacity: 1; transform: translateY(0); pointer-events: auto;
+      animation: fadeUp 0.4s ease-out both;
     }
     .ps-cta:active { opacity: 0.8; }
 
@@ -111,7 +97,12 @@
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .ps-status {
+      font-size: 12px; color: rgba(255,255,255,0.3);
+      margin-bottom: 12px; min-height: 16px;
+      transition: opacity 0.3s;
+    }
   </style>
 </head>
 <body>
@@ -125,7 +116,8 @@
     </div>
 
     <h1 class="ps-title" id="ps-title">Traitement en cours…</h1>
-    <p  class="ps-msg"   id="ps-msg">Ton paiement est confirmé, on active ton accès.</p>
+    <p  class="ps-msg"   id="ps-msg">Ton paiement est confirmé, on finalise tout.</p>
+    <p  class="ps-status" id="ps-status"></p>
     <a  class="ps-cta"   id="ps-cta" href="/src/pages/accueil.html">Retour à l'accueil</a>
 
   </main>
@@ -138,65 +130,103 @@
     const ringEl   = document.getElementById('ps-ring');
     const titleEl  = document.getElementById('ps-title');
     const msgEl    = document.getElementById('ps-msg');
+    const statusEl = document.getElementById('ps-status');
     const ctaEl    = document.getElementById('ps-cta');
 
-    function setSuccess(emoji, title, msg, ctaText, ctaHref) {
-      loaderEl.remove();
-      iconEl.classList.remove('ps-icon--loading');
-      iconEl.textContent = emoji;
-      titleEl.textContent = title;
-      msgEl.textContent   = msg;
-      ctaEl.textContent   = ctaText;
-      ctaEl.href          = ctaHref;
+    function showCTA(text, href) {
+      ctaEl.textContent = text;
+      ctaEl.href = href;
+      ctaEl.classList.add('ps-cta--visible');
     }
 
-    function setPending(emoji, title, msg) {
-      loaderEl.remove();
+    function setDone(emoji, title, msg, ringColor = 'rgba(0,255,106,0.15)') {
+      loaderEl?.remove();
       iconEl.classList.remove('ps-icon--loading');
-      iconEl.style.background = 'rgba(255,200,0,0.12)';
-      iconEl.style.borderColor = 'rgba(255,200,0,0.3)';
-      ringEl.style.background = 'radial-gradient(circle, rgba(255,200,0,0.15), transparent 70%)';
+      iconEl.classList.add('ps-icon--done');
       iconEl.textContent = emoji;
+      ringEl.style.background = `radial-gradient(circle, ${ringColor}, transparent 70%)`;
       titleEl.textContent = title;
       msgEl.textContent   = msg;
+      statusEl.textContent = '';
     }
 
-    // ── Cas BM groupe ──────────────────────────────────────
+    function setStatus(text) {
+      statusEl.textContent = text;
+    }
+
+    // ── Récupérer l'utilisateur ────────────────────────────
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // ── CAS 1 : Bonus/Malus groupe ─────────────────────────
     const pendingBM = localStorage.getItem('footzy_pending_bm');
     if (pendingBM) {
       const bm = JSON.parse(pendingBM);
-      setSuccess('🎯', 'Paiement confirmé !',
-        `${bm.label} va être envoyé à ${bm.targetPseudo}.`,
-        'Retour au groupe', `/src/pages/groupe.html?id=${bm.groupeId}`);
+      setStatus('Application du bonus/malus…');
 
-    // ── Cas vainqueur ──────────────────────────────────────
+      try {
+        const { error } = await supabase.from('bonus_malus').insert({
+          groupe_id:    bm.groupeId,
+          from_user_id: user?.id,
+          to_user_id:   bm.targetId,
+          points:       bm.pts,
+          label:        bm.label,
+        });
+
+        localStorage.removeItem('footzy_pending_bm');
+
+        if (error) throw error;
+
+        setDone('🎯', 'C\'est envoyé !',
+          `${bm.label} a bien été attribué à ${bm.targetPseudo}.`);
+        showCTA('Retour au groupe', `/src/pages/groupe.html?id=${bm.groupeId}`);
+
+      } catch (e) {
+        setDone('⚠️', 'Paiement reçu',
+          'L\'action sera appliquée à ton retour dans le groupe.',
+          'rgba(255,200,0,0.15)');
+        showCTA('Retour au groupe', `/src/pages/groupe.html?id=${bm.groupeId}`);
+      }
+
+    // ── CAS 2 : Modifier vainqueur ─────────────────────────
     } else if (localStorage.getItem('footzy_pending_change_vainqueur') === '1') {
-      setSuccess('✏️', 'Paiement confirmé !',
-        'Tu peux maintenant modifier ton pronostic vainqueur.',
-        'Modifier ma prédiction', '/src/pages/profil.html');
+      setStatus('Confirmation du paiement…');
+      await new Promise(r => setTimeout(r, 1200)); // petit délai visuel
 
-    // ── Cas premium — poll ─────────────────────────────────
+      setDone('✏️', 'Paiement confirmé !',
+        'Tu peux maintenant modifier ton pronostic vainqueur.');
+      showCTA('Modifier ma prédiction', '/src/pages/profil.html');
+
+    // ── CAS 3 : Premium — poll jusqu'à activation ──────────
     } else {
+      setStatus('Activation de ton abonnement…');
+
       let attempts = 0;
       const poll = setInterval(async () => {
         attempts++;
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) { clearInterval(poll); return; }
 
-        const { data: profile } = await supabase
-          .from('profiles').select('plan').eq('id', user.id).single();
+        try {
+          if (!user) { clearInterval(poll); return; }
 
-        if (profile?.plan === 'premium') {
+          const { data: profile } = await supabase
+            .from('profiles').select('plan').eq('id', user.id).single();
+
+          if (profile?.plan === 'premium') {
+            clearInterval(poll);
+            setDone('⭐', 'Premium activé !',
+              'Oracle IA, Feed Premium et Boosts sont maintenant disponibles.');
+            showCTA('Découvrir l\'Oracle 🔮', '/src/pages/oracle.html');
+            return;
+          }
+        } catch {}
+
+        if (attempts >= 15) {
           clearInterval(poll);
-          setSuccess('⭐', 'Accès Premium activé !',
-            'Oracle IA, Feed Premium et Boosts sont maintenant disponibles.',
-            'Découvrir l\'Oracle 🔮', '/src/pages/oracle.html');
-        }
-
-        if (attempts > 15) {
-          clearInterval(poll);
-          setPending('🕐', 'Activation en cours…',
-            'Ton accès sera actif dans quelques minutes. Rafraîchis si nécessaire.');
+          setDone('🕐', 'Activation en cours…',
+            'Ton accès sera actif dans quelques minutes.',
+            'rgba(255,200,0,0.15)');
+          showCTA('Aller à l\'accueil', '/src/pages/accueil.html');
+        } else {
+          setStatus(`Vérification… (${attempts}/15)`);
         }
       }, 2000);
     }

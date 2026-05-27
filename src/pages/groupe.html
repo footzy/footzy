@@ -354,6 +354,7 @@
   <script type="module">
     import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
     import { shareCode, toast } from '/src/js/lib/utils.js';
+    import { createCheckout, PLANS } from '/src/js/lib/whop.js';
 
     const user = await requireAuth();
     if (!user) throw new Error('not authed');
@@ -383,6 +384,36 @@
 
     const params = new URLSearchParams(location.search);
     let currentGroupeId = params.get('id');
+
+    // ── Retour depuis paiement : exécuter l'action bonus/malus en attente ──
+    const pendingBM = localStorage.getItem('footzy_pending_bm');
+    if (pendingBM) {
+      try {
+        const bm = JSON.parse(pendingBM);
+        localStorage.removeItem('footzy_pending_bm');
+        // Si on est bien dans le bon groupe (ou sans groupe sélectionné), exécuter
+        if (bm.groupeId) {
+          const { error: bmErr } = await supabase.from('bonus_malus').insert({
+            groupe_id:    bm.groupeId,
+            from_user_id: user.id,
+            to_user_id:   bm.targetId,
+            points:       bm.pts,
+            label:        bm.label,
+          });
+          if (!bmErr) {
+            // Notifier la cible
+            const ch = supabase.channel(`notif-${bm.targetId}`);
+            await ch.send({ type: 'broadcast', event: 'bonus_malus', payload: { label: bm.label, pts: bm.pts } });
+            supabase.removeChannel(ch);
+            toast(`${bm.label} envoyé à ${bm.targetPseudo} ! 🎉`);
+            // Rediriger vers le bon groupe
+            if (!currentGroupeId) currentGroupeId = bm.groupeId;
+          } else {
+            toast('Erreur lors de l\'action : ' + bmErr.message);
+          }
+        }
+      } catch(e) { localStorage.removeItem('footzy_pending_bm'); }
+    }
     let realtimeChannel = null;
     let kickedFromGroup = false;
     let isAlreadyInGroup = false;
@@ -753,6 +784,7 @@
           <div style="font-size:22px;margin-bottom:4px">${o.label.split(' ')[0]}</div>
           <div style="font-size:12px;font-weight:700;color:${o.color}">${o.label.substring(o.label.indexOf(' ')+1)}</div>
           <div style="font-size:13px;font-weight:800;color:${o.color};margin-top:4px">${o.desc}</div>
+          <div style="font-size:11px;font-weight:600;color:var(--fg-faint);margin-top:5px">1,99€</div>
         </button>`
       ).join('');
 
@@ -765,26 +797,19 @@
           const tps = btn.dataset.tpseudo;
           document.getElementById('bm-modal').classList.remove('open');
 
-          // Sauvegarder en DB
-          const { error: bmErr } = await supabase.from('bonus_malus').insert({
+          // Stocker l'action en attente, puis rediriger vers le paiement
+          localStorage.setItem('footzy_pending_bm', JSON.stringify({
+            groupeId:     currentGroupeId,
+            targetId:     tid,
+            targetPseudo: tps,
+            actionIdx:    +btn.dataset.idx,
+            label:        o.label,
+            pts:          o.pts,
+          }));
+          createCheckout(PLANS.groupe_action, user.id, {
             groupe_id: currentGroupeId,
-            from_user_id: user.id,
-            to_user_id: tid,
-            points: o.pts,
-            label: o.label,
+            target_id: tid,
           });
-          if (bmErr) { toast('Erreur ❌ ' + bmErr.message); return; }
-
-          // Notifier la cible (sans révéler l'expéditeur)
-          const ch = supabase.channel(`notif-${tid}`);
-          await ch.send({ type: 'broadcast', event: 'bonus_malus', payload: {
-            label: o.label,
-            pts: o.pts,
-          }});
-          supabase.removeChannel(ch);
-
-          toast(`${o.label} envoyé à ${tps} !`);
-          loadGroupe(true);
         });
       });
     }

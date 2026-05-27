@@ -26,7 +26,17 @@
 
     // Cas spécial : retour après paiement "Modifier vainqueur"
     const isPendingVainqueur = localStorage.getItem('footzy_pending_change_vainqueur') === '1';
-    if (isPendingVainqueur) {
+    const pendingBM = localStorage.getItem('footzy_pending_bm');
+
+    if (pendingBM) {
+      const bm = JSON.parse(pendingBM);
+      iconEl.textContent  = '✅';
+      titleEl.textContent = 'Paiement confirmé !';
+      msgEl.textContent   = `${bm.label} va être envoyé à ${bm.targetPseudo}.`;
+      ctaBtn.textContent  = 'Retour au groupe';
+      ctaBtn.href         = `/src/pages/groupe.html?id=${bm.groupeId}`;
+      // (le localStorage flag reste pour que groupe.html exécute l'action)
+    } else if (isPendingVainqueur) {
       // Le flag sera consommé par profil.html au retour
       iconEl.textContent  = '✅';
       titleEl.textContent = 'Paiement confirmé !';

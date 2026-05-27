@@ -4,6 +4,7 @@ const WHOP_PUBLIC_KEY = import.meta.env.VITE_WHOP_PUBLIC_KEY;
 export const PLANS = {
   premium:          import.meta.env.VITE_WHOP_PLAN_PREMIUM          || 'premium',
   change_vainqueur: import.meta.env.VITE_WHOP_PLAN_CHANGE_VAINQUEUR || 'change_vainqueur',
+  groupe_action:    import.meta.env.VITE_WHOP_PLAN_GROUPE_ACTION     || 'groupe_action',
 };
 
 export const BOOST_PRICES = {

@@ -35,6 +35,7 @@ export default async function handler(req) {
 
   const PLAN_PREMIUM          = process.env.VITE_WHOP_PLAN_PREMIUM;
   const PLAN_CHANGE_VAINQUEUR = process.env.VITE_WHOP_PLAN_CHANGE_VAINQUEUR;
+  const PLAN_GROUPE_ACTION    = process.env.VITE_WHOP_PLAN_GROUPE_ACTION;
 
   // ── membership.went_valid → abonnement Premium activé ──
   if (event.action === 'membership.went_valid') {
@@ -74,8 +75,22 @@ export default async function handler(req) {
     const { user_id, product_id, amount, transaction_id, metadata } = event.data;
     const footzyUserId = metadata?.footzy_user_id;
 
+    // Action groupe bonus/malus (1,99€) — exécution côté client via localStorage
+    if (product_id === PLAN_GROUPE_ACTION && footzyUserId) {
+      // Juste dédupliquer la transaction, l'action est exécutée côté client
+      const { data: existing } = await supabase
+        .from('achats_boost').select('id')
+        .eq('whop_transaction_id', transaction_id).maybeSingle();
+      if (!existing) {
+        await supabase.from('achats_boost').insert({
+          user_id: footzyUserId, match_id: null, type: 'groupe_action',
+          prix_centimes: amount, whop_transaction_id: transaction_id, applique: true,
+        });
+      }
+    }
+
     // Changement de pronostic vainqueur (1,99€)
-    if (product_id === PLAN_CHANGE_VAINQUEUR && footzyUserId) {
+    else if (product_id === PLAN_CHANGE_VAINQUEUR && footzyUserId) {
       // Le flag localStorage côté client gère l'ouverture du modal.
       // On log juste la transaction pour éviter les doublons.
       const { data: existing } = await supabase

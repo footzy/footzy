@@ -154,6 +154,9 @@
       statusEl.textContent = text;
     }
 
+    // Wrapper async pour pouvoir utiliser return
+    (async () => {
+
     // ── Récupérer l'utilisateur ────────────────────────────
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -262,6 +265,8 @@
         }
       }, 2000);
     }
+
+    })(); // fin wrapper async
   </script>
 </body>
 </html>

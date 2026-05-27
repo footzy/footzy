@@ -121,7 +121,57 @@
         <h2 style="font-size:18px;font-weight:800;margin-bottom:4px">Mon vainqueur CdM 2026</h2>
         <p style="font-size:12px;color:var(--fg-faint)" id="vainqueur-modal-subtitle">Attention : une fois confirmée, cette prédiction est définitive.</p>
       </div>
-      <input class="input-field" id="vainqueur-equipe" placeholder="Équipe (ex: France 🇫🇷)" style="margin-bottom:10px" />
+      <select class="input-field" id="vainqueur-equipe" style="margin-bottom:10px;cursor:pointer">
+        <option value="">Choisir une équipe…</option>
+        <option value="Afrique du Sud"      data-flag="🇿🇦">🇿🇦 Afrique du Sud</option>
+        <option value="Algérie"             data-flag="🇩🇿">🇩🇿 Algérie</option>
+        <option value="Allemagne"           data-flag="🇩🇪">🇩🇪 Allemagne</option>
+        <option value="Angleterre"          data-flag="🏴󠁧󠁢󠁥󠁮󠁧󠁿">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Angleterre</option>
+        <option value="Arabie Saoudite"     data-flag="🇸🇦">🇸🇦 Arabie Saoudite</option>
+        <option value="Argentine"           data-flag="🇦🇷">🇦🇷 Argentine</option>
+        <option value="Australie"           data-flag="🇦🇺">🇦🇺 Australie</option>
+        <option value="Autriche"            data-flag="🇦🇹">🇦🇹 Autriche</option>
+        <option value="Belgique"            data-flag="🇧🇪">🇧🇪 Belgique</option>
+        <option value="Bosnie-Herzégovine"  data-flag="🇧🇦">🇧🇦 Bosnie-Herzégovine</option>
+        <option value="Brésil"              data-flag="🇧🇷">🇧🇷 Brésil</option>
+        <option value="Canada"              data-flag="🇨🇦">🇨🇦 Canada</option>
+        <option value="Cap-Vert"            data-flag="🇨🇻">🇨🇻 Cap-Vert</option>
+        <option value="Colombie"            data-flag="🇨🇴">🇨🇴 Colombie</option>
+        <option value="Congo RD"            data-flag="🇨🇩">🇨🇩 Congo RD</option>
+        <option value="Corée du Sud"        data-flag="🇰🇷">🇰🇷 Corée du Sud</option>
+        <option value="Côte d'Ivoire"       data-flag="🇨🇮">🇨🇮 Côte d'Ivoire</option>
+        <option value="Croatie"             data-flag="🇭🇷">🇭🇷 Croatie</option>
+        <option value="Curaçao"             data-flag="🇨🇼">🇨🇼 Curaçao</option>
+        <option value="Écosse"              data-flag="🏴󠁧󠁢󠁳󠁣󠁴󠁿">🏴󠁧󠁢󠁳󠁣󠁴󠁿 Écosse</option>
+        <option value="Égypte"              data-flag="🇪🇬">🇪🇬 Égypte</option>
+        <option value="Équateur"            data-flag="🇪🇨">🇪🇨 Équateur</option>
+        <option value="Espagne"             data-flag="🇪🇸">🇪🇸 Espagne</option>
+        <option value="États-Unis"          data-flag="🇺🇸">🇺🇸 États-Unis</option>
+        <option value="France"              data-flag="🇫🇷">🇫🇷 France</option>
+        <option value="Ghana"               data-flag="🇬🇭">🇬🇭 Ghana</option>
+        <option value="Haïti"               data-flag="🇭🇹">🇭🇹 Haïti</option>
+        <option value="Irak"                data-flag="🇮🇶">🇮🇶 Irak</option>
+        <option value="Iran"                data-flag="🇮🇷">🇮🇷 Iran</option>
+        <option value="Japon"               data-flag="🇯🇵">🇯🇵 Japon</option>
+        <option value="Jordanie"            data-flag="🇯🇴">🇯🇴 Jordanie</option>
+        <option value="Maroc"               data-flag="🇲🇦">🇲🇦 Maroc</option>
+        <option value="Mexique"             data-flag="🇲🇽">🇲🇽 Mexique</option>
+        <option value="Norvège"             data-flag="🇳🇴">🇳🇴 Norvège</option>
+        <option value="Nouvelle-Zélande"    data-flag="🇳🇿">🇳🇿 Nouvelle-Zélande</option>
+        <option value="Ouzbékistan"         data-flag="🇺🇿">🇺🇿 Ouzbékistan</option>
+        <option value="Panama"              data-flag="🇵🇦">🇵🇦 Panama</option>
+        <option value="Paraguay"            data-flag="🇵🇾">🇵🇾 Paraguay</option>
+        <option value="Pays-Bas"            data-flag="🇳🇱">🇳🇱 Pays-Bas</option>
+        <option value="Portugal"            data-flag="🇵🇹">🇵🇹 Portugal</option>
+        <option value="Qatar"               data-flag="🇶🇦">🇶🇦 Qatar</option>
+        <option value="République Tchèque"  data-flag="🇨🇿">🇨🇿 République Tchèque</option>
+        <option value="Sénégal"             data-flag="🇸🇳">🇸🇳 Sénégal</option>
+        <option value="Suède"               data-flag="🇸🇪">🇸🇪 Suède</option>
+        <option value="Suisse"              data-flag="🇨🇭">🇨🇭 Suisse</option>
+        <option value="Tunisie"             data-flag="🇹🇳">🇹🇳 Tunisie</option>
+        <option value="Turquie"             data-flag="🇹🇷">🇹🇷 Turquie</option>
+        <option value="Uruguay"             data-flag="🇺🇾">🇺🇾 Uruguay</option>
+      </select>
       <button class="fz-btn fz-btn--primary fz-btn--block" id="save-vainqueur-btn" style="margin-bottom:4px">Confirmer ma prédiction</button>
       <button style="margin-top:10px;color:var(--fg-faint);font-size:13px;width:100%;text-align:center" onclick="document.getElementById('vainqueur-modal').classList.remove('open')">Annuler</button>
     </div>
@@ -252,10 +302,10 @@
     }
 
     document.getElementById('save-vainqueur-btn').addEventListener('click', () => {
-      const equipe = document.getElementById('vainqueur-equipe').value.trim();
-      if (!equipe) { toast('Entre le nom d\'une équipe.'); return; }
-      const flagMatch = equipe.match(/\p{Emoji_Presentation}/u);
-      const flag = flagMatch ? flagMatch[0] : '🏳';
+      const sel = document.getElementById('vainqueur-equipe');
+      const equipe = sel.value;
+      if (!equipe) { toast('Choisis une équipe.'); return; }
+      const flag = sel.selectedOptions[0]?.dataset.flag || '🏳';
 
       // ── Afficher le warning de confirmation ──
       const overlay = document.createElement('div');

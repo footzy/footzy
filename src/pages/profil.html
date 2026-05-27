@@ -116,18 +116,22 @@
   <!-- Vainqueur Modal -->
   <div class="modal-overlay" id="vainqueur-modal">
     <div class="modal-sheet">
-      <h2 style="font-size:18px;font-weight:700;margin-bottom:16px">🏆 Vainqueur CdM 2026</h2>
-      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">Pour quel groupe ? (une seule prédiction par groupe)</p>
-      <select id="vainqueur-groupe" class="input-field" style="margin-bottom:12px;appearance:none"></select>
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:32px;margin-bottom:6px">🏆</div>
+        <h2 style="font-size:18px;font-weight:800;margin-bottom:4px">Mon vainqueur CdM 2026</h2>
+        <p style="font-size:12px;color:var(--fg-faint)" id="vainqueur-modal-subtitle">Attention : une fois confirmée, cette prédiction est définitive.</p>
+      </div>
       <input class="input-field" id="vainqueur-equipe" placeholder="Équipe (ex: France 🇫🇷)" style="margin-bottom:10px" />
-      <button class="cta-primary" id="save-vainqueur-btn">Enregistrer</button>
-      <button style="margin-top:12px;color:var(--text-tertiary);font-size:13px;width:100%;text-align:center" onclick="document.getElementById('vainqueur-modal').classList.remove('open')">Annuler</button>
+      <button class="fz-btn fz-btn--primary fz-btn--block" id="save-vainqueur-btn" style="margin-bottom:4px">Confirmer ma prédiction</button>
+      <button style="margin-top:10px;color:var(--fg-faint);font-size:13px;width:100%;text-align:center" onclick="document.getElementById('vainqueur-modal').classList.remove('open')">Annuler</button>
     </div>
   </div>
 
   <script type="module">
     import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
     import { checkMidAccess, createCheckout, PLANS } from '/src/js/lib/whop.js';
+    // Quarts de finale CdM 2026 : verrouillage total après le 5 juillet 2026
+    const QF_CUTOFF = new Date('2026-07-05T00:00:00Z');
     import { formatDate, toast } from '/src/js/lib/utils.js';
 
     const user = await requireAuth();
@@ -176,35 +180,94 @@
         <span class="fz-bcell__label">${b.name}</span>
       </div>`).join('');
 
-    // Vainqueur
-    const { data: memberships } = await supabase.from('groupe_membres').select('groupe_id, groupes(id,nom)').eq('user_id', user.id);
-    if (memberships?.length) {
-      const vainqueurGroupeSelect = document.getElementById('vainqueur-groupe');
-      vainqueurGroupeSelect.innerHTML = memberships.map(m => `<option value="${m.groupes.id}">${m.groupes.nom}</option>`).join('');
+    // ── Vainqueur CdM (prédiction globale, sans groupe) ──
+    const canChangeForFee = new Date() < QF_CUTOFF; // avant la fin des quarts
 
-      const firstGroupeId = memberships[0].groupes.id;
-      const { data: vainqueur } = await supabase.from('pronostics_vainqueur').select('*').eq('user_id', user.id).eq('groupe_id', firstGroupeId).maybeSingle();
-      if (vainqueur) {
-        document.getElementById('vainqueur-flag').textContent = vainqueur.flag || '🏳';
-        document.getElementById('vainqueur-team').textContent = vainqueur.equipe;
+    const { data: vainqueur } = await supabase
+      .from('pronostics_vainqueur')
+      .select('*')
+      .eq('user_id', user.id)
+      .is('groupe_id', null)
+      .maybeSingle();
+
+    const editBtn = document.getElementById('edit-vainqueur-btn');
+
+    if (vainqueur) {
+      // Prédiction existante → afficher l'équipe
+      document.getElementById('vainqueur-flag').textContent = vainqueur.flag || '🏳';
+      document.getElementById('vainqueur-team').textContent = vainqueur.equipe;
+
+      if (canChangeForFee) {
+        // Avant les quarts : on peut changer en payant
+        editBtn.textContent = 'Modifier (1,99€)';
+        editBtn.style.fontSize = '12px';
+        editBtn.style.color = 'var(--fg-muted)';
+        editBtn.style.background = 'var(--bg-card-2)';
+        editBtn.style.borderColor = 'var(--border)';
+        editBtn.addEventListener('click', () => {
+          // Mémoriser l'intention de changement avant redirection Whop
+          localStorage.setItem('footzy_pending_change_vainqueur', '1');
+          createCheckout(PLANS.change_vainqueur, user.id);
+        });
+      } else {
+        // Après les quarts : verrouillé définitivement
+        editBtn.style.display = 'none';
+        document.getElementById('vainqueur-card').insertAdjacentHTML('beforeend',
+          '<span style="font-size:10px;color:var(--fg-faint);font-weight:600;margin-left:auto">🔒 Verrouillé</span>');
       }
+    } else {
+      // Pas encore de prédiction → libre
+      editBtn.addEventListener('click', () => {
+        document.getElementById('vainqueur-equipe').value = '';
+        document.getElementById('vainqueur-modal-subtitle').textContent =
+          'Attention : une fois confirmée, cette prédiction est définitive.';
+        document.getElementById('vainqueur-modal').classList.add('open');
+      });
     }
 
-    document.getElementById('edit-vainqueur-btn').addEventListener('click', () => {
+    // Retour depuis paiement Whop → ouvrir directement le modal de modification
+    if (localStorage.getItem('footzy_pending_change_vainqueur') === '1' && canChangeForFee) {
+      localStorage.removeItem('footzy_pending_change_vainqueur');
+      document.getElementById('vainqueur-equipe').value = vainqueur?.equipe || '';
+      document.getElementById('vainqueur-modal-subtitle').textContent =
+        'Paiement validé — tu peux maintenant changer ton équipe.';
       document.getElementById('vainqueur-modal').classList.add('open');
-    });
+    }
+
     document.getElementById('save-vainqueur-btn').addEventListener('click', async () => {
-      const groupeId = document.getElementById('vainqueur-groupe').value;
       const equipe = document.getElementById('vainqueur-equipe').value.trim();
-      if (!equipe) return;
+      if (!equipe) { toast('Entre le nom d\'une équipe.'); return; }
       const flagMatch = equipe.match(/\p{Emoji_Presentation}/u);
       const flag = flagMatch ? flagMatch[0] : '🏳';
-      await supabase.from('pronostics_vainqueur').upsert({ user_id: user.id, groupe_id: groupeId, equipe, flag }, { onConflict: 'user_id,groupe_id' });
+
+      const saveBtn = document.getElementById('save-vainqueur-btn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Enregistrement…';
+
+      // delete + insert pour gérer le NULL unique
+      await supabase.from('pronostics_vainqueur').delete().eq('user_id', user.id).is('groupe_id', null);
+      const { error } = await supabase.from('pronostics_vainqueur').insert({ user_id: user.id, groupe_id: null, equipe, flag });
+
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Confirmer ma prédiction';
+
+      if (error) { toast('Erreur : ' + error.message); return; }
+
       document.getElementById('vainqueur-flag').textContent = flag;
       document.getElementById('vainqueur-team').textContent = equipe;
       document.getElementById('vainqueur-modal').classList.remove('open');
-      toast('Vainqueur enregistré ! 🏆');
+
+      // Après 1ère sauvegarde : remplacer "Modifier" par le bouton payant (ou cacher)
+      if (canChangeForFee) {
+        editBtn.textContent = 'Modifier (1,99€)';
+        editBtn.style.fontSize = '12px';
+      } else {
+        editBtn.style.display = 'none';
+      }
+
+      toast('Vainqueur confirmé ! 🏆');
     });
+
     document.getElementById('vainqueur-modal').addEventListener('click', e => {
       if (e.target === document.getElementById('vainqueur-modal')) document.getElementById('vainqueur-modal').classList.remove('open');
     });

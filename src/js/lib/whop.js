@@ -1,8 +1,9 @@
 const WHOP_PUBLIC_KEY = import.meta.env.VITE_WHOP_PUBLIC_KEY;
 
-// ── Single plan: Premium 9,99€ ──────────────────────────
+// ── Plans ────────────────────────────────────────────────
 export const PLANS = {
-  premium: import.meta.env.VITE_WHOP_PLAN_PREMIUM || 'premium',
+  premium:          import.meta.env.VITE_WHOP_PLAN_PREMIUM          || 'premium',
+  change_vainqueur: import.meta.env.VITE_WHOP_PLAN_CHANGE_VAINQUEUR || 'change_vainqueur',
 };
 
 export const BOOST_PRICES = {

@@ -783,7 +783,7 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-.fz-plan--mid { background: var(--accent-soft); color: var(--accent-strong); }
+.fz-plan--premium { background: var(--accent-soft); color: var(--accent-strong); }
 .fz-plan--free { background: var(--bg-card-2); color: var(--fg-faint); }
 .fz-plan--top { background: linear-gradient(135deg, #FFE08A, #D4A100); color: #3A2A00; }
 

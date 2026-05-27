@@ -31,10 +31,10 @@
       if (!user) { clearInterval(poll); return; }
 
       const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user.id).single();
-      if (profile?.plan === 'mid') {
+      if (profile?.plan === 'premium') {
         clearInterval(poll);
         iconEl.textContent = '✅';
-        titleEl.textContent = 'Accès Mid activé !';
+        titleEl.textContent = 'Accès Premium activé !';
         msgEl.textContent = 'L\'Oracle IA et tous les Boosts sont maintenant disponibles.';
       }
 

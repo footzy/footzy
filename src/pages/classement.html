@@ -85,7 +85,7 @@
     if (!user) throw new Error('not authed');
     const profile = await getCurrentProfile();
 
-    const isPremium = profile?.plan === 'premium' || profile?.plan === 'mid';
+    const isPremium = profile?.plan === 'premium';
 
     // Show CTA for free users
     if (!isPremium) {
@@ -98,7 +98,7 @@
     const { data: players } = await supabase
       .from('profiles')
       .select('id, pseudo, plan, points_totaux, scores_exacts')
-      .in('plan', ['premium', 'mid'])
+      .eq('plan', 'premium')
       .order('points_totaux', { ascending: false })
       .limit(100);
 
@@ -161,7 +161,7 @@
       const isMe = p.id === user.id;
       const init = (p.pseudo?.[0] || '?').toUpperCase();
       const trophy = trophyForRank(rank);
-      const planBadge = `<span class="fz-plan fz-plan--mid">⭐ Premium</span>`;
+      const planBadge = `<span class="fz-plan fz-plan--premium">⭐ Premium</span>`;
       return `
         <div class="fz-rank${isMe ? ' is-me' : ''}">
           <span class="fz-rank__pos">#${rank}</span>

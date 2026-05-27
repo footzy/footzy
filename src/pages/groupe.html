@@ -385,35 +385,8 @@
     const params = new URLSearchParams(location.search);
     let currentGroupeId = params.get('id');
 
-    // ── Retour depuis paiement : exécuter l'action bonus/malus en attente ──
-    const pendingBM = localStorage.getItem('footzy_pending_bm');
-    if (pendingBM) {
-      try {
-        const bm = JSON.parse(pendingBM);
-        localStorage.removeItem('footzy_pending_bm');
-        // Si on est bien dans le bon groupe (ou sans groupe sélectionné), exécuter
-        if (bm.groupeId) {
-          const { error: bmErr } = await supabase.from('bonus_malus').insert({
-            groupe_id:    bm.groupeId,
-            from_user_id: user.id,
-            to_user_id:   bm.targetId,
-            points:       bm.pts,
-            label:        bm.label,
-          });
-          if (!bmErr) {
-            // Notifier la cible
-            const ch = supabase.channel(`notif-${bm.targetId}`);
-            await ch.send({ type: 'broadcast', event: 'bonus_malus', payload: { label: bm.label, pts: bm.pts } });
-            supabase.removeChannel(ch);
-            toast(`${bm.label} envoyé à ${bm.targetPseudo} ! 🎉`);
-            // Rediriger vers le bon groupe
-            if (!currentGroupeId) currentGroupeId = bm.groupeId;
-          } else {
-            toast('Erreur lors de l\'action : ' + bmErr.message);
-          }
-        }
-      } catch(e) { localStorage.removeItem('footzy_pending_bm'); }
-    }
+    // NOTE: l'exécution des BM est gérée dans payment-success.html
+    // après vérification du paiement via achats_boost (webhook).
     let realtimeChannel = null;
     let kickedFromGroup = false;
     let isAlreadyInGroup = false;

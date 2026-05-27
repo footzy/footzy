@@ -7,45 +7,176 @@
   <link rel="stylesheet" href="/src/css/tokens.css" />
   <link rel="stylesheet" href="/src/css/components.css" />
   <link rel="stylesheet" href="/src/css/fz-components.css" />
+  <style>
+    @keyframes popIn {
+      0%   { transform: scale(0.5); opacity: 0; }
+      70%  { transform: scale(1.15); }
+      100% { transform: scale(1);   opacity: 1; }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse-ring {
+      0%   { transform: scale(0.9); opacity: 0.6; }
+      50%  { transform: scale(1.1); opacity: 0.2; }
+      100% { transform: scale(0.9); opacity: 0.6; }
+    }
+
+    body { background: #0F0F0E; margin: 0; }
+
+    .ps-bg {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      text-align: center;
+      background: radial-gradient(ellipse at 50% 20%, rgba(0,255,106,0.07) 0%, transparent 65%);
+    }
+
+    .ps-icon-wrap {
+      position: relative;
+      width: 96px;
+      height: 96px;
+      margin: 0 auto 28px;
+    }
+    .ps-ring {
+      position: absolute;
+      inset: -12px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,255,106,0.15), transparent 70%);
+      animation: pulse-ring 2.4s ease-in-out infinite;
+    }
+    .ps-icon {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: rgba(0,255,106,0.12);
+      border: 2px solid rgba(0,255,106,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 44px;
+      animation: popIn 0.5s cubic-bezier(.32,.72,0,1) both;
+    }
+    .ps-icon--loading {
+      background: rgba(255,255,255,0.05);
+      border-color: rgba(255,255,255,0.1);
+      animation: none;
+    }
+
+    .ps-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: #fff;
+      margin: 0 0 10px;
+      letter-spacing: -0.02em;
+      animation: fadeUp 0.4s 0.1s both ease-out;
+    }
+    .ps-msg {
+      font-size: 15px;
+      color: rgba(255,255,255,0.5);
+      margin: 0 0 36px;
+      line-height: 1.5;
+      max-width: 280px;
+      animation: fadeUp 0.4s 0.2s both ease-out;
+    }
+    .ps-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: #00ff6a;
+      color: #0F0F0E;
+      font-weight: 800;
+      font-size: 15px;
+      padding: 14px 32px;
+      border-radius: 14px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+      max-width: 300px;
+      animation: fadeUp 0.4s 0.3s both ease-out;
+      transition: opacity 0.15s;
+    }
+    .ps-cta:active { opacity: 0.8; }
+
+    .ps-loader {
+      width: 32px; height: 32px;
+      border: 3px solid rgba(255,255,255,0.08);
+      border-top-color: rgba(255,255,255,0.5);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
 </head>
 <body>
-  <main style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center">
-    <div style="font-size:64px;margin-bottom:16px" id="result-icon">⏳</div>
-    <h1 style="font-size:24px;font-weight:700;margin-bottom:8px" id="result-title">Traitement en cours...</h1>
-    <p style="color:var(--fg-muted);margin-bottom:32px" id="result-msg">Ton accès va être activé dans quelques secondes.</p>
-    <a href="/src/pages/accueil.html" class="fz-btn fz-btn--primary" style="max-width:280px" id="cta-btn">Retour à l'accueil</a>
+  <main class="ps-bg">
+
+    <div class="ps-icon-wrap">
+      <div class="ps-ring" id="ps-ring"></div>
+      <div class="ps-icon ps-icon--loading" id="ps-icon">
+        <div class="ps-loader" id="ps-loader"></div>
+      </div>
+    </div>
+
+    <h1 class="ps-title" id="ps-title">Traitement en cours…</h1>
+    <p  class="ps-msg"   id="ps-msg">Ton paiement est confirmé, on active ton accès.</p>
+    <a  class="ps-cta"   id="ps-cta" href="/src/pages/accueil.html">Retour à l'accueil</a>
+
   </main>
 
   <script type="module">
     import { supabase } from '/src/js/lib/supabase.js';
 
-    const iconEl  = document.getElementById('result-icon');
-    const titleEl = document.getElementById('result-title');
-    const msgEl   = document.getElementById('result-msg');
-    const ctaBtn  = document.getElementById('cta-btn');
+    const iconEl   = document.getElementById('ps-icon');
+    const loaderEl = document.getElementById('ps-loader');
+    const ringEl   = document.getElementById('ps-ring');
+    const titleEl  = document.getElementById('ps-title');
+    const msgEl    = document.getElementById('ps-msg');
+    const ctaEl    = document.getElementById('ps-cta');
 
-    // Cas spécial : retour après paiement "Modifier vainqueur"
-    const isPendingVainqueur = localStorage.getItem('footzy_pending_change_vainqueur') === '1';
+    function setSuccess(emoji, title, msg, ctaText, ctaHref) {
+      loaderEl.remove();
+      iconEl.classList.remove('ps-icon--loading');
+      iconEl.textContent = emoji;
+      titleEl.textContent = title;
+      msgEl.textContent   = msg;
+      ctaEl.textContent   = ctaText;
+      ctaEl.href          = ctaHref;
+    }
+
+    function setPending(emoji, title, msg) {
+      loaderEl.remove();
+      iconEl.classList.remove('ps-icon--loading');
+      iconEl.style.background = 'rgba(255,200,0,0.12)';
+      iconEl.style.borderColor = 'rgba(255,200,0,0.3)';
+      ringEl.style.background = 'radial-gradient(circle, rgba(255,200,0,0.15), transparent 70%)';
+      iconEl.textContent = emoji;
+      titleEl.textContent = title;
+      msgEl.textContent   = msg;
+    }
+
+    // ── Cas BM groupe ──────────────────────────────────────
     const pendingBM = localStorage.getItem('footzy_pending_bm');
-
     if (pendingBM) {
       const bm = JSON.parse(pendingBM);
-      iconEl.textContent  = '✅';
-      titleEl.textContent = 'Paiement confirmé !';
-      msgEl.textContent   = `${bm.label} va être envoyé à ${bm.targetPseudo}.`;
-      ctaBtn.textContent  = 'Retour au groupe';
-      ctaBtn.href         = `/src/pages/groupe.html?id=${bm.groupeId}`;
-      // (le localStorage flag reste pour que groupe.html exécute l'action)
-    } else if (isPendingVainqueur) {
-      // Le flag sera consommé par profil.html au retour
-      iconEl.textContent  = '✅';
-      titleEl.textContent = 'Paiement confirmé !';
-      msgEl.textContent   = 'Tu peux maintenant modifier ton pronostic vainqueur.';
-      ctaBtn.textContent  = 'Modifier ma prédiction';
-      ctaBtn.href         = '/src/pages/profil.html';
-      // (le localStorage flag reste pour que profil.html ouvre le modal)
+      setSuccess('🎯', 'Paiement confirmé !',
+        `${bm.label} va être envoyé à ${bm.targetPseudo}.`,
+        'Retour au groupe', `/src/pages/groupe.html?id=${bm.groupeId}`);
+
+    // ── Cas vainqueur ──────────────────────────────────────
+    } else if (localStorage.getItem('footzy_pending_change_vainqueur') === '1') {
+      setSuccess('✏️', 'Paiement confirmé !',
+        'Tu peux maintenant modifier ton pronostic vainqueur.',
+        'Modifier ma prédiction', '/src/pages/profil.html');
+
+    // ── Cas premium — poll ─────────────────────────────────
     } else {
-      // Cas standard : abonnement Premium — on poll le profil
       let attempts = 0;
       const poll = setInterval(async () => {
         attempts++;
@@ -57,18 +188,15 @@
 
         if (profile?.plan === 'premium') {
           clearInterval(poll);
-          iconEl.textContent  = '✅';
-          titleEl.textContent = 'Accès Premium activé ! 🎉';
-          msgEl.textContent   = 'Oracle IA, Feed Premium et Boosts sont maintenant disponibles.';
-          ctaBtn.textContent  = 'Découvrir l\'Oracle 🔮';
-          ctaBtn.href         = '/src/pages/oracle.html';
+          setSuccess('⭐', 'Accès Premium activé !',
+            'Oracle IA, Feed Premium et Boosts sont maintenant disponibles.',
+            'Découvrir l\'Oracle 🔮', '/src/pages/oracle.html');
         }
 
         if (attempts > 15) {
           clearInterval(poll);
-          iconEl.textContent  = '🕐';
-          titleEl.textContent = 'Activation en cours...';
-          msgEl.textContent   = 'Ton accès sera actif dans quelques minutes. Rafraîchis si nécessaire.';
+          setPending('🕐', 'Activation en cours…',
+            'Ton accès sera actif dans quelques minutes. Rafraîchis si nécessaire.');
         }
       }, 2000);
     }

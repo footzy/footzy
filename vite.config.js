@@ -21,6 +21,7 @@ export default defineConfig({
         groupe: resolve(__dirname, 'src/pages/groupe.html'),
         profil: resolve(__dirname, 'src/pages/profil.html'),
         verdict: resolve(__dirname, 'src/pages/verdict.html'),
+        'payment-success': resolve(__dirname, 'src/pages/payment-success.html'),
       }
     }
   }

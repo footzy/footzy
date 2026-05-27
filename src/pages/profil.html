@@ -114,6 +114,24 @@
   </nav>
 
   <!-- Vainqueur Modal -->
+  <!-- Picker équipe (bottom-sheet custom) -->
+  <div id="team-picker-overlay" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(15,15,14,0.65);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center">
+    <div style="background:var(--bg-card);border-radius:28px 28px 0 0;width:100%;max-width:480px;display:flex;flex-direction:column;max-height:75vh">
+      <!-- Handle + titre -->
+      <div style="padding:14px 20px 10px;border-bottom:1px solid var(--border);flex-shrink:0">
+        <div style="width:36px;height:4px;background:var(--border);border-radius:4px;margin:0 auto 12px"></div>
+        <div style="font-size:15px;font-weight:800;text-align:center;letter-spacing:-0.01em">Choisir une équipe</div>
+      </div>
+      <!-- Recherche -->
+      <div style="padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0">
+        <input id="team-search" type="text" placeholder="🔍  Rechercher…" autocomplete="off"
+          style="width:100%;box-sizing:border-box;background:var(--bg-card-2);border:1px solid var(--border);border-radius:50px;padding:10px 16px;font-size:14px;color:var(--fg);outline:none" />
+      </div>
+      <!-- Liste scrollable -->
+      <div id="team-list" style="overflow-y:auto;flex:1;padding:8px 0"></div>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="vainqueur-modal">
     <div class="modal-sheet">
       <div style="text-align:center;margin-bottom:16px">
@@ -121,57 +139,11 @@
         <h2 style="font-size:18px;font-weight:800;margin-bottom:4px">Mon vainqueur CdM 2026</h2>
         <p style="font-size:12px;color:var(--fg-faint)" id="vainqueur-modal-subtitle">Attention : une fois confirmée, cette prédiction est définitive.</p>
       </div>
-      <select class="input-field" id="vainqueur-equipe" style="margin-bottom:10px;cursor:pointer">
-        <option value="">Choisir une équipe…</option>
-        <option value="Afrique du Sud"      data-flag="🇿🇦">🇿🇦 Afrique du Sud</option>
-        <option value="Algérie"             data-flag="🇩🇿">🇩🇿 Algérie</option>
-        <option value="Allemagne"           data-flag="🇩🇪">🇩🇪 Allemagne</option>
-        <option value="Angleterre"          data-flag="🏴󠁧󠁢󠁥󠁮󠁧󠁿">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Angleterre</option>
-        <option value="Arabie Saoudite"     data-flag="🇸🇦">🇸🇦 Arabie Saoudite</option>
-        <option value="Argentine"           data-flag="🇦🇷">🇦🇷 Argentine</option>
-        <option value="Australie"           data-flag="🇦🇺">🇦🇺 Australie</option>
-        <option value="Autriche"            data-flag="🇦🇹">🇦🇹 Autriche</option>
-        <option value="Belgique"            data-flag="🇧🇪">🇧🇪 Belgique</option>
-        <option value="Bosnie-Herzégovine"  data-flag="🇧🇦">🇧🇦 Bosnie-Herzégovine</option>
-        <option value="Brésil"              data-flag="🇧🇷">🇧🇷 Brésil</option>
-        <option value="Canada"              data-flag="🇨🇦">🇨🇦 Canada</option>
-        <option value="Cap-Vert"            data-flag="🇨🇻">🇨🇻 Cap-Vert</option>
-        <option value="Colombie"            data-flag="🇨🇴">🇨🇴 Colombie</option>
-        <option value="Congo RD"            data-flag="🇨🇩">🇨🇩 Congo RD</option>
-        <option value="Corée du Sud"        data-flag="🇰🇷">🇰🇷 Corée du Sud</option>
-        <option value="Côte d'Ivoire"       data-flag="🇨🇮">🇨🇮 Côte d'Ivoire</option>
-        <option value="Croatie"             data-flag="🇭🇷">🇭🇷 Croatie</option>
-        <option value="Curaçao"             data-flag="🇨🇼">🇨🇼 Curaçao</option>
-        <option value="Écosse"              data-flag="🏴󠁧󠁢󠁳󠁣󠁴󠁿">🏴󠁧󠁢󠁳󠁣󠁴󠁿 Écosse</option>
-        <option value="Égypte"              data-flag="🇪🇬">🇪🇬 Égypte</option>
-        <option value="Équateur"            data-flag="🇪🇨">🇪🇨 Équateur</option>
-        <option value="Espagne"             data-flag="🇪🇸">🇪🇸 Espagne</option>
-        <option value="États-Unis"          data-flag="🇺🇸">🇺🇸 États-Unis</option>
-        <option value="France"              data-flag="🇫🇷">🇫🇷 France</option>
-        <option value="Ghana"               data-flag="🇬🇭">🇬🇭 Ghana</option>
-        <option value="Haïti"               data-flag="🇭🇹">🇭🇹 Haïti</option>
-        <option value="Irak"                data-flag="🇮🇶">🇮🇶 Irak</option>
-        <option value="Iran"                data-flag="🇮🇷">🇮🇷 Iran</option>
-        <option value="Japon"               data-flag="🇯🇵">🇯🇵 Japon</option>
-        <option value="Jordanie"            data-flag="🇯🇴">🇯🇴 Jordanie</option>
-        <option value="Maroc"               data-flag="🇲🇦">🇲🇦 Maroc</option>
-        <option value="Mexique"             data-flag="🇲🇽">🇲🇽 Mexique</option>
-        <option value="Norvège"             data-flag="🇳🇴">🇳🇴 Norvège</option>
-        <option value="Nouvelle-Zélande"    data-flag="🇳🇿">🇳🇿 Nouvelle-Zélande</option>
-        <option value="Ouzbékistan"         data-flag="🇺🇿">🇺🇿 Ouzbékistan</option>
-        <option value="Panama"              data-flag="🇵🇦">🇵🇦 Panama</option>
-        <option value="Paraguay"            data-flag="🇵🇾">🇵🇾 Paraguay</option>
-        <option value="Pays-Bas"            data-flag="🇳🇱">🇳🇱 Pays-Bas</option>
-        <option value="Portugal"            data-flag="🇵🇹">🇵🇹 Portugal</option>
-        <option value="Qatar"               data-flag="🇶🇦">🇶🇦 Qatar</option>
-        <option value="République Tchèque"  data-flag="🇨🇿">🇨🇿 République Tchèque</option>
-        <option value="Sénégal"             data-flag="🇸🇳">🇸🇳 Sénégal</option>
-        <option value="Suède"               data-flag="🇸🇪">🇸🇪 Suède</option>
-        <option value="Suisse"              data-flag="🇨🇭">🇨🇭 Suisse</option>
-        <option value="Tunisie"             data-flag="🇹🇳">🇹🇳 Tunisie</option>
-        <option value="Turquie"             data-flag="🇹🇷">🇹🇷 Turquie</option>
-        <option value="Uruguay"             data-flag="🇺🇾">🇺🇾 Uruguay</option>
-      </select>
+      <!-- Trigger custom picker -->
+      <button id="team-picker-trigger" style="width:100%;background:var(--bg-card-2);border:1px solid var(--border);border-radius:14px;padding:13px 16px;text-align:left;font-size:15px;font-weight:600;color:var(--fg-muted);display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:12px">
+        <span id="team-picker-label">Choisir une équipe…</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
       <button class="fz-btn fz-btn--primary fz-btn--block" id="save-vainqueur-btn" style="margin-bottom:4px">Confirmer ma prédiction</button>
       <button style="margin-top:10px;color:var(--fg-faint);font-size:13px;width:100%;text-align:center" onclick="document.getElementById('vainqueur-modal').classList.remove('open')">Annuler</button>
     </div>
@@ -268,7 +240,9 @@
     } else {
       // Pas encore de prédiction → libre
       editBtn.addEventListener('click', () => {
-        document.getElementById('vainqueur-equipe').value = '';
+        pickerSelected = { name: '', flag: '' };
+        document.getElementById('team-picker-label').textContent = 'Choisir une équipe…';
+        document.getElementById('team-picker-label').style.color = 'var(--fg-muted)';
         document.getElementById('vainqueur-modal-subtitle').textContent =
           'Attention : une fois confirmée, cette prédiction est définitive.';
         document.getElementById('vainqueur-modal').classList.add('open');
@@ -278,7 +252,12 @@
     // Retour depuis paiement Whop → ouvrir directement le modal de modification
     if (localStorage.getItem('footzy_pending_change_vainqueur') === '1' && canChangeForFee) {
       localStorage.removeItem('footzy_pending_change_vainqueur');
-      document.getElementById('vainqueur-equipe').value = vainqueur?.equipe || '';
+      const existing = TEAMS.find(t => t.name === vainqueur?.equipe);
+      if (existing) {
+        pickerSelected = existing;
+        document.getElementById('team-picker-label').textContent = `${existing.flag}  ${existing.name}`;
+        document.getElementById('team-picker-label').style.color = 'var(--fg)';
+      }
       document.getElementById('vainqueur-modal-subtitle').textContent =
         'Paiement validé — tu peux maintenant changer ton équipe.';
       document.getElementById('vainqueur-modal').classList.add('open');
@@ -301,11 +280,80 @@
       toast('Vainqueur confirmé ! 🏆');
     }
 
+    // ── Team picker ──
+    const TEAMS = [
+      { name: 'Afrique du Sud', flag: '🇿🇦' }, { name: 'Algérie', flag: '🇩🇿' },
+      { name: 'Allemagne', flag: '🇩🇪' }, { name: 'Angleterre', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
+      { name: 'Arabie Saoudite', flag: '🇸🇦' }, { name: 'Argentine', flag: '🇦🇷' },
+      { name: 'Australie', flag: '🇦🇺' }, { name: 'Autriche', flag: '🇦🇹' },
+      { name: 'Belgique', flag: '🇧🇪' }, { name: 'Bosnie-Herzégovine', flag: '🇧🇦' },
+      { name: 'Brésil', flag: '🇧🇷' }, { name: 'Canada', flag: '🇨🇦' },
+      { name: 'Cap-Vert', flag: '🇨🇻' }, { name: 'Colombie', flag: '🇨🇴' },
+      { name: 'Congo RD', flag: '🇨🇩' }, { name: 'Corée du Sud', flag: '🇰🇷' },
+      { name: "Côte d'Ivoire", flag: '🇨🇮' }, { name: 'Croatie', flag: '🇭🇷' },
+      { name: 'Curaçao', flag: '🇨🇼' }, { name: 'Écosse', flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿' },
+      { name: 'Égypte', flag: '🇪🇬' }, { name: 'Équateur', flag: '🇪🇨' },
+      { name: 'Espagne', flag: '🇪🇸' }, { name: 'États-Unis', flag: '🇺🇸' },
+      { name: 'France', flag: '🇫🇷' }, { name: 'Ghana', flag: '🇬🇭' },
+      { name: 'Haïti', flag: '🇭🇹' }, { name: 'Irak', flag: '🇮🇶' },
+      { name: 'Iran', flag: '🇮🇷' }, { name: 'Japon', flag: '🇯🇵' },
+      { name: 'Jordanie', flag: '🇯🇴' }, { name: 'Maroc', flag: '🇲🇦' },
+      { name: 'Mexique', flag: '🇲🇽' }, { name: 'Norvège', flag: '🇳🇴' },
+      { name: 'Nouvelle-Zélande', flag: '🇳🇿' }, { name: 'Ouzbékistan', flag: '🇺🇿' },
+      { name: 'Panama', flag: '🇵🇦' }, { name: 'Paraguay', flag: '🇵🇾' },
+      { name: 'Pays-Bas', flag: '🇳🇱' }, { name: 'Portugal', flag: '🇵🇹' },
+      { name: 'Qatar', flag: '🇶🇦' }, { name: 'République Tchèque', flag: '🇨🇿' },
+      { name: 'Sénégal', flag: '🇸🇳' }, { name: 'Suède', flag: '🇸🇪' },
+      { name: 'Suisse', flag: '🇨🇭' }, { name: 'Tunisie', flag: '🇹🇳' },
+      { name: 'Turquie', flag: '🇹🇷' }, { name: 'Uruguay', flag: '🇺🇾' },
+    ];
+
+    let pickerSelected = { name: '', flag: '' };
+
+    function renderTeamList(filter = '') {
+      const q = filter.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+      const list = document.getElementById('team-list');
+      const filtered = TEAMS.filter(t =>
+        t.name.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').includes(q)
+      );
+      list.innerHTML = filtered.map(t => `
+        <button data-name="${t.name}" data-flag="${t.flag}"
+          style="width:100%;background:none;border:none;padding:13px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left;${pickerSelected.name===t.name?'background:var(--accent-soft);':''}">
+          <span style="font-size:24px;line-height:1">${t.flag}</span>
+          <span style="font-size:15px;font-weight:${pickerSelected.name===t.name?'800':'600'};color:${pickerSelected.name===t.name?'var(--accent-strong)':'var(--fg)'}">${t.name}</span>
+          ${pickerSelected.name===t.name ? '<span style="margin-left:auto;color:var(--accent-strong);font-size:18px">✓</span>' : ''}
+        </button>`).join('');
+      list.querySelectorAll('button[data-name]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          pickerSelected = { name: btn.dataset.name, flag: btn.dataset.flag };
+          closePicker();
+          document.getElementById('team-picker-label').textContent = `${pickerSelected.flag}  ${pickerSelected.name}`;
+          document.getElementById('team-picker-label').style.color = 'var(--fg)';
+        });
+      });
+    }
+
+    function openPicker() {
+      const o = document.getElementById('team-picker-overlay');
+      o.style.display = 'flex';
+      document.getElementById('team-search').value = '';
+      renderTeamList();
+      setTimeout(() => document.getElementById('team-search').focus(), 100);
+    }
+    function closePicker() {
+      document.getElementById('team-picker-overlay').style.display = 'none';
+    }
+
+    document.getElementById('team-picker-trigger').addEventListener('click', openPicker);
+    document.getElementById('team-picker-overlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('team-picker-overlay')) closePicker();
+    });
+    document.getElementById('team-search').addEventListener('input', e => renderTeamList(e.target.value));
+
     document.getElementById('save-vainqueur-btn').addEventListener('click', () => {
-      const sel = document.getElementById('vainqueur-equipe');
-      const equipe = sel.value;
+      const equipe = pickerSelected.name;
+      const flag   = pickerSelected.flag;
       if (!equipe) { toast('Choisis une équipe.'); return; }
-      const flag = sel.selectedOptions[0]?.dataset.flag || '🏳';
 
       // ── Afficher le warning de confirmation ──
       const overlay = document.createElement('div');

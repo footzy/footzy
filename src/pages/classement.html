@@ -44,7 +44,7 @@
     <!-- CTA gratuit (affiché si pas premium) -->
     <div style="padding:0 20px 16px" id="free-cta" style="display:none">
       <button class="fz-btn fz-btn--block fz-shimmer" id="join-btn" style="padding:16px 22px;font-weight:800;font-size:14px;letter-spacing:-0.01em">
-        <span style="position:relative;z-index:1">👑 Rejoins le Classement Premium · 6,99€/mois</span>
+        <span style="position:relative;z-index:1">👑 Rejoins le Classement Premium · 9,99€</span>
       </button>
     </div>
 
@@ -85,20 +85,20 @@
     if (!user) throw new Error('not authed');
     const profile = await getCurrentProfile();
 
-    const isPremium = profile?.plan === 'mid' || profile?.plan === 'elite';
+    const isPremium = profile?.plan === 'premium' || profile?.plan === 'mid';
 
     // Show CTA for free users
     if (!isPremium) {
       const freeCta = document.getElementById('free-cta');
       freeCta.style.display = 'block';
-      document.getElementById('join-btn').addEventListener('click', () => createCheckout(PLANS.mid_monthly, user.id));
+      document.getElementById('join-btn').addEventListener('click', () => createCheckout(PLANS.premium, user.id));
     }
 
     // Load premium leaderboard
     const { data: players } = await supabase
       .from('profiles')
       .select('id, pseudo, plan, points_totaux, scores_exacts')
-      .in('plan', ['mid', 'elite'])
+      .in('plan', ['premium', 'mid'])
       .order('points_totaux', { ascending: false })
       .limit(100);
 
@@ -161,9 +161,7 @@
       const isMe = p.id === user.id;
       const init = (p.pseudo?.[0] || '?').toUpperCase();
       const trophy = trophyForRank(rank);
-      const planBadge = p.plan === 'elite'
-        ? `<span class="fz-plan fz-plan--top">💎 Elite</span>`
-        : `<span class="fz-plan fz-plan--mid">⭐ Premium</span>`;
+      const planBadge = `<span class="fz-plan fz-plan--mid">⭐ Premium</span>`;
       return `
         <div class="fz-rank${isMe ? ' is-me' : ''}">
           <span class="fz-rank__pos">#${rank}</span>

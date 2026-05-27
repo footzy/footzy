@@ -1,15 +1,15 @@
 const WHOP_PUBLIC_KEY = import.meta.env.VITE_WHOP_PUBLIC_KEY;
 
+// ── Single plan: Premium 9,99€ ──────────────────────────
 export const PLANS = {
-  mid_monthly: 'mid_monthly',
-  mid_cdm: 'mid_cdm',
+  premium: import.meta.env.VITE_WHOP_PLAN_PREMIUM || 'premium',
 };
 
 export const BOOST_PRICES = {
-  x2: { 'j-24h': 99, 'j-1h': 149, live: 199 },
-  joker: { 'j-24h': 99, 'j-1h': 149, live: 199 },
-  malus: { 'j-24h': 99, 'j-1h': 149, live: 199 },
-  boost_buteur: { 'j-24h': 99, 'j-1h': 149, live: 199 },
+  x2:           { 'j-24h': 99,  'j-1h': 149, live: 199 },
+  joker:        { 'j-24h': 99,  'j-1h': 149, live: 199 },
+  malus:        { 'j-24h': 99,  'j-1h': 149, live: 199 },
+  boost_buteur: { 'j-24h': 99,  'j-1h': 149, live: 199 },
 };
 
 export function getBoostTiming(kickoffAt) {
@@ -35,9 +35,17 @@ export async function createCheckout(planId, footzyUserId, metadata = {}) {
   window.location.href = `https://whop.com/checkout/?${params.toString()}`;
 }
 
-export async function checkMidAccess(profile) {
+/**
+ * Vérifie si le profil a accès Premium.
+ * Accepte 'premium' (nouveau) et 'mid' (legacy) pour la rétrocompatibilité.
+ */
+export async function checkPremiumAccess(profile) {
   if (!profile) return false;
-  if (profile.plan !== 'mid') return false;
+  const hasPlan = profile.plan === 'premium' || profile.plan === 'mid';
+  if (!hasPlan) return false;
   if (profile.plan_expires_at && new Date(profile.plan_expires_at) < new Date()) return false;
   return true;
 }
+
+// Alias legacy pour les imports existants
+export const checkMidAccess = checkPremiumAccess;

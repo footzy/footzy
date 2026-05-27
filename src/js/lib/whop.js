@@ -70,43 +70,47 @@ export async function createCheckout(planId, footzyUserId, metadata = {}) {
       @keyframes fzFadeIn  { from{opacity:0} to{opacity:1} }
       @keyframes fzSlideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
       #fz-checkout-inner { animation: fzSlideUp .28s cubic-bezier(.32,.72,0,1); }
-      #fz-checkout-inner [data-whop-checkout-plan-id] { min-height: 400px; }
+      #fz-whop-checkout-mount { min-height: 400px; }
+      /* Remonter le bouton Apple Pay au dessus du form Whop */
+      #fz-checkout-body { display:flex; flex-direction:column; }
     </style>
     <div id="fz-checkout-inner" style="
       background: #0F0F0E;
       border-radius: 28px 28px 0 0;
       width: 100%; max-width: 480px;
-      max-height: 92vh;
+      max-height: 96vh;
       display: flex; flex-direction: column;
       overflow: hidden;
     ">
-      <!-- Handle + close -->
-      <div style="padding:12px 20px 8px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.08)">
-        <div style="width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:4px;margin:0 auto;position:absolute;left:50%;transform:translateX(-50%)"></div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:16px">💳</span>
-          <span style="font-size:14px;font-weight:700;color:#fff">Paiement sécurisé</span>
-        </div>
+      <!-- Handle bar -->
+      <div style="padding:10px 0 0;flex-shrink:0;display:flex;justify-content:center">
+        <div style="width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:4px"></div>
+      </div>
+
+      <!-- Header compact -->
+      <div style="padding:10px 20px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.08)">
+        <span style="font-size:13px;font-weight:700;color:#fff;opacity:0.7">Paiement sécurisé 🔒</span>
         <button id="fz-checkout-close" style="
           background:rgba(255,255,255,0.08);border:none;border-radius:50%;
-          width:30px;height:30px;color:#999;font-size:20px;cursor:pointer;
-          display:flex;align-items:center;justify-content:center;
+          width:28px;height:28px;color:#999;font-size:18px;cursor:pointer;
+          display:flex;align-items:center;justify-content:center;line-height:1;
         ">×</button>
       </div>
 
-      <!-- Zone checkout Whop -->
+      <!-- Zone checkout Whop — scroll complet -->
       <div id="fz-checkout-body" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch">
-        <!-- Loader pendant le chargement du script -->
+
+        <!-- Loader -->
         <div id="fz-checkout-loader" style="
           padding:60px 20px;text-align:center;
           display:flex;flex-direction:column;align-items:center;gap:14px;
         ">
           <div style="font-size:36px">💳</div>
           <div style="font-size:15px;font-weight:700;color:#fff">Chargement...</div>
-          <div style="font-size:12px;color:#666">Apple Pay · Google Pay · Carte</div>
+          <div style="font-size:12px;color:#666">Apple Pay · Carte</div>
         </div>
 
-        <!-- Div mountée par le script Whop -->
+        <!-- Mount Whop — le bouton Apple Pay apparaît en haut -->
         <div
           id="fz-whop-checkout-mount"
           data-whop-checkout-plan-id="${planId}"
@@ -130,8 +134,11 @@ export async function createCheckout(planId, footzyUserId, metadata = {}) {
   setTimeout(() => {
     const loader = document.getElementById('fz-checkout-loader');
     const mount  = document.getElementById('fz-whop-checkout-mount');
+    const body   = document.getElementById('fz-checkout-body');
     if (loader) loader.style.display = 'none';
     if (mount)  mount.style.display  = 'block';
+    // Scroller tout en haut pour que Apple Pay soit visible
+    if (body) body.scrollTop = 0;
 
     // Si après 6s le formulaire n'est toujours pas monté → fallback redirect
     setTimeout(() => {

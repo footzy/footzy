@@ -49,7 +49,7 @@ function loadWhopScript() {
   });
 }
 
-export async function createCheckout(planId, footzyUserId, metadata = {}) {
+export async function createCheckout(planId, footzyUserId, metadata = {}, userEmail = '') {
   document.getElementById('fz-checkout-modal')?.remove();
 
   // Encoder userId dans le return URL comme fallback d'identification
@@ -137,8 +137,23 @@ export async function createCheckout(planId, footzyUserId, metadata = {}) {
     const body   = document.getElementById('fz-checkout-body');
     if (loader) loader.style.display = 'none';
     if (mount)  mount.style.display  = 'block';
-    // Scroller tout en haut pour que Apple Pay soit visible
     if (body) body.scrollTop = 0;
+
+    // Injecter l'email auto pour éviter l'erreur de validation avant Apple Pay
+    if (userEmail) {
+      const tryFillEmail = (attempts = 0) => {
+        const emailInput = mount?.querySelector('input[type="email"], input[name="email"], input[autocomplete="email"]');
+        if (emailInput && !emailInput.value) {
+          emailInput.value = userEmail;
+          emailInput.dispatchEvent(new Event('input',  { bubbles: true }));
+          emailInput.dispatchEvent(new Event('change', { bubbles: true }));
+          emailInput.dispatchEvent(new Event('blur',   { bubbles: true }));
+        } else if (!emailInput && attempts < 10) {
+          setTimeout(() => tryFillEmail(attempts + 1), 300);
+        }
+      };
+      setTimeout(() => tryFillEmail(), 400);
+    }
 
     // Si après 6s le formulaire n'est toujours pas monté → fallback redirect
     setTimeout(() => {

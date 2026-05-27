@@ -139,12 +139,7 @@ export async function createCheckout(planId, footzyUserId, metadata = {}) {
       const hasForm = mount?.querySelector('input, iframe, form');
       if (!hasForm) {
         modal.remove();
-        const params = new URLSearchParams({
-          d: planId,
-          metadata: JSON.stringify({ footzy_user_id: footzyUserId, ...metadata }),
-          redirect_url: returnUrl,
-        });
-        window.location.href = `https://whop.com/checkout/?${params.toString()}`;
+        window.location.href = `https://whop.com/checkout/${planId}?redirect_url=${encodeURIComponent(returnUrl)}`;
       }
     }, 6000);
   }, 300);

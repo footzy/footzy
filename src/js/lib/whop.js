@@ -144,14 +144,62 @@ export async function createCheckout(planId, footzyUserId, metadata = {}) {
     }, 6000);
   }, 300);
 
-  // Écouter la complétion via postMessage
-  window.addEventListener('message', function onMsg(e) {
-    if (!String(e.origin).includes('whop')) return;
+  // ── Redirection après paiement ───────────────────────────
+  function redirectSuccess() {
+    if (!document.getElementById('fz-checkout-modal')) return; // déjà fermé
+    window.removeEventListener('message', onMsg);
+    modal.remove();
+    window.location.href = returnUrl;
+  }
+
+  // 1) postMessage Whop (tous formats possibles)
+  function onMsg(e) {
+    const origin = String(e.origin);
+    if (!origin.includes('whop') && !origin.includes('apple') && !origin.includes('stripe')) return;
     const d = e.data;
-    if (d?.type === 'checkout.complete' || d?.status === 'success') {
-      window.removeEventListener('message', onMsg);
-      modal.remove();
-      window.location.href = returnUrl;
+    if (!d) return;
+
+    const isComplete =
+      d?.type === 'checkout.complete'     ||
+      d?.type === 'checkout_completed'    ||
+      d?.type === 'payment.success'       ||
+      d?.type === 'payment_success'       ||
+      d?.type === 'purchase.completed'    ||
+      d?.type === 'CHECKOUT_COMPLETE'     ||
+      d?.status === 'success'             ||
+      d?.status === 'completed'           ||
+      d?.event === 'checkout.complete'    ||
+      d?.event === 'purchase_completed'   ||
+      (typeof d?.type === 'string' && (d.type.includes('success') || d.type.includes('complete')));
+
+    if (isComplete) redirectSuccess();
+  }
+  window.addEventListener('message', onMsg);
+
+  // 2) Poll Supabase en backup — détecte si un achat apparaît en DB
+  //    (couvre Apple Pay qui ne fire pas toujours de postMessage)
+  let _pollCount = 0;
+  const _pollCheckout = setInterval(async () => {
+    _pollCount++;
+    if (!document.getElementById('fz-checkout-modal') || _pollCount > 60) {
+      clearInterval(_pollCheckout);
+      return;
     }
-  });
+    try {
+      const { supabase } = await import('/src/js/lib/supabase.js');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      if (planId === PLANS.premium) {
+        const { data: p } = await supabase.from('profiles').select('plan').eq('id', user.id).single();
+        if (p?.plan === 'premium') { clearInterval(_pollCheckout); redirectSuccess(); }
+      } else {
+        // Pour les paiements one-time : vérifier si un achat récent existe
+        const since = new Date(Date.now() - 5 * 60 * 1000).toISOString(); // 5 min
+        const { data: achats } = await supabase.from('achats_boost')
+          .select('id').eq('user_id', user.id).gte('created_at', since).limit(1);
+        if (achats?.length) { clearInterval(_pollCheckout); redirectSuccess(); }
+      }
+    } catch {}
+  }, 3000);
 }

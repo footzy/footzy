@@ -129,7 +129,7 @@
 
   <script type="module">
     import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
-    import { checkMidAccess, createCheckout, PLANS } from '/src/js/lib/whop.js';
+    import { checkPremiumAccess, createCheckout, PLANS } from '/src/js/lib/whop.js';
     // Quarts de finale CdM 2026 : verrouillage total après le 5 juillet 2026
     const QF_CUTOFF = new Date('2026-07-05T00:00:00Z');
     import { formatDate, toast } from '/src/js/lib/utils.js';
@@ -146,9 +146,9 @@
     const streakEl = document.getElementById('stat-streak');
     streakEl.innerHTML = `${profile?.streak_quotidien || 0}<span style="font-size:20px">🔥</span>`;
 
-    const hasMid = await checkMidAccess(profile);
-    if (hasMid) {
-      document.getElementById('plan-badge').innerHTML = '<span class="fz-plan fz-plan--mid">⭐ Premium</span>';
+    const hasPremium = await checkPremiumAccess(profile);
+    if (hasPremium) {
+      document.getElementById('plan-badge').innerHTML = '<span class="fz-plan fz-plan--premium">⭐ Premium</span>';
       document.getElementById('premium-star').style.display = 'flex';
     } else {
       document.getElementById('plan-badge').innerHTML = '<span class="fz-plan fz-plan--free">Gratuit</span>';

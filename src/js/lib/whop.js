@@ -36,17 +36,9 @@ export async function createCheckout(planId, footzyUserId, metadata = {}) {
   window.location.href = `https://whop.com/checkout/?${params.toString()}`;
 }
 
-/**
- * Vérifie si le profil a accès Premium.
- * Accepte 'premium' (nouveau) et 'mid' (legacy) pour la rétrocompatibilité.
- */
 export async function checkPremiumAccess(profile) {
   if (!profile) return false;
-  const hasPlan = profile.plan === 'premium' || profile.plan === 'mid';
-  if (!hasPlan) return false;
+  if (profile.plan !== 'premium') return false;
   if (profile.plan_expires_at && new Date(profile.plan_expires_at) < new Date()) return false;
   return true;
 }
-
-// Alias legacy pour les imports existants
-export const checkMidAccess = checkPremiumAccess;

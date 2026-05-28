@@ -1,4 +1,4 @@
-const CACHE_NAME = 'footzy-v12';
+const CACHE_NAME = 'footzy-v13';
 const STATIC_ASSETS = [
   '/',
   '/src/css/tokens.css',

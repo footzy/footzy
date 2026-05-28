@@ -83,21 +83,32 @@
             <span style="background:linear-gradient(135deg,#FFE08A,#D4A100);color:#000;border-radius:50px;padding:2px 8px;font-size:10px;font-weight:800;text-transform:none;letter-spacing:0">⭐ Premium</span>
           </label>
           <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+            <!-- Snapchat -->
             <div style="position:relative">
-              <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none">📸</span>
-              <input class="input-field" id="edit-instagram" placeholder="Instagram (pseudo ou lien)" style="padding-left:42px" />
+              <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);line-height:0;pointer-events:none">
+                <div style="width:24px;height:24px;border-radius:6px;background:#FFFC00;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M10 2C6.9 2 4.5 4.4 4.5 7.6v4L3.2 12.7c.15.5.65.75 1.1.55 0 .9-.6 1.6-1.5 1.8.35.42 1.6.56 2.7.14.45.65 1.1 1.1 1.9 1.1.44 0 .84-.14 1.18-.38.34.24.74.38 1.18.38.8 0 1.45-.45 1.9-1.1 1.1.42 2.35.28 2.7-.14-.9-.2-1.5-.9-1.5-1.8.45.2 1-.05 1.1-.55L16.8 11.6V7.6C16.8 4.4 13.1 2 10 2z" fill="white"/></svg>
+                </div>
+              </span>
+              <input class="input-field" id="edit-snapchat" placeholder="Snapchat (pseudo ou lien)" style="padding-left:44px" />
             </div>
+            <!-- Instagram -->
             <div style="position:relative">
-              <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none">🎵</span>
-              <input class="input-field" id="edit-tiktok" placeholder="TikTok (pseudo ou lien)" style="padding-left:42px" />
+              <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);line-height:0;pointer-events:none">
+                <div style="width:24px;height:24px;border-radius:6px;background:linear-gradient(45deg,#f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="12" rx="3" stroke="white" stroke-width="1.4" fill="none"/><circle cx="7" cy="7" r="2.8" stroke="white" stroke-width="1.4" fill="none"/><circle cx="10.3" cy="3.7" r="1" fill="white"/></svg>
+                </div>
+              </span>
+              <input class="input-field" id="edit-instagram" placeholder="Instagram (pseudo ou lien)" style="padding-left:44px" />
             </div>
+            <!-- X -->
             <div style="position:relative">
-              <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;font-weight:900;color:var(--fg);pointer-events:none">𝕏</span>
-              <input class="input-field" id="edit-twitter" placeholder="X / Twitter (pseudo ou lien)" style="padding-left:42px" />
-            </div>
-            <div style="position:relative">
-              <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none">▶️</span>
-              <input class="input-field" id="edit-youtube" placeholder="YouTube (pseudo ou lien)" style="padding-left:42px" />
+              <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);line-height:0;pointer-events:none">
+                <div style="width:24px;height:24px;border-radius:6px;background:#000;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M7.7 5.8 11.2 1.5H10L6.9 5l-2.7-3.5H.8l3.8 5.4L.8 11.8H2l3.3-3.8 2.6 3.8H12L7.7 5.8zm-1.1 1.3-.45-.65L2.8 2.55h1.5L7 6.1l.45.65 3.4 4.8h-1.5L6.6 7.1z" fill="white"/></svg>
+                </div>
+              </span>
+              <input class="input-field" id="edit-twitter" placeholder="X / Twitter (pseudo ou lien)" style="padding-left:44px" />
             </div>
           </div>
           <!-- Lock overlay for free users -->
@@ -313,10 +324,18 @@
 
     // Links display
     const PLATFORMS = [
-      { key: 'instagram', emoji: '📸', base: 'https://instagram.com/' },
-      { key: 'tiktok',    emoji: '🎵', base: 'https://tiktok.com/@' },
-      { key: 'twitter',   emoji: '𝕏',  base: 'https://x.com/' },
-      { key: 'youtube',   emoji: '▶️', base: 'https://youtube.com/@' },
+      {
+        key: 'snapchat', name: 'Snapchat', base: 'https://snapchat.com/add/',
+        icon: `<div style="width:20px;height:20px;border-radius:5px;background:#FFFC00;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M10 2C6.9 2 4.5 4.4 4.5 7.6v4L3.2 12.7c.15.5.65.75 1.1.55 0 .9-.6 1.6-1.5 1.8.35.42 1.6.56 2.7.14.45.65 1.1 1.1 1.9 1.1.44 0 .84-.14 1.18-.38.34.24.74.38 1.18.38.8 0 1.45-.45 1.9-1.1 1.1.42 2.35.28 2.7-.14-.9-.2-1.5-.9-1.5-1.8.45.2 1-.05 1.1-.55L16.8 11.6V7.6C16.8 4.4 13.1 2 10 2z" fill="white"/></svg></div>`,
+      },
+      {
+        key: 'instagram', name: 'Instagram', base: 'https://instagram.com/',
+        icon: `<div style="width:20px;height:20px;border-radius:5px;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="12" height="12" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="12" rx="3" stroke="white" stroke-width="1.4" fill="none"/><circle cx="7" cy="7" r="2.8" stroke="white" stroke-width="1.4" fill="none"/><circle cx="10.3" cy="3.7" r="1" fill="white"/></svg></div>`,
+      },
+      {
+        key: 'twitter', name: 'X', base: 'https://x.com/',
+        icon: `<div style="width:20px;height:20px;border-radius:5px;background:#000;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="11" height="11" viewBox="0 0 13 13" fill="none"><path d="M7.7 5.8 11.2 1.5H10L6.9 5l-2.7-3.5H.8l3.8 5.4L.8 11.8H2l3.3-3.8 2.6 3.8H12L7.7 5.8zm-1.1 1.3-.45-.65L2.8 2.55h1.5L7 6.1l.45.65 3.4 4.8h-1.5L6.6 7.1z" fill="white"/></svg></div>`,
+      },
     ];
     function buildLinkUrl(platform, val) {
       if (!val) return null;
@@ -328,8 +347,8 @@
         const url = buildLinkUrl(p, profile[p.key]);
         const label = profile[p.key].replace('@','').split('/').filter(Boolean).pop() || profile[p.key];
         return `<a href="${url}" target="_blank" rel="noopener noreferrer"
-          style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-card-2);border:1px solid var(--border);border-radius:50px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--fg);text-decoration:none;white-space:nowrap">
-          ${p.emoji} ${label}
+          style="display:inline-flex;align-items:center;gap:8px;background:var(--bg-card-2);border:1px solid var(--border);border-radius:50px;padding:6px 14px 6px 8px;font-size:13px;font-weight:600;color:var(--fg);text-decoration:none;white-space:nowrap">
+          ${p.icon} ${label}
         </a>`;
       }).join('');
       const linksEl = document.getElementById('links-display');
@@ -871,10 +890,9 @@
       document.getElementById('edit-bio-input').value = bioVal;
       document.getElementById('bio-char-count').textContent = `${bioVal.length}/150`;
       // Social links (pre-fill only for premium)
+      document.getElementById('edit-snapchat').value = profile?.snapchat || '';
       document.getElementById('edit-instagram').value = profile?.instagram || '';
-      document.getElementById('edit-tiktok').value = profile?.tiktok || '';
       document.getElementById('edit-twitter').value = profile?.twitter || '';
-      document.getElementById('edit-youtube').value = profile?.youtube || '';
       // Avatar preview
       const previewEl = document.getElementById('edit-avatar-preview');
       if (profile?.avatar_url) {
@@ -950,10 +968,9 @@
         const newBio = document.getElementById('edit-bio-input').value.trim();
         const updates = { pseudo: newPseudo, avatar_url: avatarUrl, bio: newBio };
         if (hasPremium) {
+          updates.snapchat  = document.getElementById('edit-snapchat').value.trim();
           updates.instagram = document.getElementById('edit-instagram').value.trim();
-          updates.tiktok    = document.getElementById('edit-tiktok').value.trim();
           updates.twitter   = document.getElementById('edit-twitter').value.trim();
-          updates.youtube   = document.getElementById('edit-youtube').value.trim();
         }
 
         // Update profiles table
@@ -972,10 +989,9 @@
         profile.avatar_url = avatarUrl;
         profile.bio        = document.getElementById('edit-bio-input').value.trim();
         if (hasPremium) {
+          profile.snapchat  = document.getElementById('edit-snapchat').value.trim();
           profile.instagram = document.getElementById('edit-instagram').value.trim();
-          profile.tiktok    = document.getElementById('edit-tiktok').value.trim();
           profile.twitter   = document.getElementById('edit-twitter').value.trim();
-          profile.youtube   = document.getElementById('edit-youtube').value.trim();
         }
         // Refresh bio display
         const bioEl = document.getElementById('bio-text');

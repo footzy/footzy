@@ -190,7 +190,30 @@
       setTimeout(() => { window.location.href = retour; }, 3000);
       return;
 
-    // ── CAS 2 : Modifier vainqueur ─────────────────────────
+    // ── CAS 2 : Guerre Globale ─────────────────────────────
+    } else if (localStorage.getItem('footzy_pending_war')) {
+      let war = {};
+      try { war = JSON.parse(localStorage.getItem('footzy_pending_war')); } catch {}
+      const retour = '/src/pages/accueil.html';
+
+      setDone('⚔️', 'Paiement accepté !', `${war.label || 'Action'} envoyé à ${war.targetPseudo || ''} · ${war.pts > 0 ? '+' : ''}${war.pts} pts globaux.`);
+      showCTA('Retour au Feed', retour);
+
+      if (user && war.targetId) {
+        supabase.rpc('apply_global_attack', {
+          p_to_user_id: war.targetId,
+          p_points:     war.pts,
+          p_label:      war.label,
+        }).then(({ error }) => {
+          if (error) localStorage.setItem('fz_war_last_error', error.message);
+          else localStorage.removeItem('fz_war_last_error');
+        }).catch(() => {});
+      }
+
+      localStorage.removeItem('footzy_pending_war');
+      setTimeout(() => { window.location.href = retour; }, 3000);
+
+    // ── CAS 3 : Modifier vainqueur ─────────────────────────
     } else if (localStorage.getItem('footzy_pending_change_vainqueur') === '1') {
       localStorage.removeItem('footzy_pending_change_vainqueur');
       setDone('✏️', 'Paiement accepté !', 'Tu peux maintenant modifier ton pronostic vainqueur.');

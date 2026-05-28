@@ -72,22 +72,8 @@ function loadWhopScript() {
   });
 }
 
-// ── Checkout redirect Whop ────────────────────────────────
+// ── Checkout embed Whop ───────────────────────────────────
 export async function createCheckout(planId, footzyUserId, userEmail = '', metadata = {}) {
-  const returnUrl = `${window.location.origin}/src/pages/payment-success.html?uid=${encodeURIComponent(footzyUserId)}`;
-
-  const checkoutUrl = new URL(`https://whop.com/checkout/${planId}/`);
-  checkoutUrl.searchParams.set('d', returnUrl);
-  if (userEmail) {
-    checkoutUrl.searchParams.set('email', userEmail);
-    checkoutUrl.searchParams.set('email.hidden', '1');
-  }
-
-  window.location.href = checkoutUrl.toString();
-}
-
-/* ── ANCIENNE VERSION EMBED (backup) ────────────────────────
-export async function createCheckout_EMBED(planId, footzyUserId, userEmail = '', metadata = {}) {
   document.getElementById('fz-checkout-modal')?.remove();
 
   const returnUrl = `${window.location.origin}/src/pages/payment-success.html?uid=${encodeURIComponent(footzyUserId)}`;
@@ -259,4 +245,3 @@ export async function createCheckout_EMBED(planId, footzyUserId, userEmail = '',
     } catch {}
   }, 3000);
 }
-── FIN BACKUP ─────────────────────────────────────────── */

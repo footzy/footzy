@@ -4,78 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Footzy — Inscription</title>
-  <link rel="stylesheet" href="/src/css/tokens.css" />
-  <link rel="stylesheet" href="/src/css/components.css" />
-  <link rel="stylesheet" href="/src/css/fz-components.css" />
-  <link rel="stylesheet" href="/src/css/pages.css" />
 </head>
 <body>
-  <main class="auth-page">
-    <a href="/" style="color:var(--green-accent);font-weight:700;font-size:18px;margin-bottom:32px;display:block">← Footzy</a>
-    <h1>Créer un compte</h1>
-    <p class="subtitle">Rejoins la compétition pour la CdM 2026</p>
-
-    <form class="auth-form" id="register-form">
-      <input class="input-field" type="email" name="email" placeholder="Adresse email" required autocomplete="email" />
-      <input class="input-field" type="text" name="pseudo" placeholder="Pseudo (ex: ZidaneOG)" required minlength="3" maxlength="20" autocomplete="username" />
-      <input class="input-field" type="password" name="password" placeholder="Mot de passe (8 car. min)" required minlength="8" autocomplete="new-password" />
-      <div id="error-msg" style="color:var(--danger);font-size:13px;display:none"></div>
-      <button type="submit" class="cta-primary" id="submit-btn">Créer mon compte</button>
-    </form>
-
-    <p class="auth-footer">Déjà un compte ? <a href="/src/pages/login.html">Se connecter</a></p>
-  </main>
-
-  <script type="module">
-    import { supabase } from '/src/js/lib/supabase.js';
-
-    const form = document.getElementById('register-form');
-    const errorMsg = document.getElementById('error-msg');
-    const submitBtn = document.getElementById('submit-btn');
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      errorMsg.style.display = 'none';
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Création...';
-
-      const email = form.email.value.trim();
-      const pseudo = form.pseudo.value.trim();
-      const password = form.password.value;
-
-      const { data: existing } = await supabase
-        .from('profiles').select('id').eq('pseudo', pseudo).maybeSingle();
-      if (existing) {
-        errorMsg.textContent = 'Ce pseudo est déjà pris.';
-        errorMsg.style.display = 'block';
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Créer mon compte';
-        return;
-      }
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { pseudo } }
-      });
-      if (error) {
-        errorMsg.textContent = error.message;
-        errorMsg.style.display = 'block';
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Créer mon compte';
-        return;
-      }
-
-      if (data.user) {
-        await supabase.from('profiles').upsert({
-          id: data.user.id,
-          pseudo,
-          points_totaux: 0,
-          plan: 'free'
-        }, { onConflict: 'id' });
-        window.location.href = '/src/pages/onboarding.html';
-      }
-    });
+  <script>
+    // Redirige vers la page de connexion unifiée (mode inscription)
+    window.location.replace('/src/pages/login.html?mode=register');
   </script>
 </body>
 </html>

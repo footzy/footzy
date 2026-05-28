@@ -167,25 +167,22 @@ export async function createCheckout(planId, footzyUserId, userEmail = '', metad
     if (loader) loader.style.display = 'none';
     if (mount)  mount.style.display  = 'block';
 
-    // ── Injection email dans le champ Whop ──────────────────
-    // data-whop-checkout-prefill-email supprime le bouton Apple Pay express,
-    // donc on injecte l'email directement dans l'input après le rendu.
-    if (userEmail && mount) {
-      const tryFillEmail = (attempts = 0) => {
-        const root = mount.shadowRoot || mount;
-        const input = root.querySelector('input[type="email"], input[name="email"]');
-        if (input) {
-          // Utiliser le setter natif pour déclencher les handlers React/Vue/etc.
-          const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
-          if (setter) setter.call(input, userEmail);
-          else input.value = userEmail;
-          input.dispatchEvent(new Event('input',  { bubbles: true }));
-          input.dispatchEvent(new Event('change', { bubbles: true }));
-        } else if (attempts < 20) {
-          setTimeout(() => tryFillEmail(attempts + 1), 250);
+    // ── Injection email via l'API officielle Whop ───────────
+    // window.wco.setEmail(id, email) est l'API native du SDK Whop.
+    // On attend que le frame soit enregistré dans identifiedFrames puis on injecte.
+    if (userEmail) {
+      const trySetEmail = (attempts = 0) => {
+        try {
+          if (window.wco?.identifiedFrames?.has('fz-whop-checkout-mount')) {
+            window.wco.setEmail('fz-whop-checkout-mount', userEmail);
+          } else if (attempts < 30) {
+            setTimeout(() => trySetEmail(attempts + 1), 200);
+          }
+        } catch {
+          if (attempts < 30) setTimeout(() => trySetEmail(attempts + 1), 200);
         }
       };
-      tryFillEmail();
+      trySetEmail();
     }
 
     // Fallback après 10s si le form n'a pas monté

@@ -744,6 +744,32 @@
     });
 
     document.getElementById('avatar-upload-zone').addEventListener('click', () => {
+      if (!hasPremium) {
+        // Show premium upsell
+        const upsell = document.createElement('div');
+        upsell.style.cssText = 'position:fixed;inset:0;z-index:20000;background:rgba(15,15,14,0.72);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center';
+        upsell.innerHTML = `
+          <div style="background:var(--bg-card);border-radius:28px 28px 0 0;width:100%;max-width:480px;padding:28px 20px calc(32px + env(safe-area-inset-bottom));text-align:center">
+            <div style="font-size:44px;margin-bottom:12px">📷</div>
+            <div style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#FFE08A,#D4A100);border-radius:50px;padding:4px 14px;font-size:12px;font-weight:800;color:#000;margin-bottom:14px">⭐ Premium</div>
+            <h2 style="font-size:20px;font-weight:800;letter-spacing:-0.02em;margin:0 0 8px;color:var(--fg)">Photo de profil Premium</h2>
+            <p style="font-size:14px;color:var(--fg-muted);line-height:1.5;margin:0 0 24px">Personnalise ton profil avec une photo. Disponible avec le Pass Premium.</p>
+            <button id="upsell-cta" style="background:linear-gradient(135deg,#FFE08A,#D4A100);color:#000;border:none;border-radius:50px;height:54px;width:100%;font-size:16px;font-weight:800;cursor:pointer;margin-bottom:12px;box-shadow:0 4px 20px rgba(212,161,0,0.35)">
+              Passer Premium — 9,99€/mois
+            </button>
+            <button id="upsell-close" style="background:transparent;border:none;color:var(--fg-muted);font-size:14px;font-weight:600;cursor:pointer;width:100%;padding:8px">
+              Pas maintenant
+            </button>
+          </div>`;
+        document.body.appendChild(upsell);
+        upsell.querySelector('#upsell-cta').addEventListener('click', () => {
+          upsell.remove();
+          createCheckout(PLANS.premium, user.id, user.email);
+        });
+        upsell.querySelector('#upsell-close').addEventListener('click', () => upsell.remove());
+        upsell.addEventListener('click', e => { if (e.target === upsell) upsell.remove(); });
+        return;
+      }
       document.getElementById('avatar-file-input').click();
     });
 

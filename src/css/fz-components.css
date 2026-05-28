@@ -579,7 +579,18 @@
   padding: 6px;
   text-align: center;
 }
-.fz-bcell.is-locked { opacity: 0.35; filter: grayscale(1); }
+.fz-bcell { position: relative; }
+.fz-bcell.is-locked { opacity: 0.45; filter: grayscale(1); }
+.fz-bcell__info {
+  position: absolute; top: 5px; right: 5px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--bg-muted); border: 1px solid var(--border);
+  font-size: 9px; font-weight: 800; color: var(--fg-muted);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; line-height: 1;
+  transition: background .15s, color .15s;
+}
+.fz-bcell__info:hover { background: var(--green-accent); color: #000; border-color: var(--green-accent); }
 .fz-bcell__emoji { font-size: 24px; }
 .fz-bcell__label {
   font-size: 9px; font-weight: 700;

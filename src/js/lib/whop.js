@@ -145,6 +145,7 @@ export async function createCheckout(planId, footzyUserId, userEmail = '', metad
           data-whop-checkout-return-url="${returnUrl}"
           data-whop-checkout-metadata='{"footzy_user_id":"${footzyUserId}"}'
           data-whop-checkout-hide-email="true"
+          data-whop-checkout-theme="light"
           data-whop-checkout-on-complete="fzWhopCheckoutComplete"
           style="display:none"
         ></div>

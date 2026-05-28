@@ -135,16 +135,16 @@ export async function createCheckout(planId, footzyUserId, userEmail = '', metad
         </div>
 
         <!-- Mount point Whop
-             Si email dispo : prefill-email seul (sans hide-email) → Apple Pay express visible + email valide → Safari OK
-             Si pas d'email : hide-email seul → Apple Pay présent mais champ vide (fallback)
-             data-whop-checkout-on-complete → callback officiel Whop au lieu de polling maison
+             hide-email → cache visuellement le champ email → le bouton Apple Pay express reste visible
+             L'email est injecté par JS après le rendu (voir tryFillEmail ci-dessous)
+             data-whop-checkout-on-complete → callback officiel Whop
         -->
         <div
           id="fz-whop-checkout-mount"
           data-whop-checkout-plan-id="${planId}"
           data-whop-checkout-return-url="${returnUrl}"
           data-whop-checkout-metadata='{"footzy_user_id":"${footzyUserId}"}'
-          ${userEmail ? `data-whop-checkout-prefill-email="${userEmail}"` : 'data-whop-checkout-hide-email="true"'}
+          data-whop-checkout-hide-email="true"
           data-whop-checkout-on-complete="fzWhopCheckoutComplete"
           style="display:none"
         ></div>
@@ -167,6 +167,27 @@ export async function createCheckout(planId, footzyUserId, userEmail = '', metad
     if (loader) loader.style.display = 'none';
     if (mount)  mount.style.display  = 'block';
 
+    // ── Injection email dans le champ Whop ──────────────────
+    // data-whop-checkout-prefill-email supprime le bouton Apple Pay express,
+    // donc on injecte l'email directement dans l'input après le rendu.
+    if (userEmail && mount) {
+      const tryFillEmail = (attempts = 0) => {
+        const root = mount.shadowRoot || mount;
+        const input = root.querySelector('input[type="email"], input[name="email"]');
+        if (input) {
+          // Utiliser le setter natif pour déclencher les handlers React/Vue/etc.
+          const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+          if (setter) setter.call(input, userEmail);
+          else input.value = userEmail;
+          input.dispatchEvent(new Event('input',  { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        } else if (attempts < 20) {
+          setTimeout(() => tryFillEmail(attempts + 1), 250);
+        }
+      };
+      tryFillEmail();
+    }
+
     // Fallback après 10s si le form n'a pas monté
     setTimeout(() => {
       if (!document.getElementById('fz-checkout-modal')) return;
@@ -185,7 +206,7 @@ export async function createCheckout(planId, footzyUserId, userEmail = '', metad
           loader.style.display = 'flex';
           document.getElementById('fz-retry-btn')?.addEventListener('click', () => {
             modal.remove();
-            createCheckout(planId, footzyUserId, metadata);
+            createCheckout(planId, footzyUserId, userEmail, metadata);
           });
         }
       }

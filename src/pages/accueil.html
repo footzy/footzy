@@ -191,6 +191,31 @@
     }
     .feed-delete-btn:active { background: rgba(255,68,68,0.18); transform: scale(0.9); }
 
+    /* ── War button ── */
+    .war-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255,140,0,0.08);
+      border: 1px solid rgba(255,140,0,0.22);
+      color: #FF8C00;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .war-btn:active { background: rgba(255,140,0,0.18); transform: scale(0.9); }
+
+    /* ── War popup ── */
+    @keyframes warSlideUp {
+      from { transform: translateY(24px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    .war-opt-btn:active { transform: scale(0.95) !important; }
+
     /* ── Post overlay sheet ── */
     .post-overlay {
       position: fixed;
@@ -716,7 +741,7 @@
       // 2b. Load profiles separately and merge
       const { data: profilesData } = await supabase
         .from('profiles')
-        .select('id, pseudo, plan')
+        .select('id, pseudo, plan, points_totaux, global_bm_pts, avatar_url')
         .in('id', premiumIds);
       const profilesMap = {};
       profilesData?.forEach(p => { profilesMap[p.id] = p; });
@@ -741,6 +766,10 @@
       feedList.innerHTML = pronos.map(p => renderCard(p, rxCounts[p.id] || {})).join('');
       feedList.querySelectorAll('.reaction-btn').forEach(btn => btn.addEventListener('click', handleReaction));
       feedList.querySelectorAll('.feed-delete-btn').forEach(btn => btn.addEventListener('click', handleDelete));
+      feedList.querySelectorAll('.war-btn').forEach(btn => btn.addEventListener('click', e => {
+        const card = e.currentTarget.closest('.feed-card');
+        openWarPopup(card.dataset.targetId, card.dataset.targetPseudo, parseInt(card.dataset.targetPts || '0'));
+      }));
     }
 
     function renderCard(p, counts) {
@@ -748,13 +777,26 @@
       const prof = p.profiles;
       const init = (prof?.pseudo?.[0] || '?').toUpperCase();
 
+      // Avatar (photo ou initiale)
+      const avatarInner = prof?.avatar_url
+        ? `<img src="${prof.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${init}',style:'font-size:16px;font-weight:700'}))">`
+        : init;
+
+      // Points globaux (base + guerre globale)
+      const globalPts = (prof?.points_totaux || 0) + (prof?.global_bm_pts || 0);
+      const bmDelta   = prof?.global_bm_pts || 0;
+      const bmHint    = bmDelta !== 0
+        ? `<span style="font-size:10px;font-weight:700;color:${bmDelta > 0 ? 'var(--green-accent)' : 'var(--danger)'}">${bmDelta > 0 ? '+' : ''}${bmDelta}</span>`
+        : '';
+
       let statusBadge = '';
-      if (p.status === 'won')           statusBadge = `<span class="feed-status-badge won">+${p.points} pts</span>`;
+      if (p.status === 'won')               statusBadge = `<span class="feed-status-badge won">+${p.points} pts</span>`;
       else if (p.status === 'en-vie-exact') statusBadge = `<span class="feed-status-badge exact">⭐ Exact</span>`;
-      else if (p.status === 'lost')     statusBadge = `<span class="feed-status-badge lost">0 pt</span>`;
+      else if (p.status === 'lost')         statusBadge = `<span class="feed-status-badge lost">0 pt</span>`;
 
       const dateLabel = m ? formatDate(m.kickoff_at) : '';
-      const isOwner  = p.user_id === user.id;
+      const isOwner   = p.user_id === user.id;
+
       const EMOJIS = ['🔥', '👏', '😱', '🎯'];
       const rxHTML = EMOJIS.map(emoji => {
         const cnt    = counts[emoji] || 0;
@@ -763,15 +805,19 @@
       }).join('');
 
       return `
-        <div class="feed-card" data-id="${p.id}">
+        <div class="feed-card" data-id="${p.id}" data-target-id="${p.user_id}" data-target-pseudo="${prof?.pseudo || ''}" data-target-pts="${globalPts}">
           <div class="feed-card-header">
-            <div class="feed-avatar">${init}</div>
+            <div class="feed-avatar">${avatarInner}</div>
             <div class="feed-user-info">
               <div class="feed-pseudo">${prof?.pseudo || '???'}</div>
-              <div><span class="feed-plan-badge">⭐ Premium</span></div>
+              <div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap">
+                <span class="feed-plan-badge">⭐ Premium</span>
+                <span style="font-size:11px;color:var(--text-tertiary);font-weight:600">${globalPts} pts ${bmHint}</span>
+              </div>
             </div>
             ${statusBadge}
-            ${isOwner ? `<button class="feed-delete-btn" data-prono="${p.id}" title="Supprimer">🗑</button>` : ''}
+            ${!isOwner ? `<button class="war-btn" title="⚔️ Guerre Globale">⚔️</button>` : ''}
+            ${isOwner  ? `<button class="feed-delete-btn" data-prono="${p.id}" title="Supprimer">🗑</button>` : ''}
           </div>
           <div class="feed-match-info">
             <span class="feed-match-flags">${m?.home_flag || ''}${m?.away_flag || ''}</span>
@@ -997,6 +1043,112 @@
         feedLoaded = false;
         document.getElementById('feed-list').innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--text-tertiary)">Chargement…</div>';
         loadFeed();
+      });
+    }
+
+    // ─────────────────────────────────────────
+    // GUERRE GLOBALE
+    // ─────────────────────────────────────────
+    const WAR_OPTIONS = [
+      { label: '🚀 Boost',       pts: +3, color: 'var(--green-accent)', bg: 'rgba(0,224,90,0.08)',  border: 'var(--green-border)',  desc: '+3 pts' },
+      { label: '⚡ Élan',        pts: +2, color: 'var(--green-accent)', bg: 'rgba(0,224,90,0.06)',  border: 'var(--green-border)',  desc: '+2 pts' },
+      { label: '💣 Sabotage',    pts: -2, color: 'var(--danger)',       bg: 'rgba(255,68,68,0.08)', border: 'rgba(255,68,68,0.3)',  desc: '−2 pts' },
+      { label: '💀 Destruction', pts: -3, color: 'var(--danger)',       bg: 'rgba(255,68,68,0.1)',  border: 'rgba(255,68,68,0.35)', desc: '−3 pts' },
+    ];
+
+    async function openWarPopup(targetId, targetPseudo, targetPts) {
+      // Récupérer le nombre d'attaques du jour
+      const since = new Date(); since.setHours(0,0,0,0);
+      const { data: todayAttacks } = await supabase
+        .from('feed_attacks').select('id')
+        .eq('from_user_id', user.id)
+        .gte('created_at', since.toISOString());
+      const MAX_DAILY   = 5;
+      const attacksUsed = todayAttacks?.length || 0;
+      const attacksLeft = Math.max(0, MAX_DAILY - attacksUsed);
+
+      const init = (targetPseudo[0] || '?').toUpperCase();
+
+      const el = document.createElement('div');
+      el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.88);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;padding:0';
+
+      el.innerHTML = `
+        <div style="background:var(--bg-surface);border-radius:28px 28px 0 0;width:100%;max-width:480px;padding:0 0 calc(28px + env(safe-area-inset-bottom));animation:warSlideUp .28s cubic-bezier(.32,.72,0,1)">
+          <!-- Handle -->
+          <div style="text-align:center;padding:12px 0 0">
+            <div style="width:36px;height:4px;border-radius:2px;background:var(--border);margin:0 auto"></div>
+          </div>
+          <!-- Titre -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px">
+            <div style="font-size:17px;font-weight:800;letter-spacing:-.01em">⚔️ Guerre Globale</div>
+            <button id="war-close" style="background:var(--bg-muted);border:1px solid var(--border);color:var(--text-primary);width:28px;height:28px;border-radius:50%;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+          </div>
+          <!-- Cible -->
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 20px 14px;border-bottom:1px solid var(--border);border-top:1px solid var(--border)">
+            <div style="width:44px;height:44px;border-radius:50%;background:var(--bg-dark);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:var(--text-secondary);flex-shrink:0">${init}</div>
+            <div style="flex:1">
+              <div style="font-size:15px;font-weight:700">${targetPseudo}</div>
+              <div style="font-size:12px;color:var(--text-tertiary);margin-top:2px">${targetPts} pts globaux</div>
+            </div>
+            <div style="font-size:12px;font-weight:700;padding:5px 10px;border-radius:20px;
+              background:${attacksLeft > 0 ? 'var(--green-dim)' : 'rgba(255,68,68,0.08)'};
+              border:1px solid ${attacksLeft > 0 ? 'var(--green-border)' : 'rgba(255,68,68,0.2)'};
+              color:${attacksLeft > 0 ? 'var(--green-accent)' : 'var(--danger)'}">
+              ${attacksLeft > 0 ? `${attacksLeft} / ${MAX_DAILY}` : '🚫 Limite'}
+            </div>
+          </div>
+          <!-- Options -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px 20px 12px">
+            ${WAR_OPTIONS.map((o, idx) => `
+              <button class="war-opt-btn" data-idx="${idx}"
+                ${attacksLeft === 0 ? 'disabled' : ''}
+                style="padding:16px 10px;border-radius:16px;border:1px solid ${o.border};background:${o.bg};
+                  cursor:${attacksLeft > 0 ? 'pointer' : 'not-allowed'};
+                  opacity:${attacksLeft > 0 ? '1' : '0.4'};text-align:center;transition:transform .12s,opacity .12s">
+                <div style="font-size:28px;margin-bottom:4px">${o.label.split(' ')[0]}</div>
+                <div style="font-size:12px;font-weight:700;color:${o.color}">${o.label.substring(o.label.indexOf(' ')+1)}</div>
+                <div style="font-size:15px;font-weight:900;color:${o.color};margin-top:4px">${o.desc}</div>
+              </button>
+            `).join('')}
+          </div>
+          <div style="text-align:center;font-size:11px;color:var(--text-tertiary);padding:0 20px">
+            ${MAX_DAILY} attaques gratuites par jour · Affecte le classement global
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(el);
+      el.querySelector('#war-close').addEventListener('click', () => el.remove());
+      el.addEventListener('click', e => { if (e.target === el) el.remove(); });
+
+      el.querySelectorAll('.war-opt-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const o = WAR_OPTIONS[+btn.dataset.idx];
+          // Feedback immédiat
+          el.querySelectorAll('.war-opt-btn').forEach(b => { b.disabled = true; b.style.opacity = '0.4'; });
+
+          const { data, error } = await supabase.rpc('apply_global_attack', {
+            p_to_user_id: targetId,
+            p_points:     o.pts,
+            p_label:      o.label,
+          });
+
+          if (error || data?.error) {
+            const msg = data?.error === 'daily_limit' ? '🚫 Limite de 5 attaques par jour atteinte !' : (error?.message || 'Erreur');
+            toast(msg);
+            el.querySelectorAll('.war-opt-btn').forEach(b => { b.disabled = false; b.style.opacity = '1'; });
+            return;
+          }
+
+          el.remove();
+          const isPositive = o.pts > 0;
+          toast(`${o.label.split(' ')[0]} envoyé à ${targetPseudo} ! ${o.desc}`);
+
+          // Recharger le feed pour mettre à jour les points
+          feedLoaded = false;
+          document.getElementById('feed-list').innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-tertiary)">Chargement…</div>';
+          loadFeed();
+        });
       });
     }
 

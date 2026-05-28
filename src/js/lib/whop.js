@@ -151,8 +151,22 @@ export async function createCheckout(planId, footzyUserId, userEmail = '', metad
 
   document.body.appendChild(modal);
 
+  // ── Bloquer le scroll du body (fix iOS Safari) ───────────
+  const _scrollY = window.scrollY;
+  document.body.style.position = 'fixed';
+  document.body.style.top = `-${_scrollY}px`;
+  document.body.style.width = '100%';
+  document.body.style.overflow = 'hidden';
+
   // Fermeture
-  const close = () => modal.remove();
+  const close = () => {
+    modal.remove();
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    document.body.style.overflow = '';
+    window.scrollTo(0, _scrollY);
+  };
   document.getElementById('fz-checkout-close').addEventListener('click', close);
   modal.addEventListener('click', e => { if (e.target === modal) close(); });
 

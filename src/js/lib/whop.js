@@ -118,6 +118,17 @@ export async function createCheckout(planId, footzyUserId, userEmail = '', metad
         ">×</button>
       </div>
 
+      <!-- Bandeau info Safari -->
+      ${/^((?!chrome|android).)*safari/i.test(navigator.userAgent) ? `
+      <div style="
+        margin: 0 12px 8px; padding: 10px 14px;
+        background: #fff3f3; border: 1px solid #ffb3b3; border-radius: 10px;
+        font-size: 12.5px; color: #cc0000; line-height: 1.45; flex-shrink:0;
+      ">
+        ⚠️ Le bouton Apple Pay en haut ne fonctionne pas ici.<br>
+        <strong>Ignorez-le</strong> — entrez votre email ci-dessous et cliquez sur <strong>Rejoindre</strong>.
+      </div>` : ''}
+
       <!-- Corps scrollable -->
       <div id="fz-checkout-body" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0">
 

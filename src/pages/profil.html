@@ -184,22 +184,88 @@
 
     // Badges
     const BADGES = [
-      { code: 'footeux_og', emoji: '⭐', name: 'Footeux OG' },
-      { code: 'oracle', emoji: '🔮', name: 'Oracle' },
-      { code: 'hat_trick', emoji: '🎩', name: 'Hat-trick' },
-      { code: 'kamikaze', emoji: '💥', name: 'Kamikaze' },
-      { code: 'contre_pied', emoji: '🔄', name: 'Contre-pied' },
-      { code: 'intraitable', emoji: '🛡️', name: 'Intraitable' },
-      { code: 'hall_of_fame', emoji: '👑', name: 'Hall of Fame' },
-      { code: 'footix', emoji: '🐓', name: 'Footix' },
+      {
+        code: 'footeux_og', emoji: '⭐', name: 'Footeux OG',
+        tagline: 'Là depuis le début.',
+        desc: 'Tu fais partie des premiers inscrits sur Footzy. Ce badge ne sera plus jamais distribué.',
+      },
+      {
+        code: 'oracle', emoji: '🔮', name: 'Oracle',
+        tagline: 'Tu vois ce que les autres ne voient pas.',
+        desc: 'Prédit le score exact d\'un match 3 fois dans la même semaine. La précision d\'un prophète.',
+      },
+      {
+        code: 'hat_trick', emoji: '🎩', name: 'Hat-trick',
+        tagline: 'Trois pour le prix d\'un.',
+        desc: 'Marque 3 pronos parfaits (score exact) lors d\'une même journée de matchs. Le triplé ultime.',
+      },
+      {
+        code: 'kamikaze', emoji: '💥', name: 'Kamikaze',
+        tagline: 'Tout ou rien.',
+        desc: 'Joue un boost x2 sur un match et gagne. Le courage récompensé.',
+      },
+      {
+        code: 'contre_pied', emoji: '🔄', name: 'Contre-pied',
+        tagline: 'À contre-courant, et pourtant…',
+        desc: 'Ton prono était le seul correct dans ton groupe sur un match. Tout le monde avait tort sauf toi.',
+      },
+      {
+        code: 'intraitable', emoji: '🛡️', name: 'Intraitable',
+        tagline: 'On ne te prend pas en défaut.',
+        desc: 'Termine une semaine complète sans aucun prono raté. Zéro faille.',
+      },
+      {
+        code: 'hall_of_fame', emoji: '👑', name: 'Hall of Fame',
+        tagline: 'Une légende est née.',
+        desc: 'Termine 1er de ton groupe à la fin d\'un événement. Ton nom reste gravé.',
+      },
+      {
+        code: 'footix', emoji: '🐓', name: 'Footix',
+        tagline: 'Tu t\'y connais autant en foot qu\'en cuisine moléculaire.',
+        desc: 'Aucun de tes pronos n\'est passé sur une journée complète de matchs. Un talent rare, à l\'envers.',
+      },
     ];
     const { data: userBadges } = await supabase.from('badges_utilisateur').select('badge_code').eq('user_id', user.id);
     const earnedCodes = new Set(userBadges?.map(b => b.badge_code) || []);
     document.getElementById('badges-grid').innerHTML = BADGES.map(b => `
-      <div class="fz-bcell ${earnedCodes.has(b.code) ? '' : 'is-locked'}" title="${b.name}">
+      <div class="fz-bcell ${earnedCodes.has(b.code) ? '' : 'is-locked'}">
+        <button class="fz-bcell__info" data-badge="${b.code}">i</button>
         <span class="fz-bcell__emoji">${b.emoji}</span>
         <span class="fz-bcell__label">${b.name}</span>
       </div>`).join('');
+
+    // Modal info badge
+    const badgeModal = document.createElement('div');
+    badgeModal.className = 'modal-overlay';
+    badgeModal.id = 'badge-info-modal';
+    badgeModal.innerHTML = `
+      <div class="modal-sheet" style="text-align:center">
+        <div id="bim-emoji" style="font-size:48px;margin-bottom:12px"></div>
+        <div id="bim-status" style="margin-bottom:10px"></div>
+        <h2 id="bim-name" style="font-size:18px;font-weight:800;margin-bottom:6px"></h2>
+        <p id="bim-tagline" style="font-size:14px;font-style:italic;color:var(--text-tertiary);margin-bottom:14px"></p>
+        <p id="bim-desc" style="font-size:14px;color:var(--text-secondary);line-height:1.55;margin-bottom:24px"></p>
+        <button class="cta-primary" onclick="document.getElementById('badge-info-modal').classList.remove('open')">OK</button>
+      </div>`;
+    document.body.appendChild(badgeModal);
+    badgeModal.addEventListener('click', e => { if (e.target === badgeModal) badgeModal.classList.remove('open'); });
+
+    document.getElementById('badges-grid').addEventListener('click', e => {
+      const btn = e.target.closest('.fz-bcell__info');
+      if (!btn) return;
+      const code = btn.dataset.badge;
+      const b = BADGES.find(x => x.code === code);
+      if (!b) return;
+      const earned = earnedCodes.has(code);
+      document.getElementById('bim-emoji').textContent = b.emoji;
+      document.getElementById('bim-name').textContent = b.name;
+      document.getElementById('bim-tagline').textContent = `"${b.tagline}"`;
+      document.getElementById('bim-desc').textContent = b.desc;
+      document.getElementById('bim-status').innerHTML = earned
+        ? `<span style="background:var(--green-dim);border:1px solid var(--green-border);color:var(--green-accent);border-radius:50px;padding:4px 12px;font-size:12px;font-weight:700">✅ Badge débloqué</span>`
+        : `<span style="background:var(--bg-muted);border:1px solid var(--border);color:var(--text-tertiary);border-radius:50px;padding:4px 12px;font-size:12px;font-weight:700">🔒 Non débloqué</span>`;
+      badgeModal.classList.add('open');
+    });
 
     // ── Vainqueur CdM (prédiction globale, sans groupe) ──
     const canChangeForFee = new Date() < QF_CUTOFF; // avant la fin des quarts

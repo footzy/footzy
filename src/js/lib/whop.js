@@ -140,6 +140,8 @@ export async function createCheckout(planId, footzyUserId, userEmail = '', metad
           data-whop-checkout-return-url="${returnUrl}"
           data-whop-checkout-metadata='{"footzy_user_id":"${footzyUserId}"}'
           ${userEmail ? `data-whop-checkout-prefill-email="${userEmail}"` : ''}
+          data-whop-checkout-hide-email="true"
+          data-whop-checkout-hide-address="true"
           data-whop-checkout-on-complete="fzWhopCheckoutComplete"
           style="display:none"
         ></div>

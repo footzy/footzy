@@ -50,9 +50,38 @@
       animation: fsb-pulse 2s ease-in-out infinite;
     }
     #floating-save-btn:active { transform:scale(0.97); animation:none; }
+    /* Settings */
+    .fz-slabel { font-size:11px;font-weight:700;color:var(--fg-faint);text-transform:uppercase;letter-spacing:.08em;margin:18px 0 6px 4px;display:block; }
+    .fz-scard  { background:var(--bg-card-2,rgba(0,0,0,.04));border-radius:16px;overflow:hidden;margin-bottom:4px; }
+    .fz-srow   { display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s; }
+    .fz-srow:not(:last-child) { border-bottom:1px solid var(--border); }
+    .fz-srow:active { background:rgba(0,0,0,.05); }
+    .fz-srow__ic  { width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0; }
+    .fz-srow__body { flex:1;min-width:0; }
+    .fz-srow__label { font-size:15px;font-weight:600;color:var(--fg);line-height:1.3; }
+    .fz-srow__sub   { font-size:12px;color:var(--fg-muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    .fz-srow__right { display:flex;align-items:center;gap:4px;flex-shrink:0; }
+    .fz-srow__val   { font-size:13px;color:var(--fg-muted); }
+    .fz-srow__arr   { color:var(--fg-faint);font-size:20px;line-height:1;margin-top:1px; }
+    .fz-srow--danger .fz-srow__label { color:var(--danger,#E63946); }
+    /* Toggle */
+    .fz-tog { position:relative;width:44px;height:26px;flex-shrink:0; }
+    .fz-tog input { opacity:0;width:0;height:0;position:absolute; }
+    .fz-tog-sl { position:absolute;inset:0;background:var(--border);border-radius:13px;transition:.22s;cursor:pointer; }
+    .fz-tog-sl:before { content:'';position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.22s;box-shadow:0 1px 4px rgba(0,0,0,.18); }
+    .fz-tog input:checked + .fz-tog-sl { background:var(--accent,#00E05A); }
+    .fz-tog input:checked + .fz-tog-sl:before { transform:translateX(18px); }
+    /* Gear button */
+    #settings-btn { position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);right:16px;z-index:200;width:38px;height:38px;border-radius:50%;background:var(--bg-surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--fg-muted);box-shadow:0 2px 8px rgba(0,0,0,.08); }
+    #settings-btn:active { transform:scale(.94); }
   </style>
 </head>
 <body>
+  <!-- Gear button -->
+  <button id="settings-btn" aria-label="Paramètres">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+  </button>
+
   <div class="page-content">
     <!-- Centered identity -->
     <div style="padding:12px 20px 18px;display:flex;flex-direction:column;align-items:center;gap:10px">
@@ -251,6 +280,209 @@
       <span>Profil</span>
     </a>
   </nav>
+
+  <!-- ══════════════ SETTINGS MODAL ══════════════ -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal-sheet" style="max-height:88vh;overflow-y:auto;padding-bottom:calc(24px + env(safe-area-inset-bottom))">
+
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <h2 style="font-size:20px;font-weight:800;letter-spacing:-0.02em">Paramètres</h2>
+        <button onclick="document.getElementById('settings-modal').classList.remove('open')" style="width:32px;height:32px;border-radius:50%;background:var(--bg-card-2);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--fg-muted)">✕</button>
+      </div>
+
+      <!-- COMPTE -->
+      <span class="fz-slabel">Compte</span>
+      <div class="fz-scard">
+        <div class="fz-srow" id="s-email">
+          <div class="fz-srow__ic" style="background:rgba(59,130,246,.12)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></div>
+          <div class="fz-srow__body"><div class="fz-srow__label">Email</div><div class="fz-srow__sub" id="s-email-val">—</div></div>
+          <div class="fz-srow__right"><span class="fz-srow__arr">›</span></div>
+        </div>
+        <div class="fz-srow" id="s-phone">
+          <div class="fz-srow__ic" style="background:rgba(34,197,94,.12)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.8a16 16 0 0 0 6.29 6.29l.95-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
+          <div class="fz-srow__body"><div class="fz-srow__label">Téléphone</div><div class="fz-srow__sub" id="s-phone-val">Ajouter un numéro</div></div>
+          <div class="fz-srow__right"><span class="fz-srow__arr">›</span></div>
+        </div>
+        <div class="fz-srow" id="s-password">
+          <div class="fz-srow__ic" style="background:rgba(249,115,22,.12)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+          <div class="fz-srow__body"><div class="fz-srow__label">Mot de passe</div><div class="fz-srow__sub">Envoyer un lien de réinitialisation</div></div>
+          <div class="fz-srow__right"><span class="fz-srow__arr">›</span></div>
+        </div>
+        <div class="fz-srow fz-srow--danger" id="s-delete">
+          <div class="fz-srow__ic" style="background:rgba(230,57,70,.12)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E63946" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></div>
+          <div class="fz-srow__body"><div class="fz-srow__label">Supprimer le compte</div></div>
+          <div class="fz-srow__right"><span class="fz-srow__arr" style="color:var(--danger,#E63946)">›</span></div>
+        </div>
+      </div>
+
+      <!-- NOTIFICATIONS -->
+      <span class="fz-slabel">Notifications</span>
+      <div class="fz-scard">
+        <div class="fz-srow">
+          <div class="fz-srow__ic" style="background:rgba(139,92,246,.12)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+          <div class="fz-srow__body"><div class="fz-srow__label">Notifications push</div></div>
+          <div class="fz-srow__right"><label class="fz-tog"><input type="checkbox" id="tog-push"><span class="fz-tog-sl"></span></label></div>
+        </div>
+        <div class="fz-srow">
+          <div class="fz-srow__ic" style="background:rgba(139,92,246,.12)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+          <div class="fz-srow__body"><div class="fz-srow__label">Rappel avant les matchs</div><div class="fz-srow__sub">1 heure avant le coup d'envoi</div></div>
+          <div class="fz-srow__right"><label class="fz-tog"><input type="checkbox" id="tog-notif-match" checked><span class="fz-tog-sl"></span></label></div>
+        </div>
+        <div class="fz-srow">
+          <div class="fz-srow__ic" style="background:rgba(139,92,246,.12)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+          <div class="fz-srow__body"><div class="fz-srow__label">Résultats des matchs</div></div>
+          <div class="fz-srow__right"><label class="fz-tog"><input type="checkbox" id="tog-notif-result" checked><span class="fz-tog-sl"></span></label></div>
+        </div>
+        <div class="fz-srow">
+          <div class="fz-srow__ic" style="background:rgba(139,92,246,.12)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <div class="fz-srow__body"><div class="fz-srow__label">Alertes de groupe</div><div class="fz-srow__sub">Nouveau membre, classement…</div></div>
+          <div class="fz-srow__right"><label class="fz-tog"><input type="checkbox" id="tog-notif-groupe" checked><span class="fz-tog-sl"></span></label></div>
+        </div>
+      </div>
+
+      <!-- CONFIDENTIALITÉ -->
+      <span class="fz-slabel">Confidentialité</span>
+      <div class="fz-scard">
+        <div class="fz-srow">
+          <div class="fz-srow__ic" style="background:rgba(20,184,166,.12)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#14B8A6" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+          <div class="fz-srow__body"><div class="fz-srow__label">Profil public</div><div class="fz-srow__sub">Visible dans le classement mondial</div></div>
+          <div class="fz-srow__right"><label class="fz-tog"><input type="checkbox" id="tog-public" checked><span class="fz-tog-sl"></span></label></div>
+        </div>
+        <div class="fz-srow">
+          <div class="fz-srow__ic" style="background:rgba(20,184,166,.12)">⚽</div>
+          <div class="fz-srow__body"><div class="fz-srow__label">Pronos publics visibles</div><div class="fz-srow__sub">Afficher sur le Feed</div></div>
+          <div class="fz-srow__right"><label class="fz-tog"><input type="checkbox" id="tog-pronos" checked><span class="fz-tog-sl"></span></label></div>
+        </div>
+        <div class="fz-srow">
+          <div class="fz-srow__ic" style="background:rgba(20,184,166,.12)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#14B8A6" stroke-width="2" stroke-linecap="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg></div>
+          <div class="fz-srow__body"><div class="fz-srow__label">Bio visible</div><div class="fz-srow__sub">Afficher ta bio sur ton profil</div></div>
+          <div class="fz-srow__right"><label class="fz-tog"><input type="checkbox" id="tog-bio" checked><span class="fz-tog-sl"></span></label></div>
+        </div>
+      </div>
+
+      <!-- ABONNEMENT -->
+      <span class="fz-slabel">Abonnement</span>
+      <div class="fz-scard">
+        <div class="fz-srow" id="s-plan-row">
+          <div class="fz-srow__ic" style="background:rgba(212,161,0,.15)">⭐</div>
+          <div class="fz-srow__body"><div class="fz-srow__label">Plan actuel</div><div class="fz-srow__sub" id="s-plan-val">Chargement…</div></div>
+        </div>
+        <div class="fz-srow" id="s-manage-sub">
+          <div class="fz-srow__ic" style="background:rgba(212,161,0,.15)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D4A100" stroke-width="2" stroke-linecap="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div>
+          <div class="fz-srow__body"><div class="fz-srow__label" id="s-manage-label">Gérer l'abonnement</div></div>
+          <div class="fz-srow__right"><span class="fz-srow__arr">›</span></div>
+        </div>
+      </div>
+
+      <!-- APPLICATION -->
+      <span class="fz-slabel">Application</span>
+      <div class="fz-scard">
+        <div class="fz-srow" id="s-theme">
+          <div class="fz-srow__ic" style="background:rgba(99,102,241,.12)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></div>
+          <div class="fz-srow__body"><div class="fz-srow__label">Thème</div></div>
+          <div class="fz-srow__right"><span class="fz-srow__val" id="s-theme-val">Auto</span><span class="fz-srow__arr">›</span></div>
+        </div>
+        <div class="fz-srow" id="s-cache">
+          <div class="fz-srow__ic" style="background:rgba(107,114,128,.12)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></div>
+          <div class="fz-srow__body"><div class="fz-srow__label">Vider le cache</div><div class="fz-srow__sub">Force le rechargement des données</div></div>
+        </div>
+        <div class="fz-srow" style="cursor:default">
+          <div class="fz-srow__ic" style="background:rgba(107,114,128,.12)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>
+          <div class="fz-srow__body"><div class="fz-srow__label">Version</div></div>
+          <div class="fz-srow__right"><span class="fz-srow__val">1.0.0</span></div>
+        </div>
+      </div>
+
+      <!-- INFORMATIONS -->
+      <span class="fz-slabel">Informations</span>
+      <div class="fz-scard">
+        <div class="fz-srow" id="s-faq">
+          <div class="fz-srow__ic" style="background:rgba(59,130,246,.12)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+          <div class="fz-srow__body"><div class="fz-srow__label">Aide & FAQ</div></div>
+          <div class="fz-srow__right"><span class="fz-srow__arr">›</span></div>
+        </div>
+        <div class="fz-srow" id="s-bug">
+          <div class="fz-srow__ic" style="background:rgba(249,115,22,.12)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+          <div class="fz-srow__body"><div class="fz-srow__label">Signaler un bug</div></div>
+          <div class="fz-srow__right"><span class="fz-srow__arr">›</span></div>
+        </div>
+        <div class="fz-srow" id="s-cgu">
+          <div class="fz-srow__ic" style="background:rgba(107,114,128,.12)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+          <div class="fz-srow__body"><div class="fz-srow__label">Conditions d'utilisation</div></div>
+          <div class="fz-srow__right"><span class="fz-srow__arr">›</span></div>
+        </div>
+        <div class="fz-srow" id="s-privacy">
+          <div class="fz-srow__ic" style="background:rgba(107,114,128,.12)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <div class="fz-srow__body"><div class="fz-srow__label">Politique de confidentialité</div></div>
+          <div class="fz-srow__right"><span class="fz-srow__arr">›</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Sub-modal: Change email -->
+  <div class="modal-overlay" id="s-email-modal">
+    <div class="modal-sheet">
+      <h2 style="font-size:18px;font-weight:700;margin-bottom:16px">Changer l'email</h2>
+      <label style="font-size:12px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Nouvel email</label>
+      <input class="input-field" id="s-new-email" type="email" style="margin-bottom:8px" />
+      <p style="font-size:11px;color:var(--text-tertiary);margin-bottom:16px">Un email de confirmation te sera envoyé.</p>
+      <div id="s-email-err" style="color:var(--danger);font-size:13px;margin-bottom:10px;display:none"></div>
+      <button class="cta-primary" id="s-email-save">Confirmer</button>
+      <button style="margin-top:10px;color:var(--text-tertiary);font-size:13px;width:100%;text-align:center;padding:10px" onclick="document.getElementById('s-email-modal').classList.remove('open')">Annuler</button>
+    </div>
+  </div>
+
+  <!-- Sub-modal: Phone -->
+  <div class="modal-overlay" id="s-phone-modal">
+    <div class="modal-sheet">
+      <h2 style="font-size:18px;font-weight:700;margin-bottom:16px">Numéro de téléphone</h2>
+      <label style="font-size:12px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Numéro</label>
+      <input class="input-field" id="s-phone-input" type="tel" placeholder="+33 6 00 00 00 00" style="margin-bottom:8px" />
+      <p style="font-size:11px;color:var(--text-tertiary);margin-bottom:16px">Utilisé uniquement pour récupérer ton compte.</p>
+      <div id="s-phone-err" style="color:var(--danger);font-size:13px;margin-bottom:10px;display:none"></div>
+      <button class="cta-primary" id="s-phone-save">Enregistrer</button>
+      <button style="margin-top:10px;color:var(--text-tertiary);font-size:13px;width:100%;text-align:center;padding:10px" onclick="document.getElementById('s-phone-modal').classList.remove('open')">Annuler</button>
+    </div>
+  </div>
+
+  <!-- Sub-modal: Password -->
+  <div class="modal-overlay" id="s-password-modal">
+    <div class="modal-sheet" style="text-align:center">
+      <div style="font-size:44px;margin-bottom:12px">🔑</div>
+      <h2 style="font-size:18px;font-weight:800;margin-bottom:8px">Réinitialiser le mot de passe</h2>
+      <p style="font-size:14px;color:var(--fg-muted);line-height:1.5;margin-bottom:24px">On va t'envoyer un lien de réinitialisation sur ton adresse email.</p>
+      <button class="cta-primary" id="s-password-send">Envoyer le lien</button>
+      <button style="margin-top:10px;color:var(--text-tertiary);font-size:13px;width:100%;text-align:center;padding:10px" onclick="document.getElementById('s-password-modal').classList.remove('open')">Annuler</button>
+    </div>
+  </div>
+
+  <!-- Sub-modal: Theme -->
+  <div class="modal-overlay" id="s-theme-modal">
+    <div class="modal-sheet">
+      <h2 style="font-size:18px;font-weight:700;margin-bottom:16px">Thème</h2>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+        <button class="fz-srow fz-scard" id="theme-auto"   style="border:2px solid var(--border);border-radius:14px;padding:14px 16px"><div class="fz-srow__ic" style="font-size:18px">🌗</div><div class="fz-srow__body"><div class="fz-srow__label">Auto</div><div class="fz-srow__sub">Suit les préférences de l'appareil</div></div><span id="theme-auto-check" style="font-size:18px;color:var(--accent)">✓</span></button>
+        <button class="fz-srow fz-scard" id="theme-dark"   style="border:2px solid var(--border);border-radius:14px;padding:14px 16px"><div class="fz-srow__ic" style="font-size:18px">🌙</div><div class="fz-srow__body"><div class="fz-srow__label">Sombre</div></div><span id="theme-dark-check"  style="font-size:18px;color:var(--accent);display:none">✓</span></button>
+        <button class="fz-srow fz-scard" id="theme-light"  style="border:2px solid var(--border);border-radius:14px;padding:14px 16px"><div class="fz-srow__ic" style="font-size:18px">☀️</div><div class="fz-srow__body"><div class="fz-srow__label">Clair</div></div><span id="theme-light-check" style="font-size:18px;color:var(--accent);display:none">✓</span></button>
+      </div>
+      <button style="color:var(--text-tertiary);font-size:13px;width:100%;text-align:center;padding:10px" onclick="document.getElementById('s-theme-modal').classList.remove('open')">Fermer</button>
+    </div>
+  </div>
+
+  <!-- Sub-modal: Delete account -->
+  <div class="modal-overlay" id="s-delete-modal">
+    <div class="modal-sheet" style="text-align:center">
+      <div style="font-size:44px;margin-bottom:12px">⚠️</div>
+      <h2 style="font-size:18px;font-weight:800;margin-bottom:8px;color:var(--danger,#E63946)">Supprimer le compte</h2>
+      <p style="font-size:14px;color:var(--fg-muted);line-height:1.5;margin-bottom:6px">Cette action est <strong>irréversible</strong>. Toutes tes données, pronos et badges seront supprimés.</p>
+      <p style="font-size:13px;color:var(--fg-muted);margin-bottom:20px">Pour supprimer ton compte, envoie un email à <strong>support@footzy.app</strong> depuis ton adresse enregistrée.</p>
+      <button class="cta-primary" style="background:var(--danger,#E63946)" id="s-delete-confirm">Envoyer la demande</button>
+      <button style="margin-top:10px;color:var(--text-tertiary);font-size:13px;width:100%;text-align:center;padding:10px" onclick="document.getElementById('s-delete-modal').classList.remove('open')">Annuler</button>
+    </div>
+  </div>
 
   <!-- Crop Modal -->
   <div id="crop-modal" style="display:none;position:fixed;inset:0;z-index:30000;background:#111;flex-direction:column;align-items:stretch">
@@ -1103,6 +1335,132 @@
         saveBtn.textContent = 'Enregistrer';
       }
     });
+
+    // ── Settings ──
+    function openSettings() { document.getElementById('settings-modal').classList.add('open'); }
+    function closeSettings() { document.getElementById('settings-modal').classList.remove('open'); }
+    document.getElementById('settings-btn').addEventListener('click', openSettings);
+    document.getElementById('settings-modal').addEventListener('click', e => { if (e.target === document.getElementById('settings-modal')) closeSettings(); });
+
+    // Populate settings values
+    document.getElementById('s-email-val').textContent = user.email || '—';
+    document.getElementById('s-phone-val').textContent = profile?.phone || 'Ajouter un numéro';
+    document.getElementById('s-plan-val').textContent = hasPremium ? '⭐ Premium — actif' : 'Gratuit';
+    document.getElementById('s-manage-label').textContent = hasPremium ? 'Gérer / annuler l\'abonnement' : 'Passer Premium';
+    // Privacy toggles initial state
+    document.getElementById('tog-public').checked  = profile?.is_public  !== false;
+    document.getElementById('tog-pronos').checked  = profile?.show_pronos !== false;
+    document.getElementById('tog-bio').checked     = profile?.show_bio    !== false;
+    // Notif toggles from localStorage
+    document.getElementById('tog-notif-match').checked  = localStorage.getItem('notif_match')  !== 'false';
+    document.getElementById('tog-notif-result').checked = localStorage.getItem('notif_result') !== 'false';
+    document.getElementById('tog-notif-groupe').checked = localStorage.getItem('notif_groupe') !== 'false';
+    // Push notif toggle from Notification API
+    if ('Notification' in window) document.getElementById('tog-push').checked = Notification.permission === 'granted';
+
+    // COMPTE
+    document.getElementById('s-email').addEventListener('click', () => {
+      document.getElementById('s-new-email').value = user.email || '';
+      document.getElementById('s-email-err').style.display = 'none';
+      document.getElementById('s-email-modal').classList.add('open');
+    });
+    document.getElementById('s-email-save').addEventListener('click', async () => {
+      const val = document.getElementById('s-new-email').value.trim();
+      const err = document.getElementById('s-email-err');
+      if (!val) { err.textContent = 'Entre un email valide.'; err.style.display = 'block'; return; }
+      const { error } = await supabase.auth.updateUser({ email: val });
+      if (error) { err.textContent = error.message; err.style.display = 'block'; return; }
+      document.getElementById('s-email-modal').classList.remove('open');
+      document.getElementById('s-email-val').textContent = val;
+      toast('Email de confirmation envoyé ✉️');
+    });
+
+    document.getElementById('s-phone').addEventListener('click', () => {
+      document.getElementById('s-phone-input').value = profile?.phone || '';
+      document.getElementById('s-phone-err').style.display = 'none';
+      document.getElementById('s-phone-modal').classList.add('open');
+    });
+    document.getElementById('s-phone-save').addEventListener('click', async () => {
+      const val = document.getElementById('s-phone-input').value.trim();
+      const err = document.getElementById('s-phone-err');
+      const { error } = await supabase.from('profiles').update({ phone: val }).eq('id', user.id);
+      if (error) { err.textContent = error.message; err.style.display = 'block'; return; }
+      profile.phone = val;
+      document.getElementById('s-phone-val').textContent = val || 'Ajouter un numéro';
+      document.getElementById('s-phone-modal').classList.remove('open');
+      toast('Numéro enregistré ✅');
+    });
+
+    document.getElementById('s-password').addEventListener('click', () => {
+      document.getElementById('s-password-modal').classList.add('open');
+    });
+    document.getElementById('s-password-send').addEventListener('click', async () => {
+      const { error } = await supabase.auth.resetPasswordForEmail(user.email);
+      document.getElementById('s-password-modal').classList.remove('open');
+      if (error) { toast('Erreur : ' + error.message); return; }
+      toast('Lien envoyé sur ton email 📧');
+    });
+
+    document.getElementById('s-delete').addEventListener('click', () => document.getElementById('s-delete-modal').classList.add('open'));
+    document.getElementById('s-delete-confirm').addEventListener('click', () => {
+      window.open('mailto:support@footzy.app?subject=Suppression de compte&body=Bonjour, je souhaite supprimer mon compte Footzy (' + user.email + ').', '_blank');
+      document.getElementById('s-delete-modal').classList.remove('open');
+    });
+
+    // NOTIFICATIONS
+    document.getElementById('tog-push').addEventListener('change', async e => {
+      if (e.target.checked) {
+        const perm = await Notification.requestPermission();
+        e.target.checked = perm === 'granted';
+        if (perm !== 'granted') toast('Active les notifications dans tes réglages.');
+      }
+    });
+    ['match','result','groupe'].forEach(k => {
+      document.getElementById('tog-notif-' + k).addEventListener('change', e => localStorage.setItem('notif_' + k, e.target.checked));
+    });
+
+    // CONFIDENTIALITÉ
+    async function savePrivacy(key, val) {
+      await supabase.from('profiles').update({ [key]: val }).eq('id', user.id);
+    }
+    document.getElementById('tog-public').addEventListener('change', e => savePrivacy('is_public', e.target.checked));
+    document.getElementById('tog-pronos').addEventListener('change', e => savePrivacy('show_pronos', e.target.checked));
+    document.getElementById('tog-bio').addEventListener('change', e => savePrivacy('show_bio', e.target.checked));
+
+    // ABONNEMENT
+    document.getElementById('s-manage-sub').addEventListener('click', () => {
+      closeSettings();
+      if (hasPremium) window.open('https://whop.com/hub/', '_blank');
+      else createCheckout(PLANS.premium, user.id, user.email);
+    });
+
+    // APPLICATION - Thème
+    const themes = ['auto','dark','light'];
+    let currentTheme = localStorage.getItem('fz-theme') || 'auto';
+    function applyTheme(t) {
+      document.documentElement.setAttribute('data-theme', t === 'auto' ? '' : t);
+      document.getElementById('s-theme-val').textContent = t === 'auto' ? 'Auto' : t === 'dark' ? 'Sombre' : 'Clair';
+      themes.forEach(x => { document.getElementById('theme-' + x + '-check').style.display = x === t ? 'block' : 'none'; });
+      localStorage.setItem('fz-theme', t);
+      currentTheme = t;
+    }
+    applyTheme(currentTheme);
+    document.getElementById('s-theme').addEventListener('click', () => document.getElementById('s-theme-modal').classList.add('open'));
+    themes.forEach(t => document.getElementById('theme-' + t).addEventListener('click', () => { applyTheme(t); document.getElementById('s-theme-modal').classList.remove('open'); toast('Thème ' + (t === 'auto' ? 'automatique' : t === 'dark' ? 'sombre' : 'clair') + ' appliqué'); }));
+
+    // APPLICATION - Cache
+    document.getElementById('s-cache').addEventListener('click', async () => {
+      closeSettings();
+      if ('caches' in window) { const keys = await caches.keys(); await Promise.all(keys.map(k => caches.delete(k))); }
+      toast('Cache vidé — rechargement…');
+      setTimeout(() => window.location.reload(true), 800);
+    });
+
+    // INFORMATIONS
+    document.getElementById('s-faq').addEventListener('click',     () => window.open('https://footzy.app/faq',           '_blank'));
+    document.getElementById('s-bug').addEventListener('click',     () => window.open('mailto:support@footzy.app?subject=Bug+report', '_blank'));
+    document.getElementById('s-cgu').addEventListener('click',     () => window.open('https://footzy.app/cgu',           '_blank'));
+    document.getElementById('s-privacy').addEventListener('click', () => window.open('https://footzy.app/confidentialite','_blank'));
 
     // Logout
     document.getElementById('logout-btn').addEventListener('click', async () => {

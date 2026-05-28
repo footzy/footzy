@@ -78,7 +78,6 @@ export async function createCheckout(planId, footzyUserId, userEmail = '', metad
 
   const checkoutUrl = new URL(`https://whop.com/checkout/${planId}/`);
   checkoutUrl.searchParams.set('d', returnUrl);
-  if (userEmail) checkoutUrl.searchParams.set('email', userEmail);
 
   window.location.href = checkoutUrl.toString();
 }

@@ -94,29 +94,23 @@ export async function createCheckout(planId, footzyUserId, userEmail = '', metad
       @keyframes fzSpin { to { transform: rotate(360deg); } }
     </style>
 
+    <!-- Bouton fermer flottant dans la zone sombre -->
+    <button id="fz-checkout-close" style="
+      position:absolute; top:16px; right:16px;
+      width:34px;height:34px;border-radius:50%;border:none;
+      background:rgba(255,255,255,0.9);color:#333;font-size:20px;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;
+      line-height:1;z-index:1;box-shadow:0 2px 8px rgba(0,0,0,0.3);
+    ">×</button>
+
     <div id="fz-checkout-inner" style="
       background: #fff;
       border-radius: 20px 20px 0 0;
       width: 100%; max-width: 480px;
-      max-height: 86vh;
+      max-height: 90vh;
       display: flex; flex-direction: column;
       overflow: hidden;
     ">
-
-      <!-- Barre minimale : handle centré + bouton fermer à droite -->
-      <div style="
-        display:flex; align-items:center; justify-content:space-between;
-        padding: 10px 14px 6px; flex-shrink:0;
-      ">
-        <div style="width:28px"></div>
-        <div style="width:36px;height:4px;border-radius:4px;background:rgba(0,0,0,0.15)"></div>
-        <button id="fz-checkout-close" style="
-          width:28px;height:28px;border-radius:50%;border:none;
-          background:rgba(0,0,0,0.08);color:#555;font-size:18px;
-          cursor:pointer;display:flex;align-items:center;justify-content:center;
-          line-height:1;
-        ">×</button>
-      </div>
 
       <!-- Corps scrollable -->
       <div id="fz-checkout-body" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0">

@@ -161,24 +161,6 @@ export async function createCheckout(planId, footzyUserId, userEmail = '', metad
     if (loader) loader.style.display = 'none';
     if (mount)  mount.style.display  = 'block';
 
-    // ── Injection email via l'API officielle Whop ───────────
-    // window.wco.setEmail(id, email) est l'API native du SDK Whop.
-    // On attend que le frame soit enregistré dans identifiedFrames puis on injecte.
-    if (userEmail) {
-      const trySetEmail = (attempts = 0) => {
-        try {
-          if (window.wco?.identifiedFrames?.has('fz-whop-checkout-mount')) {
-            window.wco.setEmail('fz-whop-checkout-mount', userEmail);
-          } else if (attempts < 30) {
-            setTimeout(() => trySetEmail(attempts + 1), 200);
-          }
-        } catch {
-          if (attempts < 30) setTimeout(() => trySetEmail(attempts + 1), 200);
-        }
-      };
-      trySetEmail();
-    }
-
     // Fallback après 10s si le form n'a pas monté
     setTimeout(() => {
       if (!document.getElementById('fz-checkout-modal')) return;

@@ -72,6 +72,23 @@
       from { transform: translateY(100%); }
       to   { transform: translateY(0); }
     }
+
+    /* ── Member profile popup ── */
+    @keyframes mpSlideUp {
+      from { transform: translateY(28px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    #member-profile-modal > div {
+      animation: mpSlideUp .28s cubic-bezier(.32,.72,0,1);
+    }
+    .mp-stat-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 8px;
+      text-align: center;
+    }
+    .mp-bm-btn:active { transform: scale(0.96); }
   </style>
 </head>
 <body>
@@ -358,6 +375,21 @@
 
   <!-- Game Over : créé dynamiquement en JS -->
 
+  <!-- Member profile popup -->
+  <div class="modal-overlay" id="member-profile-modal">
+    <div class="modal-sheet" style="max-height:90vh;overflow-y:auto;padding:0;position:relative">
+      <!-- Drag handle -->
+      <div style="text-align:center;padding:12px 0 0;flex-shrink:0">
+        <div style="width:36px;height:4px;border-radius:2px;background:var(--border);margin:0 auto"></div>
+      </div>
+      <!-- Fermer -->
+      <button onclick="document.getElementById('member-profile-modal').classList.remove('open')"
+        style="position:absolute;top:10px;right:14px;background:var(--bg-muted);border:1px solid var(--border);color:var(--text-primary);width:28px;height:28px;border-radius:50%;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2">✕</button>
+      <!-- Contenu dynamique -->
+      <div id="member-profile-content" style="padding:20px 20px 32px"></div>
+    </div>
+  </div>
+
   <!-- Kicked modal -->
   <div class="modal-overlay" id="kicked-modal">
     <div class="modal-sheet" style="text-align:center">
@@ -409,6 +441,11 @@
     let kickedFromGroup = false;
     let isAlreadyInGroup = false;
     let currentGroupeStatut = 'attente'; // suivi du statut pour verrouiller les pronos
+    // ── État partagé pour le popup membre ──
+    let currentGroupe = null;
+    let currentSorted = [];
+    let currentIsAdmin = false;
+    let currentActionsLeft = 0;
 
     // Écouter les notifications personnelles (kick + suppression groupe)
     supabase.channel(`notif-${user.id}`)
@@ -654,6 +691,11 @@
 
       const lb = document.getElementById('groupe-leaderboard');
       const gameEnCours = groupe.statut === 'en_cours';
+      // Stocker pour le popup membre
+      currentGroupe = groupe;
+      currentIsAdmin = isAdmin;
+      currentActionsLeft = actionsLeft;
+      currentSorted = sorted;
       lb.innerHTML = sorted.map((p, i) => {
         const rank = i + 1;
         const isMe = p.id === user.id;
@@ -664,7 +706,7 @@
         const bmBadge = p.bm_pts !== 0
           ? `<span style="font-size:10px;font-weight:700;color:${p.bm_pts > 0 ? 'var(--green-accent)' : 'var(--danger)'};">${p.bm_pts > 0 ? '+' : ''}${p.bm_pts}</span>`
           : '';
-        return `<div class="leaderboard-item${isMe ? ' me' : ''}">
+        return `<div class="leaderboard-item${isMe ? ' me' : ''}" data-memberid="${p.id}" style="cursor:pointer">
           <div class="rank-badge ${rankClass}">${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank}</div>
           <div style="flex:1">
             <div class="leaderboard-pseudo">${p.pseudo}${isMe ? ' <span style="font-size:10px;color:var(--green-accent);font-weight:600;background:var(--accent-bg);padding:2px 6px;border-radius:6px">vous</span>' : ''}${p.role === 'admin' ? ' <span style="font-size:10px;color:var(--text-tertiary);font-weight:500">admin</span>' : ''}</div>
@@ -708,6 +750,16 @@
           const targetId     = btn.dataset.uid;
           const targetPseudo = btn.dataset.pseudo;
           openBMModal(targetId, targetPseudo, actionsLeft, groupe);
+        });
+      });
+
+      // ── Clic sur une ligne → popup profil membre ──
+      lb.querySelectorAll('[data-memberid]').forEach(item => {
+        item.addEventListener('click', e => {
+          if (e.target.closest('.kick-btn') || e.target.closest('.bm-btn')) return;
+          const memberData = currentSorted.find(s => s.id === item.dataset.memberid);
+          if (!memberData) return;
+          openMemberProfile(memberData, currentSorted.indexOf(memberData) + 1);
         });
       });
 
@@ -762,6 +814,223 @@
           });
         });
       });
+    }
+
+    // ── Popup profil membre ──
+    async function openMemberProfile(member, rank) {
+      const modal   = document.getElementById('member-profile-modal');
+      const content = document.getElementById('member-profile-content');
+
+      // Affichage chargement immédiat
+      content.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--text-tertiary)">Chargement…</div>`;
+      modal.classList.add('open');
+
+      // Récupérer les données complètes du profil
+      const { data: p } = await supabase
+        .from('profiles')
+        .select('id,pseudo,avatar_url,bio,instagram,snapchat,twitter,plan,points_totaux,streak_quotidien,show_bio')
+        .eq('id', member.id)
+        .single();
+
+      if (!p) {
+        content.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--danger)">Profil introuvable</div>`;
+        return;
+      }
+
+      const isMe        = p.id === user.id;
+      const isTargetAdmin = member.role === 'admin';
+      const canKick     = currentIsAdmin && !isMe && !isTargetAdmin;
+      const gameEnCours = currentGroupe?.statut === 'en_cours';
+      const total       = (p.points_totaux || 0) + (member.bm_pts || 0);
+      const bm_pts      = member.bm_pts || 0;
+
+      // Avatar
+      const avatarHtml = p.avatar_url
+        ? `<img src="${p.avatar_url}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:2.5px solid var(--border);display:block"
+             onerror="this.replaceWith(document.getElementById('mp-av-fallback-${p.id}'));document.getElementById('mp-av-fallback-${p.id}').style.display='flex'">`
+        : '';
+      const initial = (p.pseudo || '?')[0].toUpperCase();
+      const avatarFallback = `<div id="mp-av-fallback-${p.id}" style="width:72px;height:72px;border-radius:50%;background:var(--bg-surface);border:2.5px solid var(--border);display:${p.avatar_url ? 'none' : 'flex'};align-items:center;justify-content:center;font-size:26px;font-weight:800;color:var(--text-secondary);flex-shrink:0">${initial}</div>`;
+
+      // Badges rang
+      const rankMedal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+
+      // Plan badge
+      const planBadge = p.plan === 'premium'
+        ? `<span style="font-size:10px;font-weight:700;background:linear-gradient(90deg,#B8860B,#FFD700);color:#000;padding:2px 8px;border-radius:20px">⭐ Premium</span>`
+        : '';
+
+      // Admin badge
+      const adminBadge = member.role === 'admin'
+        ? `<span style="font-size:10px;color:var(--text-tertiary);font-weight:600">👑 admin</span>`
+        : '';
+
+      // Vous badge
+      const youBadge = isMe
+        ? `<span style="font-size:10px;color:var(--green-accent);font-weight:600;background:var(--accent-bg);padding:2px 6px;border-radius:6px">vous</span>`
+        : '';
+
+      // BM net badge
+      const bmBadgeHtml = bm_pts !== 0
+        ? `<span style="font-size:11px;font-weight:700;color:${bm_pts > 0 ? 'var(--green-accent)' : 'var(--danger)'}">${bm_pts > 0 ? '+' : ''}${bm_pts} BM</span>`
+        : '';
+
+      // Badges gagnés (calculés localement)
+      const badges = [];
+      if (rank === 1) badges.push({ icon: '🏆', label: 'Leader' });
+      if ((p.streak_quotidien || 0) >= 7) badges.push({ icon: '🔥', label: 'En feu' });
+      else if ((p.streak_quotidien || 0) >= 3) badges.push({ icon: '⚡', label: 'Assidu' });
+      if (p.plan === 'premium') badges.push({ icon: '💎', label: 'Premium' });
+      if (bm_pts >= 5) badges.push({ icon: '🚀', label: 'Boosté' });
+      if (bm_pts <= -5) badges.push({ icon: '💀', label: 'Malus cible' });
+      if (total === 0 && rank === currentSorted.length && currentSorted.length > 1) badges.push({ icon: '🐢', label: 'Lanterne rouge' });
+
+      // Liens sociaux
+      const SOCIALS = [
+        { key: 'snapchat',  label: 'Snapchat',  base: 'https://snapchat.com/add/', iconBg: '#FFFC00', iconColor: '#000', letter: 'SC' },
+        { key: 'instagram', label: 'Instagram', base: 'https://instagram.com/',    iconBg: 'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)', iconColor: '#fff', letter: 'IG' },
+        { key: 'twitter',   label: 'X',         base: 'https://x.com/',            iconBg: '#000',    iconColor: '#fff', letter: 'X' },
+      ].filter(s => p[s.key]);
+
+      content.innerHTML = `
+        <!-- Header -->
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+          <div style="position:relative;flex-shrink:0">
+            ${avatarHtml}${avatarFallback}
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:19px;font-weight:800;letter-spacing:-.01em;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+              ${p.pseudo} ${youBadge}
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap">
+              ${planBadge}${adminBadge}
+            </div>
+          </div>
+          <div style="font-size:30px;flex-shrink:0;line-height:1">${rankMedal}</div>
+        </div>
+
+        ${p.bio && p.show_bio !== false ? `
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:16px">
+          <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;font-style:italic">"${p.bio}"</div>
+        </div>
+        ` : ''}
+
+        <!-- Stats -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:${badges.length > 0 ? '12px' : '16px'}">
+          <div class="mp-stat-card">
+            <div style="font-size:20px;font-weight:800;color:var(--green-accent)">${total}</div>
+            ${bmBadgeHtml ? `<div style="margin-top:2px">${bmBadgeHtml}</div>` : ''}
+            <div style="font-size:10px;color:var(--text-tertiary);margin-top:3px;font-weight:600">pts groupe</div>
+          </div>
+          <div class="mp-stat-card">
+            <div style="font-size:20px;font-weight:800">${rankMedal}</div>
+            <div style="font-size:10px;color:var(--text-tertiary);margin-top:3px;font-weight:600">classement</div>
+          </div>
+          <div class="mp-stat-card">
+            <div style="font-size:20px;font-weight:800">${p.streak_quotidien || 0}</div>
+            <div style="font-size:10px;color:var(--text-tertiary);margin-top:3px;font-weight:600">🔥 streak</div>
+          </div>
+        </div>
+
+        ${badges.length > 0 ? `
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px">
+          ${badges.map(b => `
+            <div style="display:inline-flex;align-items:center;gap:5px;background:var(--bg-surface);border:1px solid var(--border);border-radius:20px;padding:5px 10px;font-size:12px;font-weight:600;color:var(--text-secondary)">
+              ${b.icon} ${b.label}
+            </div>
+          `).join('')}
+        </div>
+        ` : ''}
+
+        ${SOCIALS.length > 0 ? `
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+          ${SOCIALS.map(s => `
+            <a href="${s.base}${p[s.key]}" target="_blank" rel="noopener"
+              style="display:inline-flex;align-items:center;gap:7px;background:var(--bg-surface);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--text-secondary);text-decoration:none">
+              <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;background:${s.iconBg};color:${s.iconColor};font-size:9px;font-weight:800;flex-shrink:0">${s.letter}</span>
+              @${p[s.key]}
+            </a>
+          `).join('')}
+        </div>
+        ` : ''}
+
+        ${!isMe ? `
+        <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-tertiary)">⚡ Bonus / Malus</div>
+            <div style="font-size:11px;font-weight:600;color:${currentActionsLeft > 0 ? 'var(--green-accent)' : 'var(--danger)'}">
+              ${currentActionsLeft > 0
+                ? `${currentActionsLeft} action${currentActionsLeft > 1 ? 's' : ''} restante${currentActionsLeft > 1 ? 's' : ''}`
+                : 'Plus d\'actions disponibles'}
+            </div>
+          </div>
+          ${gameEnCours ? `
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            ${BM_OPTIONS.map((o, idx) => `
+              <button class="mp-bm-btn" data-idx="${idx}" data-tid="${p.id}" data-tpseudo="${p.pseudo}"
+                ${currentActionsLeft === 0 ? 'disabled' : ''}
+                style="padding:14px 10px;border-radius:14px;border:1px solid ${o.border};background:${o.bg};
+                  cursor:${currentActionsLeft > 0 ? 'pointer' : 'not-allowed'};
+                  opacity:${currentActionsLeft > 0 ? '1' : '0.4'};
+                  text-align:center;transition:transform .12s,opacity .12s">
+                <div style="font-size:26px;margin-bottom:4px">${o.label.split(' ')[0]}</div>
+                <div style="font-size:12px;font-weight:700;color:${o.color}">${o.label.substring(o.label.indexOf(' ')+1)}</div>
+                <div style="font-size:13px;font-weight:800;color:${o.color};margin-top:4px">${o.desc}</div>
+                <div style="font-size:11px;color:var(--text-tertiary);margin-top:5px">1,99€</div>
+              </button>
+            `).join('')}
+          </div>
+          ` : `
+          <div style="text-align:center;padding:14px;font-size:13px;color:var(--text-tertiary);background:var(--bg-surface);border-radius:12px;border:1px solid var(--border)">
+            ⏳ Les bonus/malus sont disponibles quand le jeu est lancé
+          </div>
+          `}
+        </div>
+        ` : ''}
+
+        ${canKick ? `
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+          <button id="mp-kick-btn" data-uid="${p.id}"
+            style="width:100%;height:42px;border-radius:12px;border:1px solid var(--danger);background:none;color:var(--danger);font-size:13px;font-weight:600;cursor:pointer">
+            🚫 Exclure du groupe
+          </button>
+        </div>
+        ` : ''}
+      `;
+
+      // Handlers BM
+      content.querySelectorAll('.mp-bm-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          modal.classList.remove('open');
+          openBMModal(btn.dataset.tid, btn.dataset.tpseudo, currentActionsLeft, currentGroupe);
+        });
+      });
+
+      // Handler kick
+      const kickBtn = document.getElementById('mp-kick-btn');
+      if (kickBtn) {
+        kickBtn.addEventListener('click', async () => {
+          const uid = kickBtn.dataset.uid;
+          const ok = await showConfirm({
+            icon: '🚫',
+            title: `Exclure ${p.pseudo} ?`,
+            message: `${p.pseudo} sera retiré du groupe et ne pourra plus voir les pronos.`,
+            label: 'Exclure', danger: true
+          });
+          if (!ok) return;
+          kickBtn.disabled = true;
+          const { error } = await supabase
+            .from('groupe_membres').delete()
+            .eq('groupe_id', currentGroupeId).eq('user_id', uid);
+          if (error) { toast('Erreur ❌'); kickBtn.disabled = false; return; }
+          const notifCh = supabase.channel(`notif-${uid}`);
+          await notifCh.send({ type: 'broadcast', event: 'kicked', payload: { admin_pseudo: profile.pseudo, groupe_nom: currentGroupe.nom } });
+          supabase.removeChannel(notifCh);
+          modal.classList.remove('open');
+          toast(`${p.pseudo} a été exclu 👋`);
+          loadGroupe();
+        });
+      }
     }
 
     function showBMNotif({ label, pts }) {
@@ -1199,6 +1468,9 @@
 
     document.getElementById('match-prono-modal').addEventListener('click', e => {
       if (e.target === document.getElementById('match-prono-modal')) document.getElementById('match-prono-modal').classList.remove('open');
+    });
+    document.getElementById('member-profile-modal').addEventListener('click', e => {
+      if (e.target === document.getElementById('member-profile-modal')) document.getElementById('member-profile-modal').classList.remove('open');
     });
 
     // Create group

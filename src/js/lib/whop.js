@@ -134,18 +134,11 @@ export async function createCheckout(planId, footzyUserId, userEmail = '', metad
           <div style="font-size:14px;font-weight:600;color:#333">Chargement du paiement…</div>
         </div>
 
-        <!-- Mount point Whop
-             Sans hide-email → le bouton Apple Pay express + le champ email sont visibles
-             L'email est injecté via window.wco.setEmail() après le rendu → pas d'erreur validation
-             data-whop-checkout-theme=light → fond blanc même en dark mode iPhone
-             data-whop-checkout-on-complete → callback officiel Whop
-        -->
         <div
           id="fz-whop-checkout-mount"
           data-whop-checkout-plan-id="${planId}"
           data-whop-checkout-return-url="${returnUrl}"
           data-whop-checkout-metadata='{"footzy_user_id":"${footzyUserId}"}'
-          data-whop-checkout-theme="light"
           data-whop-checkout-on-complete="fzWhopCheckoutComplete"
           style="display:none"
         ></div>

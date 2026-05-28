@@ -237,6 +237,7 @@ export async function createCheckout(planId, footzyUserId, userEmail = '', metad
   window.addEventListener('message', onMsg);
 
   // 3) Poll Supabase en backup (Apple Pay ne fire pas toujours les events)
+  const _checkoutOpenedAt = new Date().toISOString(); // timestamp d'ouverture du checkout
   let _pollCount = 0;
   const _pollCheckout = setInterval(async () => {
     _pollCount++;
@@ -250,12 +251,11 @@ export async function createCheckout(planId, footzyUserId, userEmail = '', metad
       if (!user) return;
 
       if (planId === PLANS.premium) {
-        const { data: p } = await supabase.from('profiles').select('plan').eq('id', user.id).single();
-        if (p?.plan === 'premium') { clearInterval(_pollCheckout); redirectSuccess(); }
+        const { data: p } = await supabase.from('profiles').select('plan,updated_at').eq('id', user.id).single();
+        if (p?.plan === 'premium' && p?.updated_at >= _checkoutOpenedAt) { clearInterval(_pollCheckout); redirectSuccess(); }
       } else {
-        const since = new Date(Date.now() - 5 * 60 * 1000).toISOString();
         const { data: achats } = await supabase.from('achats_boost')
-          .select('id').eq('user_id', user.id).gte('created_at', since).limit(1);
+          .select('id').eq('user_id', user.id).gte('created_at', _checkoutOpenedAt).limit(1);
         if (achats?.length) { clearInterval(_pollCheckout); redirectSuccess(); }
       }
     } catch {}

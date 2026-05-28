@@ -48,11 +48,59 @@
         <input class="input-field" id="edit-email-input" type="email" style="margin-bottom:6px" />
         <p style="font-size:11px;color:var(--text-tertiary);margin-bottom:16px">Un email de confirmation sera envoyé si tu changes l'adresse.</p>
 
+        <!-- Bio -->
+        <label style="font-size:12px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Bio</label>
+        <div style="position:relative;margin-bottom:4px">
+          <textarea class="input-field" id="edit-bio-input" maxlength="150" placeholder="Dis quelque chose sur toi…" style="resize:none;height:78px;padding-top:12px;padding-bottom:26px;line-height:1.5"></textarea>
+          <span id="bio-char-count" style="position:absolute;bottom:10px;right:12px;font-size:11px;color:var(--text-tertiary)">0/150</span>
+        </div>
+        <p style="font-size:11px;color:var(--text-tertiary);margin-bottom:16px">Visible sur ton profil public.</p>
+
+        <!-- Liens (Premium) -->
+        <div style="position:relative" id="links-edit-wrap">
+          <label style="font-size:12px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:7px;margin-bottom:10px">
+            Liens
+            <span style="background:linear-gradient(135deg,#FFE08A,#D4A100);color:#000;border-radius:50px;padding:2px 8px;font-size:10px;font-weight:800;text-transform:none;letter-spacing:0">⭐ Premium</span>
+          </label>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+            <div style="position:relative">
+              <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none">📸</span>
+              <input class="input-field" id="edit-instagram" placeholder="Instagram (pseudo ou lien)" style="padding-left:42px" />
+            </div>
+            <div style="position:relative">
+              <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none">🎵</span>
+              <input class="input-field" id="edit-tiktok" placeholder="TikTok (pseudo ou lien)" style="padding-left:42px" />
+            </div>
+            <div style="position:relative">
+              <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;font-weight:900;color:var(--fg);pointer-events:none">𝕏</span>
+              <input class="input-field" id="edit-twitter" placeholder="X / Twitter (pseudo ou lien)" style="padding-left:42px" />
+            </div>
+            <div style="position:relative">
+              <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none">▶️</span>
+              <input class="input-field" id="edit-youtube" placeholder="YouTube (pseudo ou lien)" style="padding-left:42px" />
+            </div>
+          </div>
+          <!-- Lock overlay for free users -->
+          <div id="links-lock-overlay" style="display:none;position:absolute;inset:-4px;background:var(--bg-card);border:1px solid var(--border);border-radius:16px;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;text-align:center;padding:20px">
+            <span style="font-size:36px">⭐</span>
+            <span style="font-size:15px;font-weight:800;color:var(--fg)">Réservé aux membres Premium</span>
+            <span style="font-size:13px;color:var(--fg-muted)">Appuie pour débloquer</span>
+          </div>
+        </div>
+
         <div id="edit-profile-error" style="color:var(--danger);font-size:13px;margin-bottom:10px;display:none"></div>
         <button class="cta-primary" id="edit-profile-save">Enregistrer</button>
         <button style="margin-top:12px;color:var(--text-tertiary);font-size:13px;width:100%;text-align:center" onclick="document.getElementById('edit-profile-modal').classList.remove('open')">Annuler</button>
       </div>
     </div>
+
+    <!-- Bio display -->
+    <div id="bio-display" style="padding:0 24px 10px;text-align:center;display:none">
+      <p id="bio-text" style="font-size:14px;color:var(--fg-muted);line-height:1.6;margin:0;white-space:pre-wrap"></p>
+    </div>
+
+    <!-- Links display -->
+    <div id="links-display" style="padding:0 20px 16px;display:none;justify-content:center;flex-wrap:wrap;gap:8px"></div>
 
     <!-- Stats 2×2 -->
     <div style="padding:0 20px 18px">
@@ -231,6 +279,62 @@
       document.getElementById('plan-badge').innerHTML = '<span class="fz-plan fz-plan--free">Gratuit</span>';
       document.getElementById('mid-cta-wrap').style.display = 'block';
       document.getElementById('upgrade-mid-btn').addEventListener('click', () => createCheckout(PLANS.premium, user.id, user.email));
+    }
+
+    // Bio display
+    if (profile?.bio) {
+      document.getElementById('bio-display').style.display = 'block';
+      document.getElementById('bio-text').textContent = profile.bio;
+    }
+
+    // Links display
+    const PLATFORMS = [
+      { key: 'instagram', emoji: '📸', base: 'https://instagram.com/' },
+      { key: 'tiktok',    emoji: '🎵', base: 'https://tiktok.com/@' },
+      { key: 'twitter',   emoji: '𝕏',  base: 'https://x.com/' },
+      { key: 'youtube',   emoji: '▶️', base: 'https://youtube.com/@' },
+    ];
+    function buildLinkUrl(platform, val) {
+      if (!val) return null;
+      if (val.startsWith('http')) return val;
+      return platform.base + val.replace('@', '').trim();
+    }
+    function renderLinksDisplay() {
+      const badges = PLATFORMS.filter(p => profile?.[p.key]).map(p => {
+        const url = buildLinkUrl(p, profile[p.key]);
+        const label = profile[p.key].replace('@','').split('/').filter(Boolean).pop() || profile[p.key];
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer"
+          style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-card-2);border:1px solid var(--border);border-radius:50px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--fg);text-decoration:none;white-space:nowrap">
+          ${p.emoji} ${label}
+        </a>`;
+      }).join('');
+      const linksEl = document.getElementById('links-display');
+      if (badges) { linksEl.style.display = 'flex'; linksEl.innerHTML = badges; }
+      else linksEl.style.display = 'none';
+    }
+    renderLinksDisplay();
+
+    // Premium upsell helper
+    function showPremiumUpsell(emoji = '⭐', title = 'Fonctionnalité Premium', desc = 'Disponible avec le Pass Premium.') {
+      const upsell = document.createElement('div');
+      upsell.style.cssText = 'position:fixed;inset:0;z-index:20000;background:rgba(15,15,14,0.72);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center';
+      upsell.innerHTML = `
+        <div style="background:var(--bg-card);border-radius:28px 28px 0 0;width:100%;max-width:480px;padding:28px 20px calc(32px + env(safe-area-inset-bottom));text-align:center">
+          <div style="font-size:44px;margin-bottom:12px">${emoji}</div>
+          <div style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#FFE08A,#D4A100);border-radius:50px;padding:4px 14px;font-size:12px;font-weight:800;color:#000;margin-bottom:14px">⭐ Premium</div>
+          <h2 style="font-size:20px;font-weight:800;letter-spacing:-0.02em;margin:0 0 8px;color:var(--fg)">${title}</h2>
+          <p style="font-size:14px;color:var(--fg-muted);line-height:1.5;margin:0 0 24px">${desc}</p>
+          <button class="upsell-cta-btn" style="background:linear-gradient(135deg,#FFE08A,#D4A100);color:#000;border:none;border-radius:50px;height:54px;width:100%;font-size:16px;font-weight:800;cursor:pointer;margin-bottom:12px;box-shadow:0 4px 20px rgba(212,161,0,0.35)">
+            Passer Premium — 9,99€/mois
+          </button>
+          <button class="upsell-close-btn" style="background:transparent;border:none;color:var(--fg-muted);font-size:14px;font-weight:600;cursor:pointer;width:100%;padding:8px">
+            Pas maintenant
+          </button>
+        </div>`;
+      document.body.appendChild(upsell);
+      upsell.querySelector('.upsell-cta-btn').addEventListener('click', () => { upsell.remove(); createCheckout(PLANS.premium, user.id, user.email); });
+      upsell.querySelector('.upsell-close-btn').addEventListener('click', () => upsell.remove());
+      upsell.addEventListener('click', e => { if (e.target === upsell) upsell.remove(); });
     }
 
     // World rank
@@ -720,10 +824,34 @@
     // ── Edit Profile ──
     let newAvatarFile = null;
 
+    // Bio char counter
+    document.getElementById('edit-bio-input').addEventListener('input', e => {
+      document.getElementById('bio-char-count').textContent = `${e.target.value.length}/150`;
+    });
+
+    // Links lock overlay setup (free users)
+    if (!hasPremium) {
+      const overlay = document.getElementById('links-lock-overlay');
+      overlay.style.display = 'flex';
+      overlay.addEventListener('click', () => {
+        document.getElementById('edit-profile-modal').classList.remove('open');
+        setTimeout(() => showPremiumUpsell('🔗', 'Liens sociaux Premium', 'Ajoute ton Instagram, TikTok, X et YouTube sur ton profil. Disponible avec le Pass Premium.'), 250);
+      });
+    }
+
     document.getElementById('edit-profile-btn').addEventListener('click', () => {
       newAvatarFile = null;
       document.getElementById('edit-pseudo-input').value = profile?.pseudo || '';
       document.getElementById('edit-email-input').value = user.email || '';
+      // Bio
+      const bioVal = profile?.bio || '';
+      document.getElementById('edit-bio-input').value = bioVal;
+      document.getElementById('bio-char-count').textContent = `${bioVal.length}/150`;
+      // Social links (pre-fill only for premium)
+      document.getElementById('edit-instagram').value = profile?.instagram || '';
+      document.getElementById('edit-tiktok').value = profile?.tiktok || '';
+      document.getElementById('edit-twitter').value = profile?.twitter || '';
+      document.getElementById('edit-youtube').value = profile?.youtube || '';
       // Avatar preview
       const previewEl = document.getElementById('edit-avatar-preview');
       if (profile?.avatar_url) {
@@ -745,29 +873,7 @@
 
     document.getElementById('avatar-upload-zone').addEventListener('click', () => {
       if (!hasPremium) {
-        // Show premium upsell
-        const upsell = document.createElement('div');
-        upsell.style.cssText = 'position:fixed;inset:0;z-index:20000;background:rgba(15,15,14,0.72);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center';
-        upsell.innerHTML = `
-          <div style="background:var(--bg-card);border-radius:28px 28px 0 0;width:100%;max-width:480px;padding:28px 20px calc(32px + env(safe-area-inset-bottom));text-align:center">
-            <div style="font-size:44px;margin-bottom:12px">📷</div>
-            <div style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#FFE08A,#D4A100);border-radius:50px;padding:4px 14px;font-size:12px;font-weight:800;color:#000;margin-bottom:14px">⭐ Premium</div>
-            <h2 style="font-size:20px;font-weight:800;letter-spacing:-0.02em;margin:0 0 8px;color:var(--fg)">Photo de profil Premium</h2>
-            <p style="font-size:14px;color:var(--fg-muted);line-height:1.5;margin:0 0 24px">Personnalise ton profil avec une photo. Disponible avec le Pass Premium.</p>
-            <button id="upsell-cta" style="background:linear-gradient(135deg,#FFE08A,#D4A100);color:#000;border:none;border-radius:50px;height:54px;width:100%;font-size:16px;font-weight:800;cursor:pointer;margin-bottom:12px;box-shadow:0 4px 20px rgba(212,161,0,0.35)">
-              Passer Premium — 9,99€/mois
-            </button>
-            <button id="upsell-close" style="background:transparent;border:none;color:var(--fg-muted);font-size:14px;font-weight:600;cursor:pointer;width:100%;padding:8px">
-              Pas maintenant
-            </button>
-          </div>`;
-        document.body.appendChild(upsell);
-        upsell.querySelector('#upsell-cta').addEventListener('click', () => {
-          upsell.remove();
-          createCheckout(PLANS.premium, user.id, user.email);
-        });
-        upsell.querySelector('#upsell-close').addEventListener('click', () => upsell.remove());
-        upsell.addEventListener('click', e => { if (e.target === upsell) upsell.remove(); });
+        showPremiumUpsell('📷', 'Photo de profil Premium', 'Personnalise ton profil avec une photo. Disponible avec le Pass Premium.');
         return;
       }
       document.getElementById('avatar-file-input').click();
@@ -817,8 +923,18 @@
           avatarUrl = urlData.publicUrl + `?t=${Date.now()}`;
         }
 
+        // Build update payload
+        const newBio = document.getElementById('edit-bio-input').value.trim();
+        const updates = { pseudo: newPseudo, avatar_url: avatarUrl, bio: newBio };
+        if (hasPremium) {
+          updates.instagram = document.getElementById('edit-instagram').value.trim();
+          updates.tiktok    = document.getElementById('edit-tiktok').value.trim();
+          updates.twitter   = document.getElementById('edit-twitter').value.trim();
+          updates.youtube   = document.getElementById('edit-youtube').value.trim();
+        }
+
         // Update profiles table
-        const { error: profErr } = await supabase.from('profiles').update({ pseudo: newPseudo, avatar_url: avatarUrl }).eq('id', user.id);
+        const { error: profErr } = await supabase.from('profiles').update(updates).eq('id', user.id);
         if (profErr) throw profErr;
 
         // Update email if changed
@@ -829,8 +945,25 @@
         }
 
         // Update local profile object
-        profile.pseudo = newPseudo;
+        profile.pseudo     = newPseudo;
         profile.avatar_url = avatarUrl;
+        profile.bio        = document.getElementById('edit-bio-input').value.trim();
+        if (hasPremium) {
+          profile.instagram = document.getElementById('edit-instagram').value.trim();
+          profile.tiktok    = document.getElementById('edit-tiktok').value.trim();
+          profile.twitter   = document.getElementById('edit-twitter').value.trim();
+          profile.youtube   = document.getElementById('edit-youtube').value.trim();
+        }
+        // Refresh bio display
+        const bioEl = document.getElementById('bio-text');
+        if (profile.bio) {
+          bioEl.textContent = profile.bio;
+          document.getElementById('bio-display').style.display = 'block';
+        } else {
+          document.getElementById('bio-display').style.display = 'none';
+        }
+        // Refresh links display
+        renderLinksDisplay();
 
         // Update header avatar
         if (avatarUrl) {

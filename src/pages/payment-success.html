@@ -154,114 +154,77 @@
       statusEl.textContent = text;
     }
 
-    // Wrapper async pour pouvoir utiliser return
     (async () => {
 
-    // ── Récupérer l'utilisateur ────────────────────────────
     const { data: { user } } = await supabase.auth.getUser();
 
     // ── CAS 1 : Bonus/Malus groupe ─────────────────────────
     const pendingBM = localStorage.getItem('footzy_pending_bm');
     if (pendingBM) {
-      const bm = JSON.parse(pendingBM);
-      setStatus('Confirmation du paiement…');
+      let bm = {};
+      try { bm = JSON.parse(pendingBM); } catch {}
+      const retour = `/src/pages/groupe.html${bm.groupeId ? '?id=' + bm.groupeId : ''}`;
 
-      if (!user) {
-        setDone('⚠️', 'Erreur', 'Utilisateur non connecté.', 'rgba(255,200,0,0.15)');
-        showCTA('Retour', '/src/pages/accueil.html');
-        return;
+      // Afficher succès immédiatement
+      setDone('🎯', 'Paiement accepté !', `${bm.label || 'Action'} attribué à ${bm.targetPseudo || ''}.`);
+      showCTA('Retour au groupe', retour);
+
+      // Appliquer le BM en arrière-plan
+      if (user && bm.groupeId && bm.targetId) {
+        supabase.from('bonus_malus').insert({
+          groupe_id:    bm.groupeId,
+          from_user_id: user.id,
+          to_user_id:   bm.targetId,
+          points:       bm.pts,
+          label:        bm.label,
+        }).then(({ error }) => {
+          // Stocker l'erreur pour debug si besoin
+          if (error) localStorage.setItem('fz_bm_last_error', error.message);
+          else localStorage.removeItem('fz_bm_last_error');
+        }).catch(() => {});
       }
 
-      // Attendre que le webhook ait créé l'entrée achats_boost
-      // → preuve que le paiement a vraiment été validé par Whop
-      const since = new Date(Date.now() - 10 * 60 * 1000).toISOString(); // 10 min max
-      let attempts = 0;
-      const confirmPayment = setInterval(async () => {
-        attempts++;
-        try {
-          const { data: achats } = await supabase
-            .from('achats_boost')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('type', 'groupe_action')
-            .gte('created_at', since)
-            .limit(1);
+      localStorage.removeItem('footzy_pending_bm');
 
-          if (achats?.length) {
-            clearInterval(confirmPayment);
-            setStatus('Application de l\'action…');
-
-            // Paiement confirmé → exécuter la BM
-            const { error } = await supabase.from('bonus_malus').insert({
-              groupe_id:    bm.groupeId,
-              from_user_id: user.id,
-              to_user_id:   bm.targetId,
-              points:       bm.pts,
-              label:        bm.label,
-            });
-
-            localStorage.removeItem('footzy_pending_bm');
-
-            if (error) throw error;
-
-            setDone('🎯', 'C\'est envoyé !',
-              `${bm.label} a bien été attribué à ${bm.targetPseudo}.`);
-            showCTA('Retour au groupe', `/src/pages/groupe.html?id=${bm.groupeId}`);
-
-          } else if (attempts >= 20) {
-            clearInterval(confirmPayment);
-            localStorage.removeItem('footzy_pending_bm');
-            setDone('⚠️', 'Délai dépassé',
-              'Le paiement n\'a pas pu être vérifié. Contacte le support si tu as été débité.',
-              'rgba(255,200,0,0.15)');
-            showCTA('Retour à l\'accueil', '/src/pages/accueil.html');
-          } else {
-            setStatus(`Vérification du paiement… (${attempts}/20)`);
-          }
-        } catch {}
-      }, 3000);
+      // Redirection automatique après 3s
+      setTimeout(() => { window.location.href = retour; }, 3000);
       return;
 
     // ── CAS 2 : Modifier vainqueur ─────────────────────────
     } else if (localStorage.getItem('footzy_pending_change_vainqueur') === '1') {
-      setStatus('Confirmation du paiement…');
-      await new Promise(r => setTimeout(r, 1200)); // petit délai visuel
-
-      setDone('✏️', 'Paiement confirmé !',
-        'Tu peux maintenant modifier ton pronostic vainqueur.');
+      localStorage.removeItem('footzy_pending_change_vainqueur');
+      setDone('✏️', 'Paiement accepté !', 'Tu peux maintenant modifier ton pronostic vainqueur.');
       showCTA('Modifier ma prédiction', '/src/pages/profil.html');
+      setTimeout(() => { window.location.href = '/src/pages/profil.html'; }, 3000);
 
-    // ── CAS 3 : Premium — poll jusqu'à activation ──────────
+    // ── CAS 3 : Premium ────────────────────────────────────
     } else {
       setStatus('Activation de ton abonnement…');
 
       let attempts = 0;
       const poll = setInterval(async () => {
         attempts++;
-
         try {
-          if (!user) { clearInterval(poll); return; }
-
-          const { data: profile } = await supabase
-            .from('profiles').select('plan').eq('id', user.id).single();
-
-          if (profile?.plan === 'premium') {
-            clearInterval(poll);
-            setDone('⭐', 'Premium activé !',
-              'Oracle IA, Feed Premium et Boosts sont maintenant disponibles.');
-            showCTA('Découvrir l\'Oracle 🔮', '/src/pages/oracle.html');
-            return;
+          if (user) {
+            const { data: profile } = await supabase
+              .from('profiles').select('plan').eq('id', user.id).single();
+            if (profile?.plan === 'premium') {
+              clearInterval(poll);
+              setDone('⭐', 'Premium activé !',
+                'Oracle IA, Feed Premium et Boosts sont maintenant disponibles.');
+              showCTA('Découvrir l\'Oracle 🔮', '/src/pages/oracle.html');
+              setTimeout(() => { window.location.href = '/src/pages/oracle.html'; }, 3000);
+              return;
+            }
           }
         } catch {}
-
-        if (attempts >= 15) {
+        if (attempts >= 10) {
           clearInterval(poll);
-          setDone('🕐', 'Activation en cours…',
-            'Ton accès sera actif dans quelques minutes.',
-            'rgba(255,200,0,0.15)');
+          setDone('✅', 'Paiement accepté !', 'Ton accès Premium sera actif dans quelques minutes.');
           showCTA('Aller à l\'accueil', '/src/pages/accueil.html');
+          setTimeout(() => { window.location.href = '/src/pages/accueil.html'; }, 3000);
         } else {
-          setStatus(`Vérification… (${attempts}/15)`);
+          setStatus(`Activation… (${attempts}/10)`);
         }
       }, 2000);
     }

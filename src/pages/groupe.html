@@ -778,11 +778,12 @@
             actionIdx:    +btn.dataset.idx,
             label:        o.label,
             pts:          o.pts,
+            timestamp:    Date.now(),
           }));
-          createCheckout(PLANS.groupe_action, user.id, {
+          createCheckout(PLANS.groupe_action, user.id, user.email, {
             groupe_id: currentGroupeId,
             target_id: tid,
-          }, user.email);
+          });
         });
       });
     }

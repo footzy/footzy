@@ -104,7 +104,7 @@
             <span style="font-size:28px">🔮</span>
             <p style="margin:0;font-size:14px;font-weight:700;text-align:center">L'Oracle est réservé aux Premium</p>
             <p id="oracle-teaser" style="margin:0;font-size:12px;color:rgba(255,255,255,0.7);font-style:italic;text-align:center">"Forte tendance vers une équipe ce soir…"</p>
-            <button class="fz-btn fz-btn--accent" id="oracle-unlock-btn" style="margin-top:4px">Passer Premium — 9,99€</button>
+            <button class="fz-btn fz-btn--accent" id="oracle-unlock-btn" style="margin-top:4px">Passer Premium — 9,99€/mois</button>
           </div>
         </div>
       </div>
@@ -160,7 +160,7 @@
         <p style="font-size:14px;color:var(--fg-muted)">Prédictions IA, buteurs probables et analyses tactiques pré-match</p>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">
-        <button class="fz-btn fz-btn--primary fz-btn--block" id="upgrade-monthly-btn">Passer Premium — 9,99€</button>
+        <button class="fz-btn fz-btn--primary fz-btn--block" id="upgrade-monthly-btn">Passer Premium — 9,99€/mois</button>
       </div>
       <p style="font-size:11px;color:var(--fg-faint);text-align:center;margin-top:12px">Accès complet · Annulable à tout moment</p>
       <button style="margin-top:12px;color:var(--fg-faint);font-size:13px;width:100%;text-align:center" onclick="closeModal('upgrade-modal')">Pas maintenant</button>
@@ -265,7 +265,7 @@
       });
     }
 
-    document.getElementById('upgrade-monthly-btn').addEventListener('click', () => createCheckout(PLANS.premium, user.id));
+    document.getElementById('upgrade-monthly-btn').addEventListener('click', () => createCheckout(PLANS.premium, user.id, user.email));
 
     // Boost row
     if (isBeforeKickoff(match.kickoff_at) || match.status === 'live') {
@@ -350,7 +350,7 @@
     window.closeModal = (id) => document.getElementById(id).classList.remove('open');
     window.buyBoost   = (type, mId, uId) => {
       closeModal('boost-modal');
-      createCheckout('boost_' + type + '_' + getBoostTiming(match.kickoff_at), uId, { match_id: mId });
+      createCheckout('boost_' + type + '_' + getBoostTiming(match.kickoff_at), uId, user.email, { match_id: mId });
     };
 
     document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => {

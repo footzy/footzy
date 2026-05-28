@@ -91,7 +91,7 @@
     if (!isPremium) {
       const freeCta = document.getElementById('free-cta');
       freeCta.style.display = 'block';
-      document.getElementById('join-btn').addEventListener('click', () => createCheckout(PLANS.premium, user.id));
+      document.getElementById('join-btn').addEventListener('click', () => createCheckout(PLANS.premium, user.id, user.email));
     }
 
     // Load premium leaderboard

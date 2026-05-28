@@ -454,7 +454,7 @@
             <p style="font-size:11px;color:var(--text-tertiary);margin-top:10px">Accès complet · Sans engagement</p>
           </div>
         </div>`;
-      document.getElementById('unlock-btn').addEventListener('click', () => createCheckout(PLANS.premium, user.id));
+      document.getElementById('unlock-btn').addEventListener('click', () => createCheckout(PLANS.premium, user.id, user.email));
       return;
     }
 

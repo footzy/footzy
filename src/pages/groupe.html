@@ -192,12 +192,29 @@
 
   <!-- Create modal -->
   <div class="modal-overlay" id="create-modal">
-    <div class="modal-sheet">
-      <h2 style="font-size:18px;font-weight:700;margin-bottom:16px">Créer un groupe</h2>
-      <input class="input-field" id="create-nom-input" placeholder="Nom du groupe (ex: Les Footeux)" maxlength="30" style="margin-bottom:10px" />
-      <div id="create-modal-error" style="color:var(--danger);font-size:13px;margin-bottom:10px;display:none"></div>
-      <button class="cta-primary" id="create-modal-btn">Créer</button>
-      <button style="margin-top:12px;color:var(--text-tertiary);font-size:13px;width:100%;text-align:center" onclick="document.getElementById('create-modal').classList.remove('open')">Annuler</button>
+    <div class="modal-sheet" style="max-height:88vh;overflow-y:auto">
+
+      <!-- Étape 1 : choix événement -->
+      <div id="create-step-1">
+        <h2 style="font-size:18px;font-weight:700;margin-bottom:6px">Choisir un événement</h2>
+        <p style="font-size:13px;color:var(--text-tertiary);margin-bottom:16px">Le groupe joue pendant toute la durée de l'événement.</p>
+        <div id="event-cards" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px"></div>
+        <div id="create-step1-error" style="color:var(--danger);font-size:13px;margin-bottom:10px;display:none"></div>
+        <button class="cta-primary" id="create-step1-next">Suivant →</button>
+        <button style="margin-top:12px;color:var(--text-tertiary);font-size:13px;width:100%;text-align:center" onclick="document.getElementById('create-modal').classList.remove('open')">Annuler</button>
+      </div>
+
+      <!-- Étape 2 : nom + gage -->
+      <div id="create-step-2" style="display:none">
+        <button id="create-back-btn" style="background:none;border:none;color:var(--text-tertiary);font-size:13px;cursor:pointer;padding:0;margin-bottom:14px">← Retour</button>
+        <h2 style="font-size:18px;font-weight:700;margin-bottom:16px">Créer ton groupe</h2>
+        <div id="create-event-badge" style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-surface);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:13px;font-weight:600;margin-bottom:14px"></div>
+        <input class="input-field" id="create-nom-input" placeholder="Nom du groupe (ex: Les Footeux)" maxlength="30" style="margin-bottom:10px" />
+        <textarea class="input-field" id="create-gage-input" placeholder="Le gage 🎯 (ex: le dernier paie l'apéro !)" maxlength="120" style="margin-bottom:10px;resize:none;height:72px"></textarea>
+        <div id="create-modal-error" style="color:var(--danger);font-size:13px;margin-bottom:10px;display:none"></div>
+        <button class="cta-primary" id="create-modal-btn">Créer le groupe 🚀</button>
+      </div>
+
     </div>
   </div>
 
@@ -355,6 +372,7 @@
     import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
     import { shareCode, toast } from '/src/js/lib/utils.js';
     import { createCheckout, PLANS } from '/src/js/lib/whop.js';
+    import { EVENTS, getEvent, isEventEnded, isEventActive, formatEventDates } from '/src/js/lib/events.js';
 
     const user = await requireAuth();
     if (!user) throw new Error('not authed');
@@ -462,10 +480,10 @@
         else if (activeTab === 'tous') loadTousPronos(true);
         else loadGroupe();
       }, 5000);
-      // Masquer "Créer un groupe" pour tout le monde déjà dans un groupe
+      // 1 groupe par user : masquer créer ET rejoindre
       isAlreadyInGroup = true;
       document.getElementById('create-groupe-btn').style.display = 'none';
-      document.getElementById('join-autre-btn').textContent = 'Rejoindre un autre groupe';
+      document.getElementById('join-autre-btn').style.display = 'none';
       // Afficher les onglets pronos uniquement si dans un groupe
       document.getElementById('tab-btn-pronos').style.display = '';
       document.getElementById('tab-btn-tous').style.display = '';
@@ -513,33 +531,46 @@
 
       const isAdmin = myMembership?.role === 'admin';
 
-      // ── Gage + statut ──
-      const gageSection     = document.getElementById('gage-section');
-      const statusBadge     = document.getElementById('game-status-badge');
-      const gageDisplay     = document.getElementById('gage-display');
-      const gageInput       = document.getElementById('gage-input');
-      const gageEditBtn     = document.getElementById('gage-edit-btn');
-      const launchBtn       = document.getElementById('launch-game-btn');
-      const endBtn          = document.getElementById('end-game-btn');
-      const relaunchBtn     = document.getElementById('relaunch-game-btn');
+      // ── Gage + événement ──
+      const gageSection  = document.getElementById('gage-section');
+      const statusBadge  = document.getElementById('game-status-badge');
+      const gageDisplay  = document.getElementById('gage-display');
+      const gageInput    = document.getElementById('gage-input');
+      const gageEditBtn  = document.getElementById('gage-edit-btn');
+      document.getElementById('launch-game-btn').style.display  = 'none';
+      document.getElementById('end-game-btn').style.display     = 'none';
+      document.getElementById('relaunch-game-btn').style.display = 'none';
       gageSection.style.display = 'block';
-      currentGroupeStatut = groupe.statut || 'attente';
 
-      // Badge statut
-      const statusMap = {
-        attente:  { label: '⏳ En attente du lancement', color: 'var(--text-tertiary)',  bg: 'var(--bg-muted)',        border: 'var(--border)' },
-        en_cours: { label: '🟢 JEU EN COURS',            color: 'var(--green-accent)',   bg: 'var(--green-dim)',       border: 'var(--green-border)' },
-        termine:  { label: '🏁 Jeu terminé',             color: 'var(--text-secondary)', bg: 'var(--bg-muted)',        border: 'var(--border)' },
-      };
-      const s = statusMap[groupe.statut] || statusMap.attente;
-      statusBadge.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;background:${s.bg};border:1px solid ${s.border};border-radius:50px;padding:5px 14px;font-size:12px;font-weight:700;color:${s.color}">${s.label}</span>`;
+      // Statut déterminé par les dates de l'événement
+      const evt = getEvent(groupe.event_id);
+      const evtEnded  = isEventEnded(evt);
+      const evtActive = isEventActive(evt);
+      currentGroupeStatut = evtEnded ? 'termine' : evtActive ? 'en_cours' : 'attente';
+
+      // Badge événement + statut
+      let statusLabel, statusColor, statusBg, statusBorder;
+      if (!evt) {
+        statusLabel = '⏳ Aucun événement';
+        statusColor = 'var(--text-tertiary)'; statusBg = 'var(--bg-muted)'; statusBorder = 'var(--border)';
+      } else if (evtEnded) {
+        statusLabel = `🏁 ${evt.short} — Terminé`;
+        statusColor = 'var(--text-secondary)'; statusBg = 'var(--bg-muted)'; statusBorder = 'var(--border)';
+      } else if (evtActive) {
+        statusLabel = `🟢 ${evt.short} — En cours`;
+        statusColor = 'var(--green-accent)'; statusBg = 'var(--green-dim)'; statusBorder = 'var(--green-border)';
+      } else {
+        statusLabel = `⏳ ${evt.short} — Commence le ${new Date(evt.start).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`;
+        statusColor = 'var(--text-tertiary)'; statusBg = 'var(--bg-muted)'; statusBorder = 'var(--border)';
+      }
+      statusBadge.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;background:${statusBg};border:1px solid ${statusBorder};border-radius:50px;padding:5px 14px;font-size:12px;font-weight:700;color:${statusColor}">${statusLabel}</span>`;
 
       // Gage display
       gageDisplay.textContent = groupe.gage || 'Aucun gage défini…';
       gageDisplay.style.color = groupe.gage ? 'var(--text-primary)' : 'var(--text-tertiary)';
 
-      // Admin : édition gage
-      if (isAdmin && groupe.statut !== 'termine') {
+      // Admin : édition gage (seulement si événement pas terminé)
+      if (isAdmin && !evtEnded) {
         gageEditBtn.style.display = '';
         gageEditBtn.onclick = async () => {
           if (gageInput.style.display === 'none') {
@@ -558,74 +589,17 @@
         };
       }
 
-      // Admin : boutons lancer / terminer / relancer
-      launchBtn.style.display    = (isAdmin && groupe.statut === 'attente')  ? '' : 'none';
-      endBtn.style.display       = (isAdmin && groupe.statut === 'en_cours') ? '' : 'none';
-      relaunchBtn.style.display  = (isAdmin && groupe.statut === 'termine')  ? '' : 'none';
-
-      launchBtn.onclick = async () => {
-        if (!groupe.gage) {
-          toast('Définis d\'abord un gage !'); return;
-        }
-        const ok = await showConfirm({ icon: '🚀', title: 'Lancer le jeu ?', message: `Le gage : "${groupe.gage}"\n\nTous les membres peuvent maintenant faire leurs pronos !`, label: '🚀 C\'est parti !', danger: false });
-        if (!ok) return;
-        await supabase.from('groupes').update({ statut: 'en_cours' }).eq('id', currentGroupeId);
-        // Notifier tous les membres
-        const others = (membres || []).filter(m => m.user_id !== user.id);
-        for (const m of others) {
-          const ch = supabase.channel(`notif-${m.user_id}`);
-          await ch.send({ type: 'broadcast', event: 'game_started', payload: { groupe_nom: groupe.nom, gage: groupe.gage } });
-          supabase.removeChannel(ch);
-        }
-        playLaunchAnimation();
-        setTimeout(() => loadGroupe(true), 2800);
-      };
-
-      endBtn.onclick = async () => {
-        const ok = await showConfirm({ icon: '🏁', title: 'Terminer le jeu ?', message: 'Le classement sera figé. Les pronos seront définitivement verrouillés.', label: 'Terminer', danger: true });
-        if (!ok) return;
-
-        // Données depuis la closure (loadGroupe a déjà tout chargé)
-        const loser    = sorted[sorted.length - 1];
-        const loserPts = (loser?.points_totaux || 0) + (loser?.bm_pts || 0);
-        const goPayload = {
-          loser_pseudo: loser?.pseudo || '???',
-          gage:         groupe.gage   || '',
-          loser_pts:    loserPts,
-        };
-
-        // 1. Afficher le popup IMMÉDIATEMENT (avant tout await)
-        showGameOver(goPayload);
-
-        // 2. Mettre à jour le statut en DB (awaité — le popup est déjà visible)
-        await supabase.from('groupes').update({ statut: 'termine' }).eq('id', currentGroupeId);
-
-        // 3. Rafraîchir le classement derrière le popup
-        loadGroupe(true);
-
-        // 4. Notifier les autres membres (fire & forget)
-        for (const m of (membres || [])) {
-          if (m.user_id === user.id) continue;
-          const ch = supabase.channel(`notif-${m.user_id}`);
-          ch.send({ type: 'broadcast', event: 'game_over', payload: goPayload })
-            .catch(() => {}).finally(() => supabase.removeChannel(ch));
-        }
-      };
-
-      relaunchBtn.onclick = async () => {
-        const ok = await showConfirm({ icon: '🔄', title: 'Nouvelle partie ?', message: 'Les points de tous les joueurs seront remis à zéro. Prêt pour une nouvelle manche !', label: '🔄 C\'est parti !', danger: false });
-        if (!ok) return;
-        // RPC SECURITY DEFINER → contourne RLS, reset tous les points du groupe
-        const { error } = await supabase.rpc('reset_groupe_points', {
-          p_groupe_id: currentGroupeId,
-          p_admin_id: user.id,
-        });
-        if (error) { toast('Erreur reset points ❌ ' + error.message); return; }
-        // Remettre le statut en attente
-        await supabase.from('groupes').update({ statut: 'attente' }).eq('id', currentGroupeId);
-        toast('Nouvelle partie ! Points remis à zéro 🔄');
-        loadGroupe(true);
-      };
+      // ── Popup gage auto si événement terminé ──
+      if (evtEnded && groupe.gage && !silent) {
+        // Trouver le dernier du classement (chargé plus bas dans sorted)
+        setTimeout(() => {
+          if (typeof sorted !== 'undefined' && sorted.length > 0) {
+            const loser    = sorted[sorted.length - 1];
+            const loserPts = (loser?.points_totaux || 0) + (loser?.bm_pts || 0);
+            showGameOver({ loser_pseudo: loser?.pseudo || '???', gage: groupe.gage, loser_pts: loserPts });
+          }
+        }, 600);
+      }
 
       // Boutons action groupe
       const actionsZone = document.getElementById('groupe-actions-zone');
@@ -1228,21 +1202,87 @@
     });
 
     // Create group
+    // ── Création groupe : modal 2 étapes ──────────────────
+    let selectedEventId = null;
+
+    // Rendre les cartes événements
+    const eventCardsEl = document.getElementById('event-cards');
+    if (eventCardsEl) {
+      eventCardsEl.innerHTML = EVENTS.map(ev => {
+        const ended   = isEventEnded(ev);
+        const active  = isEventActive(ev);
+        const badge   = ended ? '🏁 Terminé' : active ? '🟢 En cours' : `Commence le ${new Date(ev.start).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})}`;
+        const dim     = ended ? 'opacity:.45;pointer-events:none' : '';
+        return `<div data-eid="${ev.id}" style="
+          ${dim}
+          background:var(--bg-surface);border:2px solid var(--border);border-radius:16px;
+          padding:14px 16px;cursor:pointer;transition:border-color .15s,background .15s;
+          display:flex;align-items:center;gap:14px;
+        ">
+          <span style="font-size:28px">${ev.emoji}</span>
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:700">${ev.nom}</div>
+            <div style="font-size:12px;color:var(--text-tertiary);margin-top:2px">${badge}</div>
+          </div>
+          <div id="check-${ev.id}" style="display:none;font-size:20px">✅</div>
+        </div>`;
+      }).join('');
+
+      eventCardsEl.querySelectorAll('[data-eid]').forEach(card => {
+        card.addEventListener('click', () => {
+          selectedEventId = card.dataset.eid;
+          eventCardsEl.querySelectorAll('[data-eid]').forEach(c => {
+            c.style.borderColor = 'var(--border)';
+            c.style.background  = 'var(--bg-surface)';
+            c.querySelector('[id^=check-]').style.display = 'none';
+          });
+          card.style.borderColor = 'var(--green-accent)';
+          card.style.background  = 'var(--green-dim)';
+          card.querySelector(`#check-${selectedEventId}`).style.display = '';
+        });
+      });
+    }
+
     document.getElementById('create-groupe-btn').addEventListener('click', () => {
+      document.getElementById('create-step-1').style.display = '';
+      document.getElementById('create-step-2').style.display = 'none';
+      selectedEventId = null;
       document.getElementById('create-modal').classList.add('open');
     });
+
+    document.getElementById('create-step1-next').addEventListener('click', () => {
+      const errEl = document.getElementById('create-step1-error');
+      if (!selectedEventId) { errEl.textContent = 'Choisis un événement.'; errEl.style.display = 'block'; return; }
+      errEl.style.display = 'none';
+      const ev = getEvent(selectedEventId);
+      document.getElementById('create-event-badge').innerHTML = `${ev.emoji} ${ev.nom}`;
+      document.getElementById('create-step-1').style.display = 'none';
+      document.getElementById('create-step-2').style.display = '';
+    });
+
+    document.getElementById('create-back-btn').addEventListener('click', () => {
+      document.getElementById('create-step-1').style.display = '';
+      document.getElementById('create-step-2').style.display = 'none';
+    });
+
     document.getElementById('create-modal-btn').addEventListener('click', async () => {
-      const nom = document.getElementById('create-nom-input').value.trim();
+      const nom  = document.getElementById('create-nom-input').value.trim();
+      const gage = document.getElementById('create-gage-input').value.trim();
       const errEl = document.getElementById('create-modal-error');
       errEl.style.display = 'none';
-      if (!nom) { errEl.textContent = 'Donne un nom à ton groupe.'; errEl.style.display = 'block'; return; }
-      const { data: groupe, error } = await supabase.from('groupes').insert({ nom, created_by: user.id }).select().single();
+      if (!nom)  { errEl.textContent = 'Donne un nom à ton groupe.'; errEl.style.display = 'block'; return; }
+      if (!gage) { errEl.textContent = 'Définis un gage pour les perdants !'; errEl.style.display = 'block'; return; }
+      const { data: groupe, error } = await supabase
+        .from('groupes')
+        .insert({ nom, created_by: user.id, event_id: selectedEventId, gage })
+        .select().single();
       if (error) { errEl.textContent = 'Erreur à la création.'; errEl.style.display = 'block'; return; }
       await supabase.from('groupe_membres').insert({ groupe_id: groupe.id, user_id: user.id, role: 'admin' });
       toast('Groupe créé ! 🎉');
       document.getElementById('create-modal').classList.remove('open');
       window.location.href = '/src/pages/groupe.html?id=' + groupe.id;
     });
+
     document.getElementById('create-modal').addEventListener('click', e => {
       if (e.target === document.getElementById('create-modal')) document.getElementById('create-modal').classList.remove('open');
     });

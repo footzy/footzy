@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Footzy — Connexion…</title>
+  <link rel="stylesheet" href="/src/css/tokens.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0F0F0E; min-height: 100vh; min-height: 100dvh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 32px 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap { width: 100%; max-width: 360px; text-align: center; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 40px; height: 40px; border-radius: 50%;
+      border: 3px solid rgba(255,255,255,0.08);
+      border-top-color: #00E05A;
+      animation: spin .7s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    .title { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 6px; letter-spacing: -0.01em; }
+    .sub   { font-size: 13px; color: rgba(255,255,255,0.4); }
+
+    /* Pseudo form (new users) */
+    .pseudo-form { display: none; }
+    .pseudo-form .emoji   { font-size: 52px; margin-bottom: 16px; }
+    .pseudo-form .heading { font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 8px; letter-spacing: -0.02em; }
+    .pseudo-form .desc    { font-size: 14px; color: rgba(255,255,255,0.4); margin-bottom: 24px; line-height: 1.5; }
+
+    .auth-input {
+      width: 100%; height: 52px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px; color: #fff;
+      font-size: 17px; font-weight: 700; text-align: center; letter-spacing: -0.01em;
+      padding: 0 16px; outline: none;
+      transition: border-color .15s; margin-bottom: 12px;
+      font-family: inherit;
+    }
+    .auth-input::placeholder { color: rgba(255,255,255,0.25); font-weight: 500; font-size: 15px; }
+    .auth-input:focus { border-color: #00E05A; }
+
+    .auth-submit {
+      width: 100%; height: 52px;
+      background: #00E05A; color: #080808;
+      border: none; border-radius: 14px;
+      font-size: 15px; font-weight: 800;
+      cursor: pointer; transition: opacity .15s, transform .1s;
+      font-family: inherit; letter-spacing: -0.01em;
+    }
+    .auth-submit:active  { opacity: 0.85; transform: scale(0.98); }
+    .auth-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .auth-error {
+      color: #FF6B6B; font-size: 13px;
+      margin-bottom: 10px; display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- Loading state -->
+    <div id="loading-state">
+      <div class="spinner"></div>
+      <div class="title">Connexion en cours…</div>
+      <div class="sub">Quelques secondes</div>
+    </div>
+
+    <!-- New user: choose pseudo -->
+    <div id="pseudo-state" class="pseudo-form">
+      <div class="emoji">🎉</div>
+      <div class="heading">Bienvenue sur Footzy !</div>
+      <div class="desc">Choisis ton pseudo pour rejoindre<br>la compétition CdM 2026</div>
+      <div id="pseudo-error" class="auth-error"></div>
+      <input class="auth-input" id="pseudo-input" type="text"
+             placeholder="Ton pseudo…" maxlength="20" minlength="3"
+             autocomplete="username" autocapitalize="none" />
+      <button class="auth-submit" id="pseudo-btn">Commencer 🚀</button>
+    </div>
+
+    <!-- Error state -->
+    <div id="error-state" style="display:none">
+      <div style="font-size:48px;margin-bottom:16px">😕</div>
+      <div class="title">Connexion échouée</div>
+      <div class="sub" id="error-detail" style="margin-bottom:24px"></div>
+      <a href="/src/pages/login.html"
+        style="display:inline-block;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:12px 24px;color:#fff;font-weight:700;font-size:14px;text-decoration:none">
+        ← Réessayer
+      </a>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import { supabase } from '/src/js/lib/supabase.js';
+
+    function showError(msg) {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('pseudo-state').style.display  = 'none';
+      document.getElementById('error-state').style.display   = '';
+      document.getElementById('error-detail').textContent = msg;
+    }
+
+    function showPseudoForm(prefilledName) {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('pseudo-state').style.display  = '';
+      if (prefilledName) {
+        const clean = prefilledName.replace(/\s+/g, '').slice(0, 20);
+        document.getElementById('pseudo-input').value = clean;
+      }
+    }
+
+    // ── Récupérer la session OAuth ──
+    let session = null;
+
+    // Supabase v2 processes the hash/code automatically on getSession()
+    const { data: { session: s1 } } = await supabase.auth.getSession();
+    session = s1;
+
+    // Fallback: wait for onAuthStateChange (Apple Pay sometimes needs this)
+    if (!session) {
+      session = await new Promise(resolve => {
+        const { data } = supabase.auth.onAuthStateChange((event, s) => {
+          if (s) { data.subscription.unsubscribe(); resolve(s); }
+        });
+        setTimeout(() => resolve(null), 8000);
+      });
+    }
+
+    if (!session) {
+      showError('Session introuvable. Vérifie ta connexion et réessaie.');
+      return; // stop
+    }
+
+    const user = session.user;
+    const meta = user.user_metadata || {};
+
+    // ── Vérifier si le profil existe ──
+    const { data: profile } = await supabase
+      .from('profiles').select('id, pseudo, avatar_url').eq('id', user.id).maybeSingle();
+
+    if (profile?.pseudo) {
+      // Utilisateur existant : mettre à jour avatar si manquant
+      if (!profile.avatar_url && (meta.avatar_url || meta.picture)) {
+        await supabase.from('profiles')
+          .update({ avatar_url: meta.avatar_url || meta.picture })
+          .eq('id', user.id);
+      }
+      window.location.href = '/src/pages/accueil.html';
+      return;
+    }
+
+    // ── Nouvel utilisateur : demander un pseudo ──
+    const providerName = meta.full_name || meta.name || '';
+    showPseudoForm(providerName);
+
+    document.getElementById('pseudo-btn').addEventListener('click', async () => {
+      const pseudo  = document.getElementById('pseudo-input').value.trim();
+      const errorEl = document.getElementById('pseudo-error');
+      const btn     = document.getElementById('pseudo-btn');
+      errorEl.style.display = 'none';
+
+      if (pseudo.length < 3) {
+        errorEl.textContent = 'Pseudo trop court (3 caractères min).';
+        errorEl.style.display = 'block'; return;
+      }
+      if (!/^[a-zA-Z0-9_\-\.]+$/.test(pseudo)) {
+        errorEl.textContent = 'Lettres, chiffres, _ - . uniquement.';
+        errorEl.style.display = 'block'; return;
+      }
+
+      btn.disabled = true; btn.textContent = 'Vérification…';
+
+      // Check pseudo uniqueness
+      const { data: ex } = await supabase
+        .from('profiles').select('id').eq('pseudo', pseudo).maybeSingle();
+      if (ex) {
+        errorEl.textContent = 'Ce pseudo est déjà pris — essaie un autre.';
+        errorEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Commencer 🚀'; return;
+      }
+
+      btn.textContent = 'Création…';
+
+      // Créer le profil
+      const { error } = await supabase.from('profiles').upsert({
+        id:           user.id,
+        pseudo,
+        avatar_url:   meta.avatar_url || meta.picture || null,
+        points_totaux: 0,
+        plan:         'free',
+      }, { onConflict: 'id' });
+
+      if (error) {
+        errorEl.textContent = 'Erreur : ' + error.message;
+        errorEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Commencer 🚀'; return;
+      }
+
+      window.location.href = '/src/pages/onboarding.html';
+    });
+
+    // Enter key on pseudo input
+    document.getElementById('pseudo-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('pseudo-btn').click();
+    });
+  </script>
+</body>
+</html>

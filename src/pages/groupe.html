@@ -656,7 +656,9 @@
           await ch.send({ type: 'broadcast', event: 'group_deleted', payload: { admin_pseudo: profile.pseudo, groupe_nom: groupe.nom } });
           supabase.removeChannel(ch);
         }
-        // Supprimer membres puis groupe
+        // Supprimer toutes les données liées au groupe
+        await supabase.from('pronostics').delete().eq('groupe_id', currentGroupeId);
+        await supabase.from('bonus_malus').delete().eq('groupe_id', currentGroupeId);
         await supabase.from('groupe_membres').delete().eq('groupe_id', currentGroupeId);
         await supabase.from('groupes').delete().eq('id', currentGroupeId);
         toast('Groupe supprimé 🗑️');

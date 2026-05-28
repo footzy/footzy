@@ -98,7 +98,7 @@ export async function createCheckout(planId, footzyUserId, userEmail = '', metad
       background: #fff;
       border-radius: 20px 20px 0 0;
       width: 100%; max-width: 480px;
-      max-height: 94vh;
+      max-height: 86vh;
       display: flex; flex-direction: column;
       overflow: hidden;
     ">

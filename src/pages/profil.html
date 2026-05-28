@@ -19,6 +19,39 @@
       </div>
       <h2 style="margin:4px 0 0;font-size:22px;font-weight:800;letter-spacing:-0.025em" id="pseudo-el">—</h2>
       <div id="plan-badge"></div>
+      <button id="edit-profile-btn" style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-surface);border:1px solid var(--border);border-radius:50px;padding:7px 16px;font-size:13px;font-weight:600;color:var(--text-secondary);cursor:pointer">
+        ✏️ Modifier le profil
+      </button>
+    </div>
+
+    <!-- Edit profile modal -->
+    <div class="modal-overlay" id="edit-profile-modal">
+      <div class="modal-sheet">
+        <h2 style="font-size:18px;font-weight:700;margin-bottom:20px">Modifier le profil</h2>
+
+        <!-- Avatar upload -->
+        <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:20px">
+          <div style="position:relative;cursor:pointer" id="avatar-upload-zone">
+            <div class="fz-avatar fz-avatar--lg fz-avatar--accent" id="edit-avatar-preview">?</div>
+            <div style="position:absolute;bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:var(--green-accent);border:2px solid var(--bg);display:flex;align-items:center;justify-content:center;font-size:13px">📷</div>
+          </div>
+          <input type="file" id="avatar-file-input" accept="image/*" style="display:none" />
+          <span style="font-size:12px;color:var(--text-tertiary);margin-top:8px">Appuie pour changer la photo</span>
+        </div>
+
+        <!-- Pseudo -->
+        <label style="font-size:12px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Pseudo</label>
+        <input class="input-field" id="edit-pseudo-input" maxlength="20" style="margin-bottom:14px" />
+
+        <!-- Email -->
+        <label style="font-size:12px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Email</label>
+        <input class="input-field" id="edit-email-input" type="email" style="margin-bottom:6px" />
+        <p style="font-size:11px;color:var(--text-tertiary);margin-bottom:16px">Un email de confirmation sera envoyé si tu changes l'adresse.</p>
+
+        <div id="edit-profile-error" style="color:var(--danger);font-size:13px;margin-bottom:10px;display:none"></div>
+        <button class="cta-primary" id="edit-profile-save">Enregistrer</button>
+        <button style="margin-top:12px;color:var(--text-tertiary);font-size:13px;width:100%;text-align:center" onclick="document.getElementById('edit-profile-modal').classList.remove('open')">Annuler</button>
+      </div>
     </div>
 
     <!-- Stats 2×2 -->
@@ -160,7 +193,12 @@
     const profile = await getCurrentProfile();
 
     // Render profile
-    document.getElementById('avatar-el').textContent = profile?.pseudo?.[0]?.toUpperCase() || '?';
+    const mainAvatarEl = document.getElementById('avatar-el');
+    if (profile?.avatar_url) {
+      mainAvatarEl.style.cssText += ';background-image:url(' + profile.avatar_url + ');background-size:cover;background-position:center;';
+    } else {
+      mainAvatarEl.textContent = profile?.pseudo?.[0]?.toUpperCase() || '?';
+    }
     document.getElementById('pseudo-el').textContent = profile?.pseudo || '';
     document.getElementById('stat-points').textContent = (profile?.points_totaux || 0).toLocaleString('fr-FR');
     document.getElementById('stat-exacts').textContent = profile?.scores_exacts || 0;
@@ -526,6 +564,119 @@
     }
 
     refreshHistoire();
+
+    // ── Edit Profile ──
+    let newAvatarFile = null;
+
+    document.getElementById('edit-profile-btn').addEventListener('click', () => {
+      newAvatarFile = null;
+      document.getElementById('edit-pseudo-input').value = profile?.pseudo || '';
+      document.getElementById('edit-email-input').value = user.email || '';
+      // Avatar preview
+      const previewEl = document.getElementById('edit-avatar-preview');
+      if (profile?.avatar_url) {
+        previewEl.style.backgroundImage = `url(${profile.avatar_url})`;
+        previewEl.style.backgroundSize = 'cover';
+        previewEl.style.backgroundPosition = 'center';
+        previewEl.textContent = '';
+      } else {
+        previewEl.style.backgroundImage = '';
+        previewEl.textContent = profile?.pseudo?.[0]?.toUpperCase() || '?';
+      }
+      document.getElementById('edit-profile-error').style.display = 'none';
+      document.getElementById('edit-profile-modal').classList.add('open');
+    });
+
+    document.getElementById('edit-profile-modal').addEventListener('click', e => {
+      if (e.target === document.getElementById('edit-profile-modal')) document.getElementById('edit-profile-modal').classList.remove('open');
+    });
+
+    document.getElementById('avatar-upload-zone').addEventListener('click', () => {
+      document.getElementById('avatar-file-input').click();
+    });
+
+    document.getElementById('avatar-file-input').addEventListener('change', e => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      newAvatarFile = file;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const previewEl = document.getElementById('edit-avatar-preview');
+        previewEl.style.backgroundImage = `url(${ev.target.result})`;
+        previewEl.style.backgroundSize = 'cover';
+        previewEl.style.backgroundPosition = 'center';
+        previewEl.textContent = '';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('edit-profile-save').addEventListener('click', async () => {
+      const saveBtn = document.getElementById('edit-profile-save');
+      const errorEl = document.getElementById('edit-profile-error');
+      const newPseudo = document.getElementById('edit-pseudo-input').value.trim();
+      const newEmail = document.getElementById('edit-email-input').value.trim();
+
+      errorEl.style.display = 'none';
+
+      if (!newPseudo) {
+        errorEl.textContent = 'Le pseudo ne peut pas être vide.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Enregistrement…';
+
+      try {
+        let avatarUrl = profile?.avatar_url || null;
+
+        // Upload new avatar if selected
+        if (newAvatarFile) {
+          const ext = newAvatarFile.name.split('.').pop().toLowerCase() || 'jpg';
+          const path = `${user.id}/avatar.${ext}`;
+          const { error: upErr } = await supabase.storage.from('avatars').upload(path, newAvatarFile, { upsert: true, contentType: newAvatarFile.type });
+          if (upErr) throw upErr;
+          const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
+          avatarUrl = urlData.publicUrl + `?t=${Date.now()}`;
+        }
+
+        // Update profiles table
+        const { error: profErr } = await supabase.from('profiles').update({ pseudo: newPseudo, avatar_url: avatarUrl }).eq('id', user.id);
+        if (profErr) throw profErr;
+
+        // Update email if changed
+        if (newEmail && newEmail !== user.email) {
+          const { error: emailErr } = await supabase.auth.updateUser({ email: newEmail });
+          if (emailErr) throw emailErr;
+          toast('Email de confirmation envoyé ✉️');
+        }
+
+        // Update local profile object
+        profile.pseudo = newPseudo;
+        profile.avatar_url = avatarUrl;
+
+        // Update header avatar
+        if (avatarUrl) {
+          mainAvatarEl.style.backgroundImage = `url(${avatarUrl})`;
+          mainAvatarEl.style.backgroundSize = 'cover';
+          mainAvatarEl.style.backgroundPosition = 'center';
+          mainAvatarEl.textContent = '';
+        } else {
+          mainAvatarEl.style.backgroundImage = '';
+          mainAvatarEl.textContent = newPseudo[0]?.toUpperCase() || '?';
+        }
+        document.getElementById('pseudo-el').textContent = newPseudo;
+
+        document.getElementById('edit-profile-modal').classList.remove('open');
+        if (!newEmail || newEmail === user.email) toast('Profil mis à jour ✅');
+      } catch (err) {
+        errorEl.textContent = err.message || 'Une erreur est survenue.';
+        errorEl.style.display = 'block';
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Enregistrer';
+      }
+    });
 
     // Logout
     document.getElementById('logout-btn').addEventListener('click', async () => {

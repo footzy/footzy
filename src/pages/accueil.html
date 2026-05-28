@@ -771,6 +771,10 @@
         const card = e.currentTarget.closest('.feed-card');
         openWarPopup(card.dataset.targetId, card.dataset.targetPseudo, parseInt(card.dataset.targetPts || '0'));
       }));
+      feedList.querySelectorAll('.feed-user-click').forEach(el => el.addEventListener('click', e => {
+        const card = e.currentTarget.closest('.feed-card');
+        openProfilePopup(card.dataset.targetId);
+      }));
     }
 
     function renderCard(p, counts) {
@@ -808,12 +812,14 @@
       return `
         <div class="feed-card" data-id="${p.id}" data-target-id="${p.user_id}" data-target-pseudo="${prof?.pseudo || ''}" data-target-pts="${globalPts}">
           <div class="feed-card-header">
-            <div class="feed-avatar">${avatarInner}</div>
-            <div class="feed-user-info">
-              <div class="feed-pseudo">${prof?.pseudo || '???'}</div>
-              <div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap">
-                <span class="feed-plan-badge">⭐ Premium</span>
-                <span style="font-size:11px;color:var(--text-tertiary);font-weight:600">${globalPts} pts ${bmHint}</span>
+            <div class="feed-user-click" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer">
+              <div class="feed-avatar">${avatarInner}</div>
+              <div class="feed-user-info">
+                <div class="feed-pseudo">${prof?.pseudo || '???'}</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap">
+                  <span class="feed-plan-badge">⭐ Premium</span>
+                  <span style="font-size:11px;color:var(--text-tertiary);font-weight:600">${globalPts} pts ${bmHint}</span>
+                </div>
               </div>
             </div>
             ${statusBadge}
@@ -1044,6 +1050,137 @@
         feedLoaded = false;
         document.getElementById('feed-list').innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--text-tertiary)">Chargement…</div>';
         loadFeed();
+      });
+    }
+
+    // ─────────────────────────────────────────
+    // POPUP PROFIL UTILISATEUR
+    // ─────────────────────────────────────────
+    async function openProfilePopup(userId) {
+      // Overlay
+      const el = document.createElement('div');
+      el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center';
+
+      // Skeleton loading
+      el.innerHTML = `
+        <div style="background:var(--bg-surface);border-radius:28px 28px 0 0;width:100%;max-width:480px;padding:0 0 calc(28px + env(safe-area-inset-bottom));animation:warSlideUp .28s cubic-bezier(.32,.72,0,1);position:relative">
+          <div style="text-align:center;padding:12px 0 0">
+            <div style="width:36px;height:4px;border-radius:2px;background:var(--border);margin:0 auto"></div>
+          </div>
+          <button id="pp-close" style="position:absolute;top:10px;right:14px;background:var(--bg-muted);border:1px solid var(--border);color:var(--text-primary);width:28px;height:28px;border-radius:50%;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2">✕</button>
+          <div id="pp-content" style="padding:20px 20px 8px">
+            <div style="text-align:center;padding:28px 0;color:var(--text-tertiary)">Chargement…</div>
+          </div>
+        </div>`;
+
+      document.body.appendChild(el);
+      el.querySelector('#pp-close').addEventListener('click', () => el.remove());
+      el.addEventListener('click', e => { if (e.target === el) el.remove(); });
+
+      // Fetch profil complet
+      const { data: p } = await supabase
+        .from('profiles')
+        .select('id,pseudo,avatar_url,bio,plan,points_totaux,global_bm_pts,streak_quotidien,instagram,snapchat,twitter,show_bio')
+        .eq('id', userId)
+        .single();
+
+      if (!p) {
+        el.querySelector('#pp-content').innerHTML = `<div style="text-align:center;padding:28px 0;color:var(--danger)">Profil introuvable</div>`;
+        return;
+      }
+
+      const isMe      = p.id === user.id;
+      const globalPts = (p.points_totaux || 0) + (p.global_bm_pts || 0);
+      const bmDelta   = p.global_bm_pts || 0;
+      const init      = (p.pseudo || '?')[0].toUpperCase();
+
+      // Avatar
+      const avatarHtml = p.avatar_url
+        ? `<img src="${p.avatar_url}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:2.5px solid var(--border)">`
+        : `<div style="width:72px;height:72px;border-radius:50%;background:var(--bg-dark);border:2.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:var(--text-secondary)">${init}</div>`;
+
+      // Plan badge
+      const planBadge = p.plan === 'premium'
+        ? `<span style="font-size:10px;font-weight:700;background:linear-gradient(90deg,#B8860B,#FFD700);color:#000;padding:2px 8px;border-radius:20px">⭐ Premium</span>`
+        : `<span style="font-size:10px;color:var(--text-tertiary);font-weight:600">Free</span>`;
+
+      // BM delta
+      const bmHint = bmDelta !== 0
+        ? `<span style="font-size:11px;font-weight:700;color:${bmDelta > 0 ? 'var(--green-accent)' : 'var(--danger)'}">${bmDelta > 0 ? '+' : ''}${bmDelta} BM</span>`
+        : '';
+
+      // Badges
+      const badges = [];
+      if ((p.streak_quotidien || 0) >= 7) badges.push({ icon: '🔥', label: 'En feu' });
+      else if ((p.streak_quotidien || 0) >= 3) badges.push({ icon: '⚡', label: 'Assidu' });
+      if (p.plan === 'premium') badges.push({ icon: '💎', label: 'Premium' });
+      if (bmDelta >= 5) badges.push({ icon: '🚀', label: 'Boosté' });
+      if (bmDelta <= -5) badges.push({ icon: '💀', label: 'Malus cible' });
+
+      // Réseaux sociaux
+      const SOCIALS = [
+        { key: 'snapchat',  base: 'https://snapchat.com/add/', bg: '#FFFC00', color: '#000', letter: 'SC' },
+        { key: 'instagram', base: 'https://instagram.com/',    bg: 'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)', color: '#fff', letter: 'IG' },
+        { key: 'twitter',   base: 'https://x.com/',            bg: '#000',    color: '#fff', letter: 'X'  },
+      ].filter(s => p[s.key]);
+
+      el.querySelector('#pp-content').innerHTML = `
+        <!-- Header -->
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+          ${avatarHtml}
+          <div style="flex:1;min-width:0">
+            <div style="font-size:19px;font-weight:800;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+              ${p.pseudo} ${isMe ? '<span style="font-size:10px;color:var(--green-accent);font-weight:600;background:var(--accent-bg);padding:2px 6px;border-radius:6px">vous</span>' : ''}
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap">${planBadge}</div>
+          </div>
+        </div>
+
+        ${p.bio && p.show_bio !== false ? `
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:16px">
+          <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;font-style:italic">"${p.bio}"</div>
+        </div>` : ''}
+
+        <!-- Stats -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:${badges.length || SOCIALS.length ? '12px' : '0'}">
+          <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center">
+            <div style="font-size:22px;font-weight:800;color:var(--green-accent)">${globalPts}</div>
+            ${bmHint ? `<div style="margin-top:2px">${bmHint}</div>` : ''}
+            <div style="font-size:10px;color:var(--text-tertiary);margin-top:3px;font-weight:600">pts globaux</div>
+          </div>
+          <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center">
+            <div style="font-size:22px;font-weight:800">${p.streak_quotidien || 0}</div>
+            <div style="font-size:10px;color:var(--text-tertiary);margin-top:3px;font-weight:600">🔥 streak</div>
+          </div>
+        </div>
+
+        ${badges.length > 0 ? `
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px">
+          ${badges.map(b => `<div style="display:inline-flex;align-items:center;gap:5px;background:var(--bg-surface);border:1px solid var(--border);border-radius:20px;padding:5px 10px;font-size:12px;font-weight:600;color:var(--text-secondary)">${b.icon} ${b.label}</div>`).join('')}
+        </div>` : ''}
+
+        ${SOCIALS.length > 0 ? `
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          ${SOCIALS.map(s => `
+            <a href="${s.base}${p[s.key]}" target="_blank" rel="noopener"
+              style="display:inline-flex;align-items:center;gap:7px;background:var(--bg-surface);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--text-secondary);text-decoration:none">
+              <span style="width:18px;height:18px;border-radius:4px;background:${s.bg};color:${s.color};font-size:9px;font-weight:800;display:inline-flex;align-items:center;justify-content:center">${s.letter}</span>
+              @${p[s.key]}
+            </a>`).join('')}
+        </div>` : ''}
+
+        ${!isMe ? `
+        <div style="padding-top:12px;border-top:1px solid var(--border);margin-top:4px">
+          <button id="pp-war-btn" style="width:100%;height:46px;border-radius:14px;border:1px solid rgba(255,140,0,0.3);background:rgba(255,140,0,0.07);color:#FF8C00;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+            ⚔️ Guerre Globale — 1,99€ par action
+          </button>
+        </div>` : ''}
+      `;
+
+      // Bouton guerre depuis le profil
+      el.querySelector('#pp-war-btn')?.addEventListener('click', () => {
+        el.remove();
+        openWarPopup(p.id, p.pseudo, globalPts);
       });
     }
 

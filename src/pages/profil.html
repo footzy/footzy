@@ -146,6 +146,24 @@
     </a>
   </nav>
 
+  <!-- Crop Modal -->
+  <div id="crop-modal" style="display:none;position:fixed;inset:0;z-index:30000;background:#111;flex-direction:column;align-items:stretch">
+    <div style="padding:16px 20px 12px;text-align:center;color:#fff;font-size:15px;font-weight:700;flex-shrink:0;letter-spacing:-0.01em">
+      Recadrer la photo
+    </div>
+    <div style="text-align:center;font-size:12px;color:rgba(255,255,255,0.45);padding-bottom:10px;flex-shrink:0">
+      Glisse pour repositionner · Pince pour zoomer
+    </div>
+    <div id="crop-container" style="flex:1;position:relative;overflow:hidden;touch-action:none;cursor:grab">
+      <img id="crop-img" draggable="false" style="position:absolute;max-width:none;user-select:none;-webkit-user-select:none;pointer-events:none" />
+      <canvas id="crop-overlay-canvas" style="position:absolute;inset:0;pointer-events:none"></canvas>
+    </div>
+    <div style="padding:16px 20px calc(16px + env(safe-area-inset-bottom));display:flex;gap:12px;background:#111;flex-shrink:0">
+      <button id="crop-cancel-btn" style="flex:1;height:52px;border:1px solid #444;background:transparent;color:#fff;border-radius:50px;font-size:15px;font-weight:600;cursor:pointer">Annuler</button>
+      <button id="crop-confirm-btn" style="flex:1;height:52px;background:#00E05A;color:#000;border:none;border-radius:50px;font-size:15px;font-weight:700;cursor:pointer">Valider ✓</button>
+    </div>
+  </div>
+
   <!-- Vainqueur Modal -->
   <!-- Picker équipe (bottom-sheet custom) -->
   <div id="team-picker-overlay" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(15,15,14,0.65);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px">
@@ -565,6 +583,140 @@
 
     refreshHistoire();
 
+    // ── Image Cropper ──
+    function openCropper(file) {
+      return new Promise(resolve => {
+        const modal    = document.getElementById('crop-modal');
+        const container = document.getElementById('crop-container');
+        const img      = document.getElementById('crop-img');
+        const oc       = document.getElementById('crop-overlay-canvas');
+
+        const url = URL.createObjectURL(file);
+
+        img.onload = () => {
+          const cw = container.clientWidth;
+          const ch = container.clientHeight;
+          const cropR = Math.min(cw, ch) * 0.42;
+
+          // Scale image to cover the crop circle
+          const initScale = Math.max((cropR * 2) / img.naturalWidth, (cropR * 2) / img.naturalHeight);
+          let scale = initScale;
+          let tx = cw / 2 - (img.naturalWidth  * scale) / 2;
+          let ty = ch / 2 - (img.naturalHeight * scale) / 2;
+
+          function applyTransform() {
+            img.style.width  = img.naturalWidth  * scale + 'px';
+            img.style.height = img.naturalHeight * scale + 'px';
+            img.style.left   = tx + 'px';
+            img.style.top    = ty + 'px';
+          }
+
+          function drawOverlay() {
+            const w = container.clientWidth, h = container.clientHeight;
+            oc.width = w; oc.height = h;
+            const ctx = oc.getContext('2d');
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillRect(0, 0, w, h);
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.arc(w / 2, h / 2, cropR, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(w / 2, h / 2, cropR, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          applyTransform();
+          drawOverlay();
+
+          // Touch: drag + pinch
+          let lastTouches = [];
+          container.addEventListener('touchstart', e => {
+            e.preventDefault();
+            lastTouches = Array.from(e.touches).map(t => ({ x: t.clientX, y: t.clientY }));
+          }, { passive: false });
+
+          container.addEventListener('touchmove', e => {
+            e.preventDefault();
+            const touches = Array.from(e.touches).map(t => ({ x: t.clientX, y: t.clientY }));
+            if (touches.length === 1 && lastTouches.length >= 1) {
+              tx += touches[0].x - lastTouches[0].x;
+              ty += touches[0].y - lastTouches[0].y;
+            } else if (touches.length === 2 && lastTouches.length >= 2) {
+              const prevD = Math.hypot(lastTouches[1].x - lastTouches[0].x, lastTouches[1].y - lastTouches[0].y);
+              const newD  = Math.hypot(touches[1].x - touches[0].x, touches[1].y - touches[0].y);
+              const ratio = newD / prevD;
+              const pcx = (touches[0].x + touches[1].x) / 2;
+              const pcy = (touches[0].y + touches[1].y) / 2;
+              tx = pcx - (pcx - tx) * ratio;
+              ty = pcy - (pcy - ty) * ratio;
+              scale = Math.max(initScale * 0.8, Math.min(scale * ratio, initScale * 6));
+            }
+            lastTouches = touches;
+            applyTransform();
+          }, { passive: false });
+
+          container.addEventListener('touchend', e => {
+            lastTouches = Array.from(e.touches).map(t => ({ x: t.clientX, y: t.clientY }));
+          });
+
+          // Mouse: drag + wheel zoom (desktop)
+          let dragging = false, lm = null;
+          container.addEventListener('mousedown', e => { dragging = true; lm = { x: e.clientX, y: e.clientY }; container.style.cursor = 'grabbing'; });
+          window.addEventListener('mouseup', () => { dragging = false; container.style.cursor = 'grab'; });
+          container.addEventListener('mousemove', e => {
+            if (!dragging || !lm) return;
+            tx += e.clientX - lm.x; ty += e.clientY - lm.y;
+            lm = { x: e.clientX, y: e.clientY };
+            applyTransform();
+          });
+          container.addEventListener('wheel', e => {
+            e.preventDefault();
+            const r = e.deltaY < 0 ? 1.1 : 0.9;
+            const cx = container.clientWidth / 2, cy = container.clientHeight / 2;
+            tx = cx - (cx - tx) * r; ty = cy - (cy - ty) * r;
+            scale = Math.max(initScale * 0.8, Math.min(scale * r, initScale * 6));
+            applyTransform();
+          }, { passive: false });
+
+          // Confirm → canvas crop
+          document.getElementById('crop-confirm-btn').onclick = () => {
+            const cw2 = container.clientWidth, ch2 = container.clientHeight;
+            const r2  = Math.min(cw2, ch2) * 0.42;
+            const imgX = (cw2 / 2 - tx) / scale;
+            const imgY = (ch2 / 2 - ty) / scale;
+            const imgR = r2 / scale;
+            const SIZE = 400;
+            const canvas = document.createElement('canvas');
+            canvas.width = SIZE; canvas.height = SIZE;
+            const ctx = canvas.getContext('2d');
+            ctx.beginPath();
+            ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2, 0, Math.PI * 2);
+            ctx.clip();
+            ctx.drawImage(img, imgX - imgR, imgY - imgR, imgR * 2, imgR * 2, 0, 0, SIZE, SIZE);
+            canvas.toBlob(blob => {
+              modal.style.display = 'none';
+              URL.revokeObjectURL(url);
+              resolve(blob);
+            }, 'image/jpeg', 0.92);
+          };
+        };
+
+        img.src = url;
+        modal.style.display = 'flex';
+
+        document.getElementById('crop-cancel-btn').onclick = () => {
+          modal.style.display = 'none';
+          URL.revokeObjectURL(url);
+          resolve(null);
+        };
+      });
+    }
+
     // ── Edit Profile ──
     let newAvatarFile = null;
 
@@ -595,19 +747,19 @@
       document.getElementById('avatar-file-input').click();
     });
 
-    document.getElementById('avatar-file-input').addEventListener('change', e => {
+    document.getElementById('avatar-file-input').addEventListener('change', async e => {
       const file = e.target.files?.[0];
       if (!file) return;
-      newAvatarFile = file;
-      const reader = new FileReader();
-      reader.onload = ev => {
-        const previewEl = document.getElementById('edit-avatar-preview');
-        previewEl.style.backgroundImage = `url(${ev.target.result})`;
-        previewEl.style.backgroundSize = 'cover';
-        previewEl.style.backgroundPosition = 'center';
-        previewEl.textContent = '';
-      };
-      reader.readAsDataURL(file);
+      e.target.value = ''; // reset so same file can be re-selected
+      const blob = await openCropper(file);
+      if (!blob) return;
+      newAvatarFile = blob;
+      const url = URL.createObjectURL(blob);
+      const previewEl = document.getElementById('edit-avatar-preview');
+      previewEl.style.backgroundImage = `url(${url})`;
+      previewEl.style.backgroundSize = 'cover';
+      previewEl.style.backgroundPosition = 'center';
+      previewEl.textContent = '';
     });
 
     document.getElementById('edit-profile-save').addEventListener('click', async () => {
@@ -632,9 +784,8 @@
 
         // Upload new avatar if selected
         if (newAvatarFile) {
-          const ext = newAvatarFile.name.split('.').pop().toLowerCase() || 'jpg';
-          const path = `${user.id}/avatar.${ext}`;
-          const { error: upErr } = await supabase.storage.from('avatars').upload(path, newAvatarFile, { upsert: true, contentType: newAvatarFile.type });
+          const path = `${user.id}/avatar.jpg`;
+          const { error: upErr } = await supabase.storage.from('avatars').upload(path, newAvatarFile, { upsert: true, contentType: 'image/jpeg' });
           if (upErr) throw upErr;
           const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
           avatarUrl = urlData.publicUrl + `?t=${Date.now()}`;

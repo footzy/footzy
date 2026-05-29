@@ -6,183 +6,560 @@
   <title>Footzy — Matchs</title>
   <link rel="stylesheet" href="/src/css/tokens.css" />
   <link rel="stylesheet" href="/src/css/components.css" />
-  <link rel="stylesheet" href="/src/css/fz-components.css" />
-  <link rel="stylesheet" href="/src/css/pages.css" />
+  <style>
+    /* ── Page-specific ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 0 10px;
+    }
+    .section-header__title {
+      font: 900 22px/1 var(--font);
+      color: var(--color-ink);
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+    }
+    .section-header__live-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font: 700 10px/1 var(--font);
+      color: var(--color-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* Live card (dark) */
+    .live-match-card {
+      background: var(--color-card-dark);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-bottom: 8px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .live-match-card:active { opacity: 0.85; }
+
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font: 700 10px/1 var(--font);
+      color: var(--color-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 14px;
+    }
+
+    .live-score-row {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .live-team {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+    }
+    .live-team__flag { font-size: 30px; line-height: 1; }
+    .live-team__name {
+      font: 700 11px/1 var(--font);
+      color: rgba(250,250,248,0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      text-align: center;
+      max-width: 80px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .live-score {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+    .live-score__num {
+      font: 900 52px/1 var(--font);
+      color: #FAFAF8;
+      letter-spacing: -0.04em;
+    }
+    .live-score__sep {
+      font: 400 32px/1 var(--font);
+      color: #3A3835;
+      padding: 0 2px;
+    }
+    .live-minute {
+      text-align: center;
+      margin-top: 10px;
+      font: 700 12px/1 var(--font);
+      color: var(--color-accent);
+    }
+    .live-phase {
+      font: var(--type-label-sm);
+      color: var(--color-ink-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    /* Upcoming card (light) */
+    .upcoming-card {
+      background: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.1s;
+    }
+    .upcoming-card:active { transform: scale(0.99); }
+    .upcoming-card.has-prono { border-color: var(--color-accent); }
+
+    .upcoming-team {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex: 1;
+      min-width: 0;
+    }
+    .upcoming-team--right { flex-direction: row-reverse; text-align: right; }
+    .upcoming-team__flag { font-size: 24px; line-height: 1; flex-shrink: 0; }
+    .upcoming-team__name {
+      font: 700 12px/1.2 var(--font);
+      color: var(--color-ink);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .upcoming-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      flex-shrink: 0;
+      padding: 0 6px;
+      min-width: 54px;
+    }
+    .upcoming-center__time {
+      font: 900 15px/1 var(--font);
+      color: var(--color-ink);
+    }
+    .upcoming-center__score {
+      font: 900 17px/1 var(--font);
+      color: var(--color-ink);
+      letter-spacing: -0.02em;
+    }
+    .upcoming-center__label {
+      font: 400 10px/1 var(--font);
+      color: var(--color-ink-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      text-align: center;
+    }
+    .upcoming-prono-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--color-accent);
+      flex-shrink: 0;
+    }
+
+    /* Défi quotidien */
+    .defi-card {
+      background: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      position: relative;
+    }
+    .defi-timer-bar {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--color-border);
+    }
+    .defi-timer-fill {
+      height: 100%;
+      background: var(--color-accent);
+      transition: width 1s linear;
+    }
+    .defi-inner { padding: 16px; }
+    .defi-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .defi-label {
+      font: var(--type-label-lg);
+      color: var(--color-green-dark);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .defi-pts {
+      font: 900 13px/1 var(--font);
+      color: var(--color-accent);
+    }
+    .defi-question {
+      font: 700 15px/1.45 var(--font);
+      color: var(--color-ink);
+      margin-bottom: 14px;
+    }
+    .defi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .defi-option {
+      padding: 12px 10px;
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-md);
+      background: var(--color-paper);
+      font: 500 13px/1.3 var(--font);
+      color: var(--color-ink-secondary);
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .defi-option:not(:disabled):active { border-color: var(--color-accent); background: rgba(0,224,90,0.08); }
+    .defi-option.correct { border-color: var(--color-accent); background: rgba(0,224,90,0.10); color: var(--color-ink); font-weight: 700; }
+    .defi-option.wrong   { border-color: var(--color-danger); background: rgba(255,68,68,0.08); opacity: 0.65; }
+    .defi-option:disabled { cursor: default; }
+
+    /* Groups section label */
+    .match-group-label {
+      font: var(--type-label-sm);
+      color: var(--color-ink-muted);
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      padding: 14px 0 6px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .match-group-label::before {
+      content: '';
+      display: block;
+      width: 16px;
+      height: 1px;
+      background: var(--color-border);
+    }
+
+    .cards-stack { display: flex; flex-direction: column; gap: 8px; }
+  </style>
 </head>
 <body>
-  <div class="page-content">
-    <!-- Header -->
-    <div class="home-header">
-      <span class="home-logo">Footz<b>y</b></span>
-      <div id="user-info" style="display:flex;align-items:center;gap:10px">
-        <span id="user-streak" class="fz-streak" style="display:none"></span>
-        <div id="user-avatar" class="fz-avatar fz-avatar--accent" onclick="window.location.href='/src/pages/profil.html'" style="cursor:pointer">?</div>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div id="user-avatar" class="app-header__avatar" onclick="window.location.href='/src/pages/profil.html'">?</div>
+    <div class="app-header__logo">FOOTZY<span>.</span></div>
+    <div id="score-pill" class="app-header__score-pill" style="display:none">0 PTS</div>
+  </header>
+
+  <div class="page-content" style="padding-left:var(--space-page);padding-right:var(--space-page)">
+
+    <!-- Défi du jour -->
+    <div class="section-label" style="padding-top:16px">DÉFI DU JOUR</div>
+    <div id="defi-container"></div>
+
+    <!-- Matchs section -->
+    <div id="today-section">
+      <div class="section-header" id="section-live" style="display:none">
+        <span class="section-header__title">EN DIRECT</span>
+        <span class="section-header__live-badge">
+          <span class="live-dot"></span> LIVE
+        </span>
+      </div>
+      <div id="live-list" class="cards-stack"></div>
+
+      <div class="section-header">
+        <span class="section-header__title" id="today-title">AUJOURD'HUI</span>
+      </div>
+      <div id="match-list" class="cards-stack">
+        <div style="padding:32px 0;text-align:center;color:var(--color-ink-muted);font:var(--type-body-sm)">Chargement…</div>
       </div>
     </div>
 
-    <!-- Défi quotidien -->
-    <div class="fz-section-h"><span class="fz-section-h__dot"></span><span class="fz-section-h__title">Défi du jour</span></div>
-    <div id="defi-container" style="padding:0 20px 4px"></div>
-
-    <!-- Matchs du jour -->
-    <div class="fz-section-h" id="today-label"><span class="fz-section-h__dot"></span><span class="fz-section-h__title">Matchs d'aujourd'hui</span></div>
-    <div id="match-list" class="fz-stack fz-stack--sm" style="padding-bottom:8px">
-      <div style="text-align:center;padding:40px 20px;color:var(--fg-faint)">Chargement...</div>
+    <!-- Prochains matchs -->
+    <div id="upcoming-section" style="display:none">
+      <div class="section-header">
+        <span class="section-header__title">PROCHAINS MATCHS</span>
+      </div>
+      <div id="upcoming-list" class="cards-stack"></div>
     </div>
 
-    <!-- Prochains matchs -->
-    <div class="fz-section-h" id="upcoming-label" style="display:none"><span class="fz-section-h__dot"></span><span class="fz-section-h__title">Prochains matchs</span></div>
-    <div id="upcoming-list" class="fz-stack fz-stack--sm" style="margin-bottom:24px"></div>
   </div>
 
-  <!-- Bottom Nav -->
+  <!-- Navbar -->
   <nav class="bottom-nav">
     <a href="/src/pages/accueil.html">
-      <span style="font-size:22px">🏠</span>
-      <span>Accueil</span>
+      <span class="nav-icon">🏠</span>
+      <span>ACCUEIL</span>
     </a>
     <a href="/src/pages/home.html" class="active">
-      <span style="font-size:22px">⚽</span>
-      <span>Matchs</span>
+      <span class="nav-icon">⚽</span>
+      <span>MATCHS</span>
     </a>
     <a href="/src/pages/oracle.html">
-      <span style="font-size:22px">🔮</span>
-      <span>Oracle</span>
+      <span class="nav-icon">🔮</span>
+      <span>ORACLE</span>
     </a>
     <a href="/src/pages/groupe.html">
-      <span style="font-size:22px">🫂</span>
-      <span>Groupe</span>
+      <span class="nav-icon">🫂</span>
+      <span>GROUPE</span>
     </a>
     <a href="/src/pages/profil.html">
-      <span style="font-size:22px">🪪</span>
-      <span>Profil</span>
+      <span class="nav-icon">🪪</span>
+      <span>PROFIL</span>
     </a>
   </nav>
 
   <script type="module">
     import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
-    import { formatKickoff, formatTime } from '/src/js/lib/utils.js';
+    import { formatTime, formatKickoff } from '/src/js/lib/utils.js';
 
     const user = await requireAuth();
     if (!user) throw new Error('not authed');
     const profile = await getCurrentProfile();
 
-    // User avatar
+    // Header
     if (profile) {
-      document.getElementById('user-avatar').textContent = profile.pseudo?.[0]?.toUpperCase() || '?';
-      if (profile.streak_quotidien > 0) {
-        const streakEl = document.getElementById('user-streak');
-        streakEl.textContent = `🔥 ${profile.streak_quotidien}`;
-        streakEl.style.display = '';
+      const av = document.getElementById('user-avatar');
+      if (profile.avatar_url) {
+        av.innerHTML = `<img src="${profile.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+      } else {
+        av.textContent = (profile.pseudo?.[0] || '?').toUpperCase();
       }
+      const pill = document.getElementById('score-pill');
+      pill.textContent = `${profile.points_totaux || 0} PTS`;
+      pill.style.display = '';
     }
 
-    // Load today's matches
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
+    function phaseLabel(m) {
+      if (m.phase === 'groupes') return 'Groupe ' + (m.groupe || '');
+      if (m.groupe === 'UCL')    return 'Finale UCL';
+      const L = { huitiemes: '1/8 de finale', quarts: 'Quart de finale', demis: 'Demi-finale', finale: 'Finale' };
+      return L[m.phase] || m.phase;
+    }
+
+    // Load matches
+    const today = new Date(); today.setHours(0,0,0,0);
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
 
     const { data: matchsToday } = await supabase
-      .from('matchs')
-      .select('*')
+      .from('matchs').select('*')
       .gte('kickoff_at', today.toISOString())
       .lt('kickoff_at', tomorrow.toISOString())
       .order('kickoff_at');
 
-    const matchList = document.getElementById('match-list');
-
-    function phaseLabel(m) {
-      if (m.phase === 'groupes') return 'Groupe ' + (m.groupe || '');
-      if (m.groupe === 'UCL')    return '🏆 Finale UCL';
-      const labels = { huitiemes: '1/8 de finale', quarts: 'Quart de finale', demis: 'Demi-finale', finale: 'Finale' };
-      return labels[m.phase] || m.phase;
+    // Load user pronos for today's matches
+    let userPronos = {};
+    if (matchsToday?.length) {
+      const ids = matchsToday.map(m => m.id);
+      const { data: pronos } = await supabase
+        .from('pronostics').select('match_id, home_score, away_score, status')
+        .eq('user_id', user.id).in('match_id', ids);
+      pronos?.forEach(p => { userPronos[p.match_id] = p; });
     }
 
-    function matchCardHTML(m) {
-      const isLive = m.status === 'live' || m.status === 'halftime';
+    function liveCardHTML(m) {
+      return `
+        <div class="live-match-card" onclick="window.location.href='/src/pages/match.html?id=${m.id}'">
+          <div class="live-badge">
+            <span class="live-dot"></span> EN DIRECT
+          </div>
+          <div class="live-phase">${phaseLabel(m).toUpperCase()}</div>
+          <div class="live-score-row">
+            <div class="live-team">
+              <span class="live-team__flag">${m.home_flag}</span>
+              <span class="live-team__name">${m.home_team}</span>
+            </div>
+            <div class="live-score">
+              <span class="live-score__num">${m.home_score}</span>
+              <span class="live-score__sep">–</span>
+              <span class="live-score__num">${m.away_score}</span>
+            </div>
+            <div class="live-team">
+              <span class="live-team__flag">${m.away_flag}</span>
+              <span class="live-team__name">${m.away_team}</span>
+            </div>
+          </div>
+          ${m.minute ? `<div class="live-minute">${m.minute}'</div>` : ''}
+        </div>`;
+    }
+
+    function upcomingCardHTML(m) {
+      const isLive     = m.status === 'live' || m.status === 'halftime';
       const isFinished = m.status === 'finished';
-      const midContent = isLive
-        ? `<div class="fz-live"><span class="fz-live__dot"></span>LIVE · ${m.minute}'</div><div class="fz-match__score">${m.home_score}–${m.away_score}</div>`
-        : isFinished
-        ? `<div class="fz-match__score">${m.home_score}–${m.away_score}</div><div class="fz-match__final">Terminé</div>`
-        : `<div class="fz-match__time">${formatTime(m.kickoff_at)}</div><div class="fz-match__group">${phaseLabel(m)}</div>`;
+      const prono      = userPronos[m.id];
+      const hasProno   = !!prono;
+
+      let centerHTML;
+      if (isLive) {
+        centerHTML = `
+          <div class="live-badge" style="margin-bottom:0">
+            <span class="live-dot"></span><span style="font-size:10px">${m.minute || 'LIVE'}'</span>
+          </div>
+          <div class="upcoming-center__score">${m.home_score}–${m.away_score}</div>`;
+      } else if (isFinished) {
+        centerHTML = `
+          <div class="upcoming-center__score">${m.home_score}–${m.away_score}</div>
+          <div class="upcoming-center__label">TERMINÉ</div>`;
+      } else {
+        centerHTML = `
+          <div class="upcoming-center__time">${formatTime(m.kickoff_at)}</div>
+          <div class="upcoming-center__label">${phaseLabel(m).toUpperCase().substring(0, 8)}</div>`;
+      }
 
       return `
-        <button class="fz-match" onclick="window.location.href='/src/pages/match.html?id=${m.id}'" style="cursor:pointer">
-          <div class="fz-match__team">
-            <span style="font-size:32px;line-height:1">${m.home_flag}</span>
-            <span class="fz-match__team-name">${m.home_team}</span>
+        <div class="upcoming-card${hasProno ? ' has-prono' : ''}" onclick="window.location.href='/src/pages/match.html?id=${m.id}'">
+          <div class="upcoming-team">
+            <span class="upcoming-team__flag">${m.home_flag}</span>
+            <span class="upcoming-team__name">${m.home_team}</span>
           </div>
-          <div class="fz-match__mid">${midContent}</div>
-          <div class="fz-match__team">
-            <span style="font-size:32px;line-height:1">${m.away_flag}</span>
-            <span class="fz-match__team-name">${m.away_team}</span>
+          <div class="upcoming-center">${centerHTML}</div>
+          <div class="upcoming-team upcoming-team--right">
+            <span class="upcoming-team__flag">${m.away_flag}</span>
+            <span class="upcoming-team__name">${m.away_team}</span>
           </div>
-        </button>`;
+          ${hasProno ? '<span class="upcoming-prono-dot"></span>' : ''}
+        </div>`;
     }
 
+    const liveMatches    = (matchsToday || []).filter(m => m.status === 'live' || m.status === 'halftime');
+    const nonLiveMatches = (matchsToday || []).filter(m => m.status !== 'live' && m.status !== 'halftime');
+
+    // Live section
+    if (liveMatches.length) {
+      document.getElementById('section-live').style.display = 'flex';
+      document.getElementById('live-list').innerHTML = liveMatches.map(liveCardHTML).join('');
+    }
+
+    // Today matches
     if (!matchsToday || matchsToday.length === 0) {
-      matchList.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-tertiary)">Aucun match aujourd'hui</div>`;
+      document.getElementById('match-list').innerHTML = `
+        <div style="padding:32px 0;text-align:center;color:var(--color-ink-muted);font:var(--type-body-sm)">
+          Aucun match aujourd'hui
+        </div>`;
+
       // Show upcoming
       const { data: upcoming } = await supabase
-        .from('matchs').select('*').gt('kickoff_at', tomorrow.toISOString())
-        .order('kickoff_at').limit(5);
+        .from('matchs').select('*')
+        .gt('kickoff_at', tomorrow.toISOString())
+        .order('kickoff_at').limit(10);
+
       if (upcoming?.length) {
-        document.getElementById('upcoming-label').style.display = 'block';
-        document.getElementById('upcoming-list').innerHTML = upcoming.map(matchCardHTML).join('');
+        document.getElementById('today-section').style.display = 'none';
+        document.getElementById('upcoming-section').style.display = '';
+        document.getElementById('upcoming-list').innerHTML = upcoming.map(upcomingCardHTML).join('');
       }
     } else {
-      matchList.innerHTML = matchsToday.map(matchCardHTML).join('');
+      document.getElementById('today-title').textContent =
+        liveMatches.length ? 'PROGRAMME DU JOUR' : 'AUJOURD\'HUI';
+      document.getElementById('match-list').innerHTML = nonLiveMatches.map(upcomingCardHTML).join('');
+
+      if (!nonLiveMatches.length) {
+        document.getElementById('match-list').style.display = 'none';
+      }
     }
 
-    // Load défi du jour
-    const todayStr = new Date().toISOString().slice(0,10);
+    // ── Défi du jour ──
+    const todayStr = new Date().toISOString().slice(0, 10);
     const { data: defi } = await supabase
-      .from('defis_quotidiens')
-      .select('*')
-      .eq('date', todayStr)
-      .maybeSingle();
+      .from('defis_quotidiens').select('*')
+      .eq('date', todayStr).maybeSingle();
 
     const defiContainer = document.getElementById('defi-container');
+
     if (!defi) {
-      defiContainer.innerHTML = `<div class="fz-card" style="text-align:center;color:var(--fg-faint);padding:20px">Pas de défi aujourd'hui</div>`;
+      defiContainer.innerHTML = `
+        <div class="defi-card" style="padding:20px;text-align:center;color:var(--color-ink-muted);font:var(--type-body-sm)">
+          Pas de défi aujourd'hui
+        </div>`;
     } else {
       const { data: alreadyAnswered } = await supabase
-        .from('reponses_defi').select('id,correcte,points').eq('user_id', user.id).eq('defi_id', defi.id).maybeSingle();
+        .from('reponses_defi').select('id,correcte,points,reponse')
+        .eq('user_id', user.id).eq('defi_id', defi.id).maybeSingle();
 
       const reponses = Array.isArray(defi.reponses) ? defi.reponses : Object.values(defi.reponses);
 
+      // Timer bar: time left today (resets at midnight)
+      const now = new Date();
+      const midnight = new Date(now); midnight.setHours(24,0,0,0);
+      const pct = Math.max(0, Math.min(100, ((midnight - now) / (24 * 3600 * 1000)) * 100));
+
       defiContainer.innerHTML = `
-        <div class="fz-card fz-defi-card">
-          <div class="defi-header">
-            <span style="font-size:11px;font-weight:800;color:var(--accent-strong);text-transform:uppercase;letter-spacing:0.08em">⚡ Défi du jour</span>
-            <span class="fz-pts">+50 pts</span>
+        <div class="defi-card" style="margin-bottom:4px">
+          <div class="defi-timer-bar">
+            <div class="defi-timer-fill" style="width:${pct}%"></div>
           </div>
-          <p class="fz-defi-q" style="margin:8px 0 12px">${defi.question}</p>
-          <div class="fz-quiz-grid" id="defi-options">
-            ${reponses.map((r, i) => `<button class="fz-quiz-btn ${alreadyAnswered ? (i === defi.bonne_reponse ? 'is-correct' : (alreadyAnswered.reponse === i && !alreadyAnswered.correcte ? 'is-wrong' : '')) : ''}" data-idx="${i}" ${alreadyAnswered ? 'disabled' : ''}>${r}</button>`).join('')}
+          <div class="defi-inner">
+            <div class="defi-header">
+              <span class="defi-label">⚡ DÉFI DU JOUR</span>
+              <span class="defi-pts">+50 PTS</span>
+            </div>
+            <p class="defi-question">${defi.question}</p>
+            <div class="defi-grid" id="defi-options">
+              ${reponses.map((r, i) => {
+                let cls = '';
+                if (alreadyAnswered) {
+                  if (i === defi.bonne_reponse) cls = 'correct';
+                  else if (alreadyAnswered.reponse === i && !alreadyAnswered.correcte) cls = 'wrong';
+                }
+                return `<button class="defi-option ${cls}" data-idx="${i}" ${alreadyAnswered ? 'disabled' : ''}>${r}</button>`;
+              }).join('')}
+            </div>
+            ${alreadyAnswered ? `
+              <p style="margin-top:12px;font:700 13px/1 var(--font);color:${alreadyAnswered.correcte ? 'var(--color-accent)' : 'var(--color-danger)'}">
+                ${alreadyAnswered.correcte ? `✓ Bonne réponse ! +${alreadyAnswered.points} pts` : '✗ Mauvaise réponse'}
+              </p>` : ''}
           </div>
-          ${alreadyAnswered ? `<p style="margin-top:12px;font-size:13px;color:${alreadyAnswered.correcte ? 'var(--accent-strong)' : 'var(--danger)'}">
-            ${alreadyAnswered.correcte ? `✓ Bonne réponse ! +${alreadyAnswered.points} pts` : '✗ Mauvaise réponse'}
-          </p>` : ''}
         </div>`;
 
       if (!alreadyAnswered) {
         document.getElementById('defi-options').addEventListener('click', async (e) => {
           const btn = e.target.closest('.defi-option');
-          if (!btn) return;
+          if (!btn || btn.disabled) return;
+
           const idx = parseInt(btn.dataset.idx);
           const correcte = idx === defi.bonne_reponse;
           const points = correcte ? 50 : 0;
 
-          await supabase.from('reponses_defi').insert({ user_id: user.id, defi_id: defi.id, reponse: idx, correcte, points });
-          if (correcte) await supabase.from('profiles').update({ points_totaux: (profile.points_totaux||0) + points }).eq('id', user.id);
+          document.querySelectorAll('.defi-option').forEach(b => { b.disabled = true; });
 
-          document.querySelectorAll('.fz-quiz-btn').forEach((b, i) => {
-            b.disabled = true;
-            if (i === defi.bonne_reponse) b.classList.add('is-correct');
-            else if (i === idx && !correcte) b.classList.add('is-wrong');
+          await supabase.from('reponses_defi').insert({
+            user_id: user.id, defi_id: defi.id, reponse: idx, correcte, points
           });
+          if (correcte) {
+            await supabase.from('profiles').update({
+              points_totaux: (profile.points_totaux || 0) + points
+            }).eq('id', user.id);
+          }
+
+          document.querySelectorAll('.defi-option').forEach((b, i) => {
+            if (i === defi.bonne_reponse) b.classList.add('correct');
+            else if (i === idx && !correcte) b.classList.add('wrong');
+          });
+
+          // Update score pill
+          const pill = document.getElementById('score-pill');
+          if (correcte) pill.textContent = `${(profile.points_totaux || 0) + points} PTS`;
         });
       }
     }

@@ -511,7 +511,7 @@
 
   <script type="module">
     import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
-    import { formatDate, formatKickoff, toast } from '/src/js/lib/utils.js';
+    import { formatDate, formatKickoff, formatTime, toast } from '/src/js/lib/utils.js';
     import { createCheckout, PLANS } from '/src/js/lib/whop.js';
 
     const user    = await requireAuth();
@@ -569,22 +569,147 @@
     fab.addEventListener('click', openMatchPicker);
 
     // ─────────────────────────────────────────
-    // ACTUALITÉ LOADING
+    // ACTUALITÉ — auto-générée depuis les matchs réels
     // ─────────────────────────────────────────
-    let myVotes = {}; // post_id → 'agree'|'disagree'
+    let myVotes = {};
+    let actuLiveInterval = null;
+
+    function phaseLabel(m) {
+      if (m.phase === 'groupes') return `Groupe ${m.groupe || ''}`;
+      if (m.groupe === 'UCL')    return 'Finale UCL';
+      const L = { huitiemes:'1/8 de finale', quarts:'Quart de finale', demis:'Demi-finale', finale:'Finale' };
+      return L[m.phase] || m.phase;
+    }
+
+    // Génère les posts automatiques depuis les données réelles des matchs
+    function buildAutoPostsFromMatches(matches) {
+      const now = new Date();
+      const auto = [];
+
+      const live     = matches.filter(m => m.status === 'live' || m.status === 'halftime');
+      const finished = matches.filter(m => m.status === 'finished');
+      const today    = matches.filter(m => {
+        if (m.status !== 'scheduled') return false;
+        const k = new Date(m.kickoff_at);
+        return k.toDateString() === now.toDateString();
+      });
+      const soon     = matches.filter(m => {
+        if (m.status !== 'scheduled') return false;
+        const k = new Date(m.kickoff_at);
+        const diff = k - now;
+        return diff > 0 && diff < 3 * 3600 * 1000; // dans les 3 prochaines heures
+      });
+      const tomorrow = matches.filter(m => {
+        if (m.status !== 'scheduled') return false;
+        const k = new Date(m.kickoff_at);
+        const tom = new Date(now); tom.setDate(tom.getDate() + 1);
+        return k.toDateString() === tom.toDateString();
+      });
+
+      // 1. LIVE — épinglé en tête, un post par match live
+      for (const m of live) {
+        auto.push({
+          id: `auto-live-${m.id}`, type: 'flash', is_pinned: true,
+          emoji: '🔴',
+          titre: `${m.home_flag} ${m.home_team} ${m.home_score}–${m.away_score} ${m.away_team} ${m.away_flag}`,
+          contenu: `EN DIRECT · ${m.minute ? m.minute + "' " : ''}${phaseLabel(m)}${m.stade ? ' — ' + m.stade : ''}. Clique sur le match pour voir les détails et poster ton prono !`,
+          created_at: new Date().toISOString(),
+          _auto: true,
+        });
+      }
+
+      // 2. Coup d'envoi imminent (< 3h)
+      for (const m of soon) {
+        const mins = Math.round((new Date(m.kickoff_at) - now) / 60000);
+        const delay = mins < 60 ? `dans ${mins} min` : `dans ${Math.round(mins/60)}h`;
+        auto.push({
+          id: `auto-soon-${m.id}`, type: 'flash', is_pinned: false,
+          emoji: '⏰',
+          titre: `${m.home_flag} ${m.home_team} vs ${m.away_team} ${m.away_flag} — ${delay}`,
+          contenu: `Coup d'envoi ${delay} · ${phaseLabel(m)}${m.stade ? ' — ' + m.stade : ''}. Lance ton pronostic avant le début !`,
+          created_at: new Date().toISOString(),
+          _auto: true,
+        });
+      }
+
+      // 3. Programme du jour (matchs restants aujourd'hui non couverts par "soon")
+      const todayOther = today.filter(m => {
+        const diff = new Date(m.kickoff_at) - now;
+        return diff >= 3 * 3600 * 1000;
+      });
+      if (todayOther.length) {
+        const lines = todayOther.map(m =>
+          `${m.home_flag} <strong>${m.home_team}</strong> vs <strong>${m.away_team}</strong> ${m.away_flag} · ${formatTime(m.kickoff_at)} · ${phaseLabel(m)}`
+        ).join('<br>');
+        auto.push({
+          id: 'auto-today', type: 'flash', is_pinned: false,
+          emoji: '📅',
+          titre: `${todayOther.length} match${todayOther.length > 1 ? 's' : ''} aujourd'hui`,
+          contenu: lines,
+          created_at: new Date().toISOString(),
+          _auto: true,
+        });
+      }
+
+      // 4. Résultats récents (dernières 24h)
+      const recent = finished.filter(m => now - new Date(m.kickoff_at) < 24 * 3600 * 1000);
+      for (const m of recent.slice(-5).reverse()) {
+        const winner = m.home_score > m.away_score ? m.home_team
+                     : m.away_score > m.home_score ? m.away_team
+                     : null;
+        auto.push({
+          id: `auto-result-${m.id}`, type: 'debrief', is_pinned: false,
+          emoji: '📊',
+          titre: `${m.home_flag} ${m.home_team} ${m.home_score}–${m.away_score} ${m.away_team} ${m.away_flag}`,
+          contenu: `Résultat final · ${phaseLabel(m)}. ${winner ? `<strong>${winner}</strong> s'impose !` : 'Match nul !'}`,
+          created_at: m.updated_at || m.kickoff_at,
+          _auto: true,
+        });
+      }
+
+      // 5. Programme de demain
+      if (tomorrow.length) {
+        const lines = tomorrow.map(m =>
+          `${m.home_flag} <strong>${m.home_team}</strong> vs <strong>${m.away_team}</strong> ${m.away_flag} · ${formatTime(m.kickoff_at)} · ${phaseLabel(m)}`
+        ).join('<br>');
+        auto.push({
+          id: 'auto-tomorrow', type: 'stats', is_pinned: false,
+          emoji: '⏭️',
+          titre: `Programme demain — ${tomorrow.length} match${tomorrow.length > 1 ? 's' : ''}`,
+          contenu: lines,
+          created_at: new Date().toISOString(),
+          _auto: true,
+        });
+      }
+
+      return auto;
+    }
 
     async function loadActu() {
       actuLoaded = true;
       const list = document.getElementById('actu-list');
 
-      const { data: posts, error } = await supabase
-        .from('actualite_posts')
-        .select('*')
-        .order('is_pinned', { ascending: false })
-        .order('created_at',  { ascending: false })
-        .limit(20);
+      // Fenêtre : hier → après-demain pour capter live, résultats récents et programme
+      const from = new Date(); from.setDate(from.getDate() - 1);
+      const to   = new Date(); to.setDate(to.getDate() + 2);
 
-      if (error || !posts?.length) {
+      const [matchesRes, postsRes] = await Promise.all([
+        supabase.from('matchs').select('*')
+          .gte('kickoff_at', from.toISOString())
+          .lte('kickoff_at', to.toISOString())
+          .order('kickoff_at'),
+        supabase.from('actualite_posts').select('*')
+          .order('is_pinned', { ascending: false })
+          .order('created_at',  { ascending: false })
+          .limit(10),
+      ]);
+
+      const autoPosts   = buildAutoPostsFromMatches(matchesRes.data || []);
+      const manualPosts = (postsRes.data || []).filter(p => !p._auto);
+
+      const allPosts = [...autoPosts, ...manualPosts];
+
+      if (!allPosts.length) {
         list.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--text-tertiary)">
           <div style="font-size:48px;margin-bottom:12px">📰</div>
           <div style="font-weight:700;color:var(--text-secondary)">Aucune actualité pour l'instant</div>
@@ -592,8 +717,8 @@
         return;
       }
 
-      // Load reaction counts for question posts
-      const questionIds = posts.filter(p => p.type === 'question').map(p => p.id);
+      // Réactions pour les posts manuels de type question
+      const questionIds = manualPosts.filter(p => p.type === 'question').map(p => p.id);
       let rxCounts = {}, commentCounts = {};
 
       if (questionIds.length) {
@@ -603,21 +728,32 @@
           if (!rxCounts[r.post_id]) rxCounts[r.post_id] = { agree: 0, disagree: 0 };
           rxCounts[r.post_id][r.type]++;
         });
-
         const { data: myRxData } = await supabase
           .from('actualite_reactions').select('post_id, type')
           .eq('user_id', user.id).in('post_id', questionIds);
         myRxData?.forEach(r => { myVotes[r.post_id] = r.type; });
-
         const { data: cmtData } = await supabase
           .from('actualite_comments').select('post_id').in('post_id', questionIds);
         cmtData?.forEach(c => { commentCounts[c.post_id] = (commentCounts[c.post_id] || 0) + 1; });
       }
 
-      list.innerHTML = posts.map(p => renderActuCard(p, rxCounts[p.id] || { agree:0, disagree:0 }, commentCounts[p.id] || 0)).join('');
+      list.innerHTML = allPosts.map(p =>
+        renderActuCard(p, rxCounts[p.id] || { agree:0, disagree:0 }, commentCounts[p.id] || 0)
+      ).join('');
 
-      // Vote listeners
       list.querySelectorAll('.actu-vote-btn').forEach(btn => btn.addEventListener('click', handleVote));
+
+      // Polling auto si des matchs sont en direct
+      const hasLive = (matchesRes.data || []).some(m => m.status === 'live' || m.status === 'halftime');
+      if (hasLive && !actuLiveInterval) {
+        actuLiveInterval = setInterval(() => {
+          actuLoaded = false;
+          loadActu();
+        }, 60_000);
+      } else if (!hasLive && actuLiveInterval) {
+        clearInterval(actuLiveInterval);
+        actuLiveInterval = null;
+      }
     }
 
     function timeAgo(dateStr) {

@@ -192,8 +192,11 @@
     document.getElementById('away-name').textContent = match.away_team;
     document.getElementById('score-home').textContent = match.home_score;
     document.getElementById('score-away').textContent = match.away_score;
+    const phaseLabels = { huitiemes: '1/8 de finale', quarts: 'Quart de finale', demis: 'Demi-finale', finale: 'Finale' };
     document.getElementById('match-phase-label').textContent =
-      match.phase === 'groupes' ? `Groupe ${match.groupe || ''}` : (match.phase || 'Match');
+      match.phase === 'groupes' ? `Groupe ${match.groupe || ''}` :
+      match.groupe === 'UCL'    ? '🏆 Finale UCL' :
+      phaseLabels[match.phase] || (match.phase || 'Match');
     document.title = `${match.home_team} vs ${match.away_team} — Footzy`;
 
     const statusChip = document.getElementById('status-chip');

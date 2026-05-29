@@ -91,6 +91,13 @@
 
     const matchList = document.getElementById('match-list');
 
+    function phaseLabel(m) {
+      if (m.phase === 'groupes') return 'Groupe ' + (m.groupe || '');
+      if (m.groupe === 'UCL')    return '🏆 Finale UCL';
+      const labels = { huitiemes: '1/8 de finale', quarts: 'Quart de finale', demis: 'Demi-finale', finale: 'Finale' };
+      return labels[m.phase] || m.phase;
+    }
+
     function matchCardHTML(m) {
       const isLive = m.status === 'live' || m.status === 'halftime';
       const isFinished = m.status === 'finished';
@@ -98,7 +105,7 @@
         ? `<div class="fz-live"><span class="fz-live__dot"></span>LIVE · ${m.minute}'</div><div class="fz-match__score">${m.home_score}–${m.away_score}</div>`
         : isFinished
         ? `<div class="fz-match__score">${m.home_score}–${m.away_score}</div><div class="fz-match__final">Terminé</div>`
-        : `<div class="fz-match__time">${formatTime(m.kickoff_at)}</div><div class="fz-match__group">${m.phase === 'groupes' ? 'Groupe ' + (m.groupe||'') : m.phase}</div>`;
+        : `<div class="fz-match__time">${formatTime(m.kickoff_at)}</div><div class="fz-match__group">${phaseLabel(m)}</div>`;
 
       return `
         <button class="fz-match" onclick="window.location.href='/src/pages/match.html?id=${m.id}'" style="cursor:pointer">

@@ -1,25 +1,53 @@
 const API_HOST = 'free-api-live-football-data.p.rapidapi.com';
-const API_KEY = import.meta.env.VITE_RAPIDAPI_KEY;
+const API_KEY  = import.meta.env.VITE_RAPIDAPI_KEY;
 
 const headers = {
   'Content-Type': 'application/json',
   'x-rapidapi-host': API_HOST,
-  'x-rapidapi-key': API_KEY
+  'x-rapidapi-key': API_KEY,
 };
 
-export async function fetchLiveScore(homeTeam, awayTeam) {
+// Récupère le score en direct d'un match (par noms d'équipes EN)
+export async function fetchLiveScore(homeTeamFr, awayTeamFr) {
   try {
     const r = await fetch(`https://${API_HOST}/football-current-live`, { headers });
     const data = await r.json();
-    const matches = data.response || data.matches || [];
-    return matches.find(m =>
-      m.home?.name?.toLowerCase().includes(homeTeam.toLowerCase()) &&
-      m.away?.name?.toLowerCase().includes(awayTeam.toLowerCase())
-    ) || null;
+    const matches = data?.response?.live || [];
+
+    return matches.find(m => {
+      const home = (m.home?.name || '').toLowerCase();
+      const away = (m.away?.name || '').toLowerCase();
+      const homeFr = homeTeamFr.toLowerCase();
+      const awayFr = awayTeamFr.toLowerCase();
+      // Fuzzy match: common French→EN mappings
+      return (
+        (home.includes(homeFr) || homeFr.includes(home) ||
+         FR_TO_EN[homeTeamFr]?.toLowerCase() === home) &&
+        (away.includes(awayFr) || awayFr.includes(away) ||
+         FR_TO_EN[awayTeamFr]?.toLowerCase() === away)
+      );
+    }) || null;
   } catch {
     return null;
   }
 }
+
+// Mapping FR→EN pour la correspondance live
+const FR_TO_EN = {
+  'Mexique': 'Mexico', 'Afrique du Sud': 'South Africa', 'Corée du Sud': 'South Korea',
+  'Rép. Tchèque': 'Czechia', 'Canada': 'Canada', 'Bosnie-Herzégovine': 'Bosnia and Herzegovina',
+  'Qatar': 'Qatar', 'Suisse': 'Switzerland', 'Brésil': 'Brazil', 'Maroc': 'Morocco',
+  'Haïti': 'Haiti', 'Écosse': 'Scotland', 'États-Unis': 'USA', 'Paraguay': 'Paraguay',
+  'Australie': 'Australia', 'Türkiye': 'Turkiye', 'Allemagne': 'Germany', 'Curaçao': 'Curacao',
+  "Côte d'Ivoire": 'Ivory Coast', 'Équateur': 'Ecuador', 'Pays-Bas': 'Netherlands',
+  'Japon': 'Japan', 'Suède': 'Sweden', 'Tunisie': 'Tunisia', 'Belgique': 'Belgium',
+  'Égypte': 'Egypt', 'Iran': 'Iran', 'Nouvelle-Zélande': 'New Zealand', 'Espagne': 'Spain',
+  'Cap-Vert': 'Cape Verde', 'Arabie Saoudite': 'Saudi Arabia', 'Uruguay': 'Uruguay',
+  'France': 'France', 'Sénégal': 'Senegal', 'Irak': 'Iraq', 'Norvège': 'Norway',
+  'Argentine': 'Argentina', 'Algérie': 'Algeria', 'Autriche': 'Austria', 'Jordanie': 'Jordan',
+  'Portugal': 'Portugal', 'RD Congo': 'DR Congo', 'Ouzbékistan': 'Uzbekistan', 'Colombie': 'Colombia',
+  'Angleterre': 'England', 'Croatie': 'Croatia', 'Ghana': 'Ghana', 'Panama': 'Panama',
+};
 
 export async function searchPlayer(query) {
   if (query.length < 2) return [];
@@ -29,7 +57,7 @@ export async function searchPlayer(query) {
       { headers }
     );
     const data = await r.json();
-    return data.response || data.players || [];
+    return data?.response?.players || [];
   } catch {
     return [];
   }
@@ -71,16 +99,18 @@ export async function getTeamStreaks(teamId) {
   }
 }
 
+// Polling live score toutes les 60s et mise à jour Supabase
 export function startLivePolling(matchId, homeTeam, awayTeam, supabase, onUpdate) {
   const update = async () => {
     const live = await fetchLiveScore(homeTeam, awayTeam);
     if (live) {
+      const liveTime = live.status?.liveTime;
       const updateData = {
-        home_score: live.home?.score ?? live.home_score ?? 0,
-        away_score: live.away?.score ?? live.away_score ?? 0,
-        minute: live.minute || live.time?.elapsed || 0,
-        status: 'live',
-        updated_at: new Date().toISOString()
+        home_score: live.home?.score ?? 0,
+        away_score: live.away?.score ?? 0,
+        minute:     liveTime ? (parseInt(liveTime.short) || 0) : 0,
+        status:     'live',
+        updated_at: new Date().toISOString(),
       };
       await supabase.from('matchs').update(updateData).eq('id', matchId);
       if (onUpdate) onUpdate(updateData);
@@ -88,5 +118,5 @@ export function startLivePolling(matchId, homeTeam, awayTeam, supabase, onUpdate
   };
 
   update();
-  return setInterval(update, 60000);
+  return setInterval(update, 60_000);
 }

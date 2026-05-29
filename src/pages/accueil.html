@@ -522,15 +522,21 @@
     if (!profile?.pseudo) {
       const rawName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User';
       const basePseudo = rawName.replace(/\s+/g, '').replace(/[^a-zA-Z0-9_\-\.]/g, '').slice(0, 18) || 'User';
-      let pseudo = basePseudo; let counter = 1;
+      let pseudo = basePseudo.length >= 3 ? basePseudo : 'User' + basePseudo;
+      let counter = 1;
       while (true) {
         const { data: ex } = await supabase.from('profiles').select('id').eq('pseudo', pseudo).maybeSingle();
         if (!ex) break;
         pseudo = basePseudo.slice(0, 15) + counter++;
       }
-      await supabase.from('profiles').upsert({ id: user.id, pseudo, points_totaux: 0, plan: 'free' }, { onConflict: 'id' });
+      if (profile) {
+        // Profil existe mais sans pseudo → update uniquement le pseudo
+        await supabase.from('profiles').update({ pseudo }).eq('id', user.id);
+      } else {
+        // Pas de profil du tout → insert complet
+        await supabase.from('profiles').insert({ id: user.id, pseudo, points_totaux: 0, plan: 'free' });
+      }
       window.location.reload();
-      throw new Error('pseudo assigned, reloading');
     }
 
     const isPremium = profile?.plan === 'premium';

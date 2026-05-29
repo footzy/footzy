@@ -518,10 +518,19 @@
     if (!user) throw new Error('not authed');
     const profile = await getCurrentProfile();
 
-    // Profil incomplet (Google/Apple sans pseudo) → compléter le setup
+    // Profil incomplet (Google sans pseudo) → auto-assigner un pseudo
     if (!profile?.pseudo) {
-      window.location.replace('/src/pages/auth-callback.html');
-      throw new Error('profile incomplete');
+      const rawName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User';
+      const basePseudo = rawName.replace(/\s+/g, '').replace(/[^a-zA-Z0-9_\-\.]/g, '').slice(0, 18) || 'User';
+      let pseudo = basePseudo; let counter = 1;
+      while (true) {
+        const { data: ex } = await supabase.from('profiles').select('id').eq('pseudo', pseudo).maybeSingle();
+        if (!ex) break;
+        pseudo = basePseudo.slice(0, 15) + counter++;
+      }
+      await supabase.from('profiles').upsert({ id: user.id, pseudo, points_totaux: 0, plan: 'free' }, { onConflict: 'id' });
+      window.location.reload();
+      throw new Error('pseudo assigned, reloading');
     }
 
     const isPremium = profile?.plan === 'premium';

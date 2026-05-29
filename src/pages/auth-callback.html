@@ -158,58 +158,30 @@
       return;
     }
 
-    // ── Nouvel utilisateur : demander un pseudo ──
-    const providerName = meta.full_name || meta.name || '';
-    showPseudoForm(providerName);
+    // ── Nouvel utilisateur : auto-assigner un pseudo depuis le nom Google ──
+    const rawName = meta.full_name || meta.name || meta.email?.split('@')[0] || 'User';
+    const basePseudo = rawName.replace(/\s+/g, '').replace(/[^a-zA-Z0-9_\-\.]/g, '').slice(0, 18) || 'User';
 
-    document.getElementById('pseudo-btn').addEventListener('click', async () => {
-      const pseudo  = document.getElementById('pseudo-input').value.trim();
-      const errorEl = document.getElementById('pseudo-error');
-      const btn     = document.getElementById('pseudo-btn');
-      errorEl.style.display = 'none';
+    // Trouver un pseudo unique (ajoute un numéro si déjà pris)
+    let pseudo = basePseudo;
+    let counter = 1;
+    while (true) {
+      const { data: ex } = await supabase.from('profiles').select('id').eq('pseudo', pseudo).maybeSingle();
+      if (!ex) break;
+      pseudo = basePseudo.slice(0, 15) + counter;
+      counter++;
+    }
 
-      if (pseudo.length < 3) {
-        errorEl.textContent = 'Pseudo trop court (3 caractères min).';
-        errorEl.style.display = 'block'; return;
-      }
-      if (!/^[a-zA-Z0-9_\-\.]+$/.test(pseudo)) {
-        errorEl.textContent = 'Lettres, chiffres, _ - . uniquement.';
-        errorEl.style.display = 'block'; return;
-      }
+    // Créer le profil automatiquement
+    await supabase.from('profiles').upsert({
+      id:            user.id,
+      pseudo,
+      avatar_url:    meta.avatar_url || meta.picture || null,
+      points_totaux: 0,
+      plan:          'free',
+    }, { onConflict: 'id' });
 
-      btn.disabled = true; btn.textContent = 'Vérification…';
-
-      // Check pseudo uniqueness
-      const { data: ex } = await supabase
-        .from('profiles').select('id').eq('pseudo', pseudo).maybeSingle();
-      if (ex) {
-        errorEl.textContent = 'Ce pseudo est déjà pris — essaie un autre.';
-        errorEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Commencer 🚀'; return;
-      }
-
-      btn.textContent = 'Création…';
-
-      // Créer le profil
-      const { error } = await supabase.from('profiles').upsert({
-        id:           user.id,
-        pseudo,
-        avatar_url:   meta.avatar_url || meta.picture || null,
-        points_totaux: 0,
-        plan:         'free',
-      }, { onConflict: 'id' });
-
-      if (error) {
-        errorEl.textContent = 'Erreur : ' + error.message;
-        errorEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Commencer 🚀'; return;
-      }
-
-      window.location.href = '/src/pages/onboarding.html';
-    });
-
-    // Enter key on pseudo input
-    document.getElementById('pseudo-input').addEventListener('keydown', e => {
-      if (e.key === 'Enter') document.getElementById('pseudo-btn').click();
-    });
+    window.location.replace('/src/pages/accueil.html');
   </script>
 </body>
 </html>

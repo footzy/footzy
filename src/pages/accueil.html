@@ -544,9 +544,10 @@
         av.textContent = (profile.pseudo?.[0] || '?').toUpperCase();
       }
       document.getElementById('score-pill').textContent = `${(profile.points_totaux || 0).toLocaleString('fr-FR')} PTS`;
-      if (profile.streak_quotidien > 0)
+      if (profile.streak_quotidien > 0) {
         const streakEl = document.getElementById('user-streak');
         if (streakEl) streakEl.textContent = `🔥 ${profile.streak_quotidien}`;
+      }
     }
 
     // ── Tab switching ──

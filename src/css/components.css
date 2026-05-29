@@ -3,6 +3,53 @@
    Design v2 : light premium, Geist, accent unique
    ══════════════════════════════════════════════ */
 
+/* ── Main app header (shared across all tab pages) ── */
+.fz-main-header {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  height: 56px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #F0EDE8;
+  border-bottom: 1px solid #E0DCD6;
+  z-index: 100;
+}
+.fz-main-header__avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: #00E05A;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 14px;
+  color: #0F0F0E;
+  cursor: pointer;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: none;
+}
+.fz-main-header__logo {
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: -0.03em;
+  color: #0F0F0E;
+}
+.fz-main-header__logo span { color: #00E05A; }
+.fz-main-header__pts {
+  background: #0F0F0E;
+  color: #00E05A;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  padding: 6px 11px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
 /* ── Card (was .glass-card) — now matches fz-card ── */
 .glass-card {
   background: var(--bg-card);

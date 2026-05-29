@@ -518,6 +518,12 @@
     if (!user) throw new Error('not authed');
     const profile = await getCurrentProfile();
 
+    // Profil incomplet (Google/Apple sans pseudo) → compléter le setup
+    if (!profile?.pseudo) {
+      window.location.replace('/src/pages/auth-callback.html');
+      throw new Error('profile incomplete');
+    }
+
     const isPremium = profile?.plan === 'premium';
     const fab = document.getElementById('fab-post');
 

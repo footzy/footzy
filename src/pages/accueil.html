@@ -581,8 +581,69 @@
       return L[m.phase] || m.phase;
     }
 
-    // Génère les posts automatiques depuis les données réelles des matchs
-    function buildAutoPostsFromMatches(matches) {
+    // ── Classement d'un groupe calculé depuis Supabase ──
+    function buildGroupStandingsCard(group, allGroupMatches) {
+      const groupMatches = allGroupMatches.filter(m => m.groupe === group);
+      const finished = groupMatches.filter(m => m.status === 'finished');
+      if (!finished.length) return null;
+
+      const teams = {};
+      const init = (name, flag) => { if (!teams[name]) teams[name] = { name, flag, p:0, w:0, d:0, l:0, gf:0, ga:0 }; };
+      for (const m of groupMatches) {
+        init(m.home_team, m.home_flag);
+        init(m.away_team, m.away_flag);
+        if (m.status !== 'finished') continue;
+        const h = m.home_score || 0, a = m.away_score || 0;
+        teams[m.home_team].p++; teams[m.away_team].p++;
+        teams[m.home_team].gf += h; teams[m.home_team].ga += a;
+        teams[m.away_team].gf += a; teams[m.away_team].ga += h;
+        if (h > a) { teams[m.home_team].w++; teams[m.away_team].l++; }
+        else if (a > h) { teams[m.away_team].w++; teams[m.home_team].l++; }
+        else { teams[m.home_team].d++; teams[m.away_team].d++; }
+      }
+
+      const standings = Object.values(teams)
+        .map(t => ({ ...t, pts: t.w * 3 + t.d, gd: t.gf - t.ga }))
+        .sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf);
+
+      const rows = standings.map((t, i) => `
+        <div style="display:flex;align-items:center;gap:6px;padding:5px 2px;${i < standings.length - 1 ? 'border-bottom:1px solid rgba(255,255,255,0.05)' : ''}">
+          <span style="font-size:10px;font-weight:700;color:${i < 2 && finished.length >= 3 ? 'var(--green-accent)' : 'var(--text-tertiary)'};width:14px;text-align:center">${i + 1}</span>
+          <span style="font-size:16px;line-height:1">${t.flag}</span>
+          <span style="flex:1;font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name}</span>
+          <span style="font-size:11px;color:var(--text-tertiary);width:16px;text-align:center">${t.p}</span>
+          <span style="font-size:11px;color:var(--text-tertiary);width:16px;text-align:center">${t.w}</span>
+          <span style="font-size:11px;color:var(--text-tertiary);width:16px;text-align:center">${t.d}</span>
+          <span style="font-size:11px;color:var(--text-tertiary);width:16px;text-align:center">${t.l}</span>
+          <span style="font-size:11px;font-weight:600;color:${t.gd > 0 ? 'var(--green-accent)' : t.gd < 0 ? 'var(--danger)' : 'var(--text-tertiary)'};width:22px;text-align:right">${t.gd > 0 ? '+' : ''}${t.gd}</span>
+          <span style="font-size:13px;font-weight:800;width:20px;text-align:center">${t.pts}</span>
+        </div>`).join('');
+
+      return {
+        id: `auto-standing-${group}`, type: 'stats', is_pinned: false,
+        emoji: '📋',
+        titre: `Classement Groupe ${group}`,
+        contenu: `<div style="margin-top:4px">
+          <div style="display:flex;gap:6px;padding:0 2px 5px;border-bottom:1px solid var(--border)">
+            <span style="width:14px"></span><span style="width:16px"></span>
+            <span style="flex:1;font-size:9px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.06em">Équipe</span>
+            <span style="font-size:9px;font-weight:700;color:var(--text-tertiary);width:16px;text-align:center" title="Joués">J</span>
+            <span style="font-size:9px;font-weight:700;color:var(--text-tertiary);width:16px;text-align:center" title="Gagnés">G</span>
+            <span style="font-size:9px;font-weight:700;color:var(--text-tertiary);width:16px;text-align:center" title="Nuls">N</span>
+            <span style="font-size:9px;font-weight:700;color:var(--text-tertiary);width:16px;text-align:center" title="Perdus">P</span>
+            <span style="font-size:9px;font-weight:700;color:var(--text-tertiary);width:22px;text-align:right" title="Différence">+/-</span>
+            <span style="font-size:9px;font-weight:700;color:var(--text-tertiary);width:20px;text-align:center" title="Points">Pts</span>
+          </div>
+          ${rows}
+          ${finished.length >= 3 ? '<div style="font-size:10px;color:var(--text-tertiary);margin-top:7px"><span style="color:var(--green-accent)">●</span> Top 2 qualifiés</div>' : ''}
+        </div>`,
+        created_at: new Date().toISOString(),
+        _auto: true,
+      };
+    }
+
+    // ── Auto-posts depuis les données réelles (enrichis) ──
+    function buildAutoPostsFromMatches(matches, allGroupMatches) {
       const now = new Date();
       const auto = [];
 
@@ -593,11 +654,11 @@
         const k = new Date(m.kickoff_at);
         return k.toDateString() === now.toDateString();
       });
-      const soon     = matches.filter(m => {
+      const soon = matches.filter(m => {
         if (m.status !== 'scheduled') return false;
         const k = new Date(m.kickoff_at);
         const diff = k - now;
-        return diff > 0 && diff < 3 * 3600 * 1000; // dans les 3 prochaines heures
+        return diff > 0 && diff < 3 * 3600 * 1000;
       });
       const tomorrow = matches.filter(m => {
         if (m.status !== 'scheduled') return false;
@@ -606,13 +667,13 @@
         return k.toDateString() === tom.toDateString();
       });
 
-      // 1. LIVE — épinglé en tête, un post par match live
+      // 1. LIVE — épinglé en tête
       for (const m of live) {
         auto.push({
           id: `auto-live-${m.id}`, type: 'flash', is_pinned: true,
           emoji: '🔴',
           titre: `${m.home_flag} ${m.home_team} ${m.home_score}–${m.away_score} ${m.away_team} ${m.away_flag}`,
-          contenu: `EN DIRECT · ${m.minute ? m.minute + "' " : ''}${phaseLabel(m)}${m.stade ? ' — ' + m.stade : ''}. Clique sur le match pour voir les détails et poster ton prono !`,
+          contenu: `<strong>EN DIRECT</strong> · ${m.minute ? m.minute + "' · " : ''}${phaseLabel(m)}. <a href="/src/pages/match.html?id=${m.id}" style="color:var(--green-accent);font-weight:700;text-decoration:none">Voir le match →</a>`,
           created_at: new Date().toISOString(),
           _auto: true,
         });
@@ -621,22 +682,20 @@
       // 2. Coup d'envoi imminent (< 3h)
       for (const m of soon) {
         const mins = Math.round((new Date(m.kickoff_at) - now) / 60000);
-        const delay = mins < 60 ? `dans ${mins} min` : `dans ${Math.round(mins/60)}h`;
+        const delay = mins < 60 ? `dans ${mins} min` : `dans ${Math.round(mins / 60)}h`;
+        const isKO = ['huitiemes','quarts','demis','finale'].includes(m.phase);
         auto.push({
           id: `auto-soon-${m.id}`, type: 'flash', is_pinned: false,
-          emoji: '⏰',
+          emoji: isKO ? '🏆' : '⏰',
           titre: `${m.home_flag} ${m.home_team} vs ${m.away_team} ${m.away_flag} — ${delay}`,
-          contenu: `Coup d'envoi ${delay} · ${phaseLabel(m)}${m.stade ? ' — ' + m.stade : ''}. Lance ton pronostic avant le début !`,
+          contenu: `Coup d'envoi ${delay} · ${phaseLabel(m)}${isKO ? ' · <strong>Élimination directe !</strong>' : ''}. Lance ton pronostic avant le début !`,
           created_at: new Date().toISOString(),
           _auto: true,
         });
       }
 
-      // 3. Programme du jour (matchs restants aujourd'hui non couverts par "soon")
-      const todayOther = today.filter(m => {
-        const diff = new Date(m.kickoff_at) - now;
-        return diff >= 3 * 3600 * 1000;
-      });
+      // 3. Programme du jour (> 3h)
+      const todayOther = today.filter(m => new Date(m.kickoff_at) - now >= 3 * 3600 * 1000);
       if (todayOther.length) {
         const lines = todayOther.map(m =>
           `${m.home_flag} <strong>${m.home_team}</strong> vs <strong>${m.away_team}</strong> ${m.away_flag} · ${formatTime(m.kickoff_at)} · ${phaseLabel(m)}`
@@ -651,17 +710,22 @@
         });
       }
 
-      // 4. Résultats récents (dernières 24h)
+      // 4. Résultats récents (< 24h) — enrichis avec contexte
       const recent = finished.filter(m => now - new Date(m.kickoff_at) < 24 * 3600 * 1000);
       for (const m of recent.slice(-5).reverse()) {
         const winner = m.home_score > m.away_score ? m.home_team
-                     : m.away_score > m.home_score ? m.away_team
-                     : null;
+                     : m.away_score > m.home_score ? m.away_team : null;
+        const isKO = ['huitiemes','quarts','demis','finale'].includes(m.phase);
+        let ctx;
+        if (isKO && winner)  ctx = `🎉 <strong>${winner}</strong> se qualifie pour le prochain tour !`;
+        else if (isKO)       ctx = `Tirs au but nécessaires — match nul au temps réglementaire.`;
+        else if (winner)     ctx = `<strong>${winner}</strong> s'impose !`;
+        else                 ctx = `Match nul — un point chacun.`;
         auto.push({
           id: `auto-result-${m.id}`, type: 'debrief', is_pinned: false,
           emoji: '📊',
           titre: `${m.home_flag} ${m.home_team} ${m.home_score}–${m.away_score} ${m.away_team} ${m.away_flag}`,
-          contenu: `Résultat final · ${phaseLabel(m)}. ${winner ? `<strong>${winner}</strong> s'impose !` : 'Match nul !'}`,
+          contenu: `Résultat final · ${phaseLabel(m)}. ${ctx}`,
           created_at: m.updated_at || m.kickoff_at,
           _auto: true,
         });
@@ -682,6 +746,53 @@
         });
       }
 
+      // 6. Classements de groupe (groupes actifs dans la fenêtre courante)
+      const activeGroups = new Set(matches.filter(m => m.groupe).map(m => m.groupe));
+      const groupsToShow = [...new Set(
+        allGroupMatches
+          .filter(m => m.status === 'finished' && m.groupe && activeGroups.has(m.groupe))
+          .map(m => m.groupe)
+      )].sort();
+      for (const g of groupsToShow) {
+        const card = buildGroupStandingsCard(g, allGroupMatches);
+        if (card) auto.push(card);
+      }
+
+      // 7. Matchs à élimination directe dans les 7 prochains jours
+      const nextWeek = new Date(now); nextWeek.setDate(nextWeek.getDate() + 7);
+      const KNOCKOUT_EMOJI = { huitiemes: '⚔️', quarts: '🏹', demis: '🎯', finale: '🏆' };
+      const knockouts = matches.filter(m =>
+        m.status === 'scheduled' &&
+        ['huitiemes','quarts','demis','finale'].includes(m.phase) &&
+        new Date(m.kickoff_at) > now &&
+        new Date(m.kickoff_at) < nextWeek
+      );
+      for (const m of knockouts) {
+        auto.push({
+          id: `auto-knockout-${m.id}`, type: 'flash', is_pinned: false,
+          emoji: KNOCKOUT_EMOJI[m.phase] || '⚽',
+          titre: `${m.home_flag} ${m.home_team} vs ${m.away_team} ${m.away_flag}`,
+          contenu: `${phaseLabel(m)} · ${formatKickoff(m.kickoff_at)} · <strong>Élimination directe</strong> — le perdant rentre à la maison !`,
+          created_at: new Date().toISOString(),
+          _auto: true,
+        });
+      }
+
+      // 8. Bilan phase de groupes
+      const allPlayed = allGroupMatches.filter(m => m.status === 'finished');
+      if (allPlayed.length) {
+        const goals = allPlayed.reduce((s, m) => s + (m.home_score || 0) + (m.away_score || 0), 0);
+        const avg   = (goals / allPlayed.length).toFixed(1);
+        auto.push({
+          id: 'auto-bilan', type: 'stats', is_pinned: false,
+          emoji: '🌍',
+          titre: `CdM 2026 — Bilan phase de groupes`,
+          contenu: `<strong>${allPlayed.length}</strong> match${allPlayed.length > 1 ? 's' : ''} joué${allPlayed.length > 1 ? 's' : ''} · <strong>${goals}</strong> buts au total · Moyenne <strong>${avg}</strong> buts/match`,
+          created_at: new Date().toISOString(),
+          _auto: true,
+        });
+      }
+
       return auto;
     }
 
@@ -693,10 +804,14 @@
       const from = new Date(); from.setDate(from.getDate() - 1);
       const to   = new Date(); to.setDate(to.getDate() + 2);
 
-      const [matchesRes, postsRes] = await Promise.all([
+      const [matchesRes, allGroupRes, postsRes] = await Promise.all([
         supabase.from('matchs').select('*')
           .gte('kickoff_at', from.toISOString())
           .lte('kickoff_at', to.toISOString())
+          .order('kickoff_at'),
+        supabase.from('matchs')
+          .select('id,home_team,away_team,home_flag,away_flag,home_score,away_score,status,groupe,phase,kickoff_at,updated_at')
+          .eq('phase', 'groupes')
           .order('kickoff_at'),
         supabase.from('actualite_posts').select('*')
           .order('is_pinned', { ascending: false })
@@ -704,7 +819,7 @@
           .limit(10),
       ]);
 
-      const autoPosts   = buildAutoPostsFromMatches(matchesRes.data || []);
+      const autoPosts   = buildAutoPostsFromMatches(matchesRes.data || [], allGroupRes.data || []);
       const manualPosts = (postsRes.data || []).filter(p => !p._auto);
 
       const allPosts = [...autoPosts, ...manualPosts];

@@ -450,6 +450,114 @@
       font-style: italic;
     }
 
+    /* ── [C2] Analyse automatique ── */
+    .auto-section {
+      background: var(--color-surface);
+      border-radius: var(--radius-xl);
+      padding: 16px;
+      margin: 0 16px 12px;
+      box-shadow: var(--shadow-card);
+    }
+    .auto-section-label {
+      font: 700 0.62rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-text-secondary);
+      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .auto-section-label::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--color-green);
+      flex-shrink: 0;
+    }
+    .auto-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      background: #F7F6F4;
+      border-radius: var(--radius-md);
+      margin-bottom: 7px;
+    }
+    .auto-row:last-child { margin-bottom: 0; }
+    .auto-row-label { font: 500 0.78rem/1 'Geist'; color: var(--color-text-secondary); }
+    .auto-row-value { font: 700 0.78rem/1 'Geist'; color: var(--color-text-primary); text-align: right; }
+    .auto-val-green { color: var(--color-green-dim) !important; }
+    .auto-val-grey  { color: var(--color-text-tertiary) !important; }
+    .auto-val-amber { color: var(--color-gold) !important; }
+
+    /* ── [C3] Score mi-temps ── */
+    .halftime-section {
+      background: var(--color-surface);
+      border-radius: var(--radius-xl);
+      padding: 20px 16px;
+      margin: 0 16px 12px;
+      box-shadow: var(--shadow-card);
+    }
+    .halftime-title {
+      font: italic 900 1.3rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+      color: var(--color-text-primary);
+      margin-bottom: 20px;
+    }
+    .score-display--sm {
+      width: 80px; height: 80px;
+      background: var(--color-surface-score);
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .score-value--sm {
+      font: 900 2.8rem/1 'Geist';
+      letter-spacing: -0.04em;
+      color: var(--color-text-primary);
+    }
+    .score-value--sm.bump { animation: scoreBump 150ms ease-out; }
+    .score-btn--sm {
+      width: 38px; height: 38px;
+      font-size: 1rem;
+    }
+
+    /* ── [C4] Cartons jaunes ── */
+    .cartons-section {
+      background: var(--color-surface);
+      border-radius: var(--radius-xl);
+      padding: 16px;
+      margin: 0 16px 12px;
+      box-shadow: var(--shadow-card);
+    }
+    .cartons-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .cartons-info-label {
+      font: 700 0.62rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-text-secondary);
+      margin-bottom: 3px;
+    }
+    .cartons-info-sub {
+      font: 400 0.68rem/1 'Geist';
+      color: var(--color-text-tertiary);
+    }
+    .cartons-stepper {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .cartons-count {
+      font: 900 1.9rem/1 'Geist';
+      letter-spacing: -0.03em;
+      color: var(--color-text-primary);
+      min-width: 28px;
+      text-align: center;
+    }
+
     /* ── [F] CTA bar fixe ── */
     .cta-bar {
       position: fixed; bottom: 0; left: 50%;
@@ -641,6 +749,60 @@
         </div>
       </div>
 
+      <!-- ── [C2] Analyse automatique (live) ── -->
+      <div class="auto-section anim anim-3">
+        <div class="auto-section-label">Analyse de ton prono</div>
+        <div class="auto-row">
+          <span class="auto-row-label">🏆 Résultat</span>
+          <span class="auto-row-value" id="auto-result">—</span>
+        </div>
+        <div class="auto-row">
+          <span class="auto-row-label">⚽ Les 2 équipes marquent</span>
+          <span class="auto-row-value" id="auto-btts">—</span>
+        </div>
+        <div class="auto-row">
+          <span class="auto-row-label">📊 Total de buts</span>
+          <span class="auto-row-value" id="auto-total">—</span>
+        </div>
+      </div>
+
+      <!-- ── [C3] Score mi-temps ── -->
+      <div class="halftime-section anim anim-3">
+        <div class="halftime-title">Score mi-temps</div>
+        <div class="score-grid">
+          <div class="score-col">
+            <button class="score-btn score-btn--sm" id="ht-home-plus">+</button>
+            <div class="score-display--sm">
+              <span class="score-value--sm" id="ht-home-val">0</span>
+            </div>
+            <button class="score-btn score-btn--sm score-btn--minus" id="ht-home-minus" disabled>−</button>
+          </div>
+          <span class="score-separator" style="font-size:1.5rem;margin-top:16px">:</span>
+          <div class="score-col">
+            <button class="score-btn score-btn--sm" id="ht-away-plus">+</button>
+            <div class="score-display--sm">
+              <span class="score-value--sm" id="ht-away-val">0</span>
+            </div>
+            <button class="score-btn score-btn--sm score-btn--minus" id="ht-away-minus" disabled>−</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── [C4] Cartons jaunes ── -->
+      <div class="cartons-section anim anim-3">
+        <div class="cartons-row">
+          <div>
+            <div class="cartons-info-label">🟨 Cartons jaunes</div>
+            <div class="cartons-info-sub">Total dans le match</div>
+          </div>
+          <div class="cartons-stepper">
+            <button class="score-btn score-btn--minus" id="yc-minus" disabled>−</button>
+            <span class="cartons-count" id="yc-val">0</span>
+            <button class="score-btn" id="yc-plus">+</button>
+          </div>
+        </div>
+      </div>
+
       <!-- ── [D] Buteurs ── -->
       <div class="buteurs-section anim anim-3">
         <div class="buteurs-label">Buteurs</div>
@@ -729,10 +891,11 @@
     if (!beforeKickoff) {
       document.getElementById('deadline-msg').style.display = 'block';
       document.getElementById('btn-valider').disabled = true;
-      document.getElementById('home-plus').disabled  = true;
-      document.getElementById('away-plus').disabled  = true;
-      document.getElementById('home-minus').disabled = true;
-      document.getElementById('away-minus').disabled = true;
+      ['home-plus','away-plus','home-minus','away-minus',
+       'ht-home-plus','ht-away-plus','ht-home-minus','ht-away-minus',
+       'yc-plus','yc-minus'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.disabled = true;
+      });
       document.getElementById('chip-add-btn').style.display = 'none';
     }
 
@@ -795,19 +958,81 @@
 
     // State
     let homeScore = 0, awayScore = 0;
+    let htHomeScore = 0, htAwayScore = 0;
+    let yellowCards = 0;
     let existingPronoId = null;
     let buteurs = [];
     const MAX_SCORE = 15;
+    const MAX_YC    = 12;
+
+    // ── Analyse automatique (live) ──
+    const homeShort = (match.home_team || 'Dom.').split(/[\s-]/)[0];
+    const awayShort = (match.away_team || 'Ext.').split(/[\s-]/)[0];
+
+    function updateAutoAnalysis() {
+      const total = homeScore + awayScore;
+
+      // Résultat 1 / N / 2
+      const resEl = document.getElementById('auto-result');
+      if (homeScore > awayScore) {
+        resEl.textContent = `Victoire ${homeShort} (1)`;
+        resEl.className = 'auto-row-value auto-val-green';
+      } else if (awayScore > homeScore) {
+        resEl.textContent = `Victoire ${awayShort} (2)`;
+        resEl.className = 'auto-row-value auto-val-green';
+      } else {
+        resEl.textContent = 'Match nul (N)';
+        resEl.className = 'auto-row-value auto-val-amber';
+      }
+
+      // BTTS
+      const bttsEl = document.getElementById('auto-btts');
+      if (homeScore > 0 && awayScore > 0) {
+        bttsEl.textContent = 'Oui ✓';
+        bttsEl.className = 'auto-row-value auto-val-green';
+      } else {
+        bttsEl.textContent = 'Non';
+        bttsEl.className = 'auto-row-value auto-val-grey';
+      }
+
+      // Over/Under
+      const totEl = document.getElementById('auto-total');
+      if (total >= 3) {
+        totEl.textContent = `Over 2.5 — ${total} buts`;
+        totEl.className = 'auto-row-value auto-val-green';
+      } else if (total === 2) {
+        totEl.textContent = `Under 2.5 — ${total} buts`;
+        totEl.className = 'auto-row-value auto-val-amber';
+      } else {
+        totEl.textContent = `Under 1.5 — ${total} but${total !== 1 ? 's' : ''}`;
+        totEl.className = 'auto-row-value auto-val-grey';
+      }
+    }
+    updateAutoAnalysis();
 
     // ── Score steppers ──
     function updateScore(team, delta) {
       if (team === 'home') {
         homeScore = Math.max(0, Math.min(MAX_SCORE, homeScore + delta));
+        // Clamp mi-temps si nécessaire
+        if (htHomeScore > homeScore) {
+          htHomeScore = homeScore;
+          document.getElementById('ht-home-val').textContent = htHomeScore;
+          document.getElementById('ht-home-minus').disabled = htHomeScore === 0;
+        }
+        document.getElementById('ht-home-plus').disabled = !beforeKickoff || htHomeScore >= homeScore;
       } else {
         awayScore = Math.max(0, Math.min(MAX_SCORE, awayScore + delta));
+        if (htAwayScore > awayScore) {
+          htAwayScore = awayScore;
+          document.getElementById('ht-away-val').textContent = htAwayScore;
+          document.getElementById('ht-away-minus').disabled = htAwayScore === 0;
+        }
+        document.getElementById('ht-away-plus').disabled = !beforeKickoff || htAwayScore >= awayScore;
       }
       animateScore(team);
       updateMinusBtns();
+      updateAutoAnalysis();
       if (navigator.vibrate) navigator.vibrate(8);
     }
 
@@ -829,6 +1054,42 @@
     document.getElementById('home-minus').addEventListener('click', () => updateScore('home', -1));
     document.getElementById('away-plus').addEventListener('click',  () => updateScore('away', +1));
     document.getElementById('away-minus').addEventListener('click', () => updateScore('away', -1));
+
+    // ── Score mi-temps ──
+    function updateHT(team, delta) {
+      const max = team === 'home' ? homeScore : awayScore;
+      if (team === 'home') {
+        htHomeScore = Math.max(0, Math.min(max, htHomeScore + delta));
+        const el = document.getElementById('ht-home-val');
+        el.textContent = htHomeScore;
+        el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+        document.getElementById('ht-home-minus').disabled = htHomeScore === 0;
+        document.getElementById('ht-home-plus').disabled  = htHomeScore >= max;
+      } else {
+        htAwayScore = Math.max(0, Math.min(max, htAwayScore + delta));
+        const el = document.getElementById('ht-away-val');
+        el.textContent = htAwayScore;
+        el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+        document.getElementById('ht-away-minus').disabled = htAwayScore === 0;
+        document.getElementById('ht-away-plus').disabled  = htAwayScore >= max;
+      }
+      if (navigator.vibrate) navigator.vibrate(8);
+    }
+
+    document.getElementById('ht-home-plus').addEventListener('click',  () => updateHT('home', +1));
+    document.getElementById('ht-home-minus').addEventListener('click', () => updateHT('home', -1));
+    document.getElementById('ht-away-plus').addEventListener('click',  () => updateHT('away', +1));
+    document.getElementById('ht-away-minus').addEventListener('click', () => updateHT('away', -1));
+
+    // ── Cartons jaunes ──
+    function updateYC(delta) {
+      yellowCards = Math.max(0, Math.min(MAX_YC, yellowCards + delta));
+      document.getElementById('yc-val').textContent = yellowCards;
+      document.getElementById('yc-minus').disabled = yellowCards === 0;
+      if (navigator.vibrate) navigator.vibrate(8);
+    }
+    document.getElementById('yc-plus').addEventListener('click',  () => updateYC(+1));
+    document.getElementById('yc-minus').addEventListener('click', () => updateYC(-1));
 
     // ── Buteurs chips ──
     function renderChips() {
@@ -916,7 +1177,7 @@
       });
     }
 
-    // ── Load existing prono (sans filtre groupe — un seul prono par user/match) ──
+    // ── Load existing prono ──
     async function loadExistingProno() {
       try {
         const { data } = await supabase.from('pronostics').select('*')
@@ -925,19 +1186,34 @@
           .limit(1).maybeSingle();
 
         if (data) {
-          homeScore = data.home_score ?? 0;
-          awayScore = data.away_score ?? 0;
-          buteurs   = data.buteurs || [];
-          animateScore('home');
-          animateScore('away');
+          homeScore   = data.home_score   ?? 0;
+          awayScore   = data.away_score   ?? 0;
+          buteurs     = data.buteurs      || [];
+          htHomeScore = data.ht_home      ?? 0;
+          htAwayScore = data.ht_away      ?? 0;
+          yellowCards = data.yellow_cards ?? 0;
+
+          animateScore('home'); animateScore('away');
           updateMinusBtns();
           renderChips();
+          updateAutoAnalysis();
+
+          document.getElementById('ht-home-val').textContent = htHomeScore;
+          document.getElementById('ht-away-val').textContent = htAwayScore;
+          document.getElementById('yc-val').textContent      = yellowCards;
+          document.getElementById('ht-home-minus').disabled  = htHomeScore === 0;
+          document.getElementById('ht-away-minus').disabled  = htAwayScore === 0;
+          document.getElementById('ht-home-plus').disabled   = !beforeKickoff || htHomeScore >= homeScore;
+          document.getElementById('ht-away-plus').disabled   = !beforeKickoff || htAwayScore >= awayScore;
+          document.getElementById('yc-minus').disabled       = yellowCards === 0;
+
           document.getElementById('btn-valider').textContent = 'Modifier mon prono';
           existingPronoId = data.id;
         } else {
           homeScore = 0; awayScore = 0; buteurs = [];
+          htHomeScore = 0; htAwayScore = 0; yellowCards = 0;
           animateScore('home'); animateScore('away');
-          updateMinusBtns(); renderChips();
+          updateMinusBtns(); renderChips(); updateAutoAnalysis();
           document.getElementById('btn-valider').textContent = 'Valider mon prono';
           existingPronoId = null;
         }
@@ -1040,10 +1316,17 @@
       btn.disabled = true;
       btn.textContent = 'Enregistrement…';
 
-      const scoreFields = {
+      const coreFields = {
         home_score: homeScore,
         away_score: awayScore,
         buteurs:    buteurs.filter(Boolean),
+      };
+      // Champs bonus (nécessitent colonnes DB ht_home, ht_away, yellow_cards)
+      const scoreFields = {
+        ...coreFields,
+        ht_home:      htHomeScore,
+        ht_away:      htAwayScore,
+        yellow_cards: yellowCards,
       };
       const selectedGroupeId = selectedVis.id !== 'public' ? selectedVis.id : null;
 
@@ -1054,12 +1337,27 @@
           .eq('user_id', user.id)
           .eq('match_id', matchId);
 
+        // Helper : save avec fallback si colonnes bonus absentes
+        async function saveFields(method, data, filter) {
+          let res = await method(data);
+          if (filter) res = filter(res);
+          if (res.error?.message?.includes('column')) {
+            // Colonnes bonus manquantes : retry avec champs core seulement
+            const coreData = Object.fromEntries(
+              Object.entries(data).filter(([k]) => ['home_score','away_score','buteurs','user_id','match_id','groupe_id'].includes(k))
+            );
+            res = await method(coreData);
+            if (filter) res = filter(res);
+          }
+          return res.error;
+        }
+
         if (allPronos?.length) {
           // Mettre à jour le score sur TOUS les pronos existants (synchronisation)
-          const { error } = await supabase.from('pronostics')
-            .update(scoreFields)
-            .eq('user_id', user.id)
-            .eq('match_id', matchId);
+          const error = await saveFields(
+            (d) => supabase.from('pronostics').update(d).eq('user_id', user.id).eq('match_id', matchId),
+            scoreFields
+          );
           if (error) throw error;
 
           // Créer un prono pour le contexte sélectionné si absent
@@ -1079,12 +1377,10 @@
           }
         } else {
           // Premier prono : insérer pour le contexte sélectionné
-          const { error } = await supabase.from('pronostics').insert({
-            user_id:   user.id,
-            match_id:  matchId,
-            groupe_id: selectedGroupeId,
-            ...scoreFields,
-          });
+          const error = await saveFields(
+            (d) => supabase.from('pronostics').insert(d),
+            { user_id: user.id, match_id: matchId, groupe_id: selectedGroupeId, ...scoreFields }
+          );
           if (error) throw error;
         }
 

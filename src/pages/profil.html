@@ -1155,14 +1155,20 @@
       if (e.target === document.getElementById('vainqueur-modal')) document.getElementById('vainqueur-modal').classList.remove('open');
     });
 
-    // Pronos history — feed only (groupe_id IS NULL = pronos publics)
-    const { data: pronos } = await supabase
+    // Pronos history — tous les pronos, dédupliqués par match (1 par match, le plus récent)
+    const { data: pronosRaw } = await supabase
       .from('pronostics')
       .select('*, matchs(home_team,away_team,home_flag,away_flag,home_score,away_score,status,kickoff_at)')
       .eq('user_id', user.id)
-      .is('groupe_id', null)
       .order('created_at', { ascending: false })
-      .limit(10);
+      .limit(40);
+    // Déduplication : garder un seul prono par match_id (le plus récent)
+    const seenMatches = new Set();
+    const pronos = (pronosRaw || []).filter(p => {
+      if (seenMatches.has(p.match_id)) return false;
+      seenMatches.add(p.match_id);
+      return true;
+    }).slice(0, 10);
 
     const histEl = document.getElementById('pronos-history');
 
@@ -1182,7 +1188,7 @@
 
     function refreshHistoire() {
       if (!pronos?.length) {
-        histEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--fg-faint)">Aucun pronostic public encore</div>';
+        histEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--fg-faint)">Aucun pronostic encore</div>';
         return;
       }
       histEl.innerHTML = pronos.map(renderPronoCard).join('');

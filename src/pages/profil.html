@@ -1157,14 +1157,16 @@
     });
 
     // ─────────────────────────────────────────
-    // PRONOS + CALCUL DE POINTS AUTO
+    // PRONOS PUBLICS + CALCUL DE POINTS GLOBAL
+    // Seuls les pronos publics (groupe_id IS NULL) contribuent aux points globaux
     // ─────────────────────────────────────────
     const { data: pronosRaw } = await supabase
       .from('pronostics')
       .select('*, matchs(home_team,away_team,home_flag,away_flag,home_score,away_score,status,kickoff_at,ht_home,ht_away,yellow_cards,buteurs_reels)')
       .eq('user_id', user.id)
+      .is('groupe_id', null)  // ← uniquement les pronos publics
       .order('created_at', { ascending: false })
-      .limit(40);
+      .limit(20);
 
     // Déduplication : garder un seul prono par match_id (le plus récent)
     const seenMatches = new Set();
@@ -1197,11 +1199,12 @@
             .eq('user_id', user.id)
         )
       );
-      // Recalculer le total de points (tous les pronos, pas que les 10 affichés)
+      // Recalculer le total (uniquement pronos PUBLICS — groupe_id IS NULL)
       const { data: allPts } = await supabase
         .from('pronostics')
         .select('points')
         .eq('user_id', user.id)
+        .is('groupe_id', null)
         .not('points', 'is', null);
       const newTotal = (allPts || []).reduce((s, p) => s + (p.points || 0), 0);
       await supabase.from('profiles')

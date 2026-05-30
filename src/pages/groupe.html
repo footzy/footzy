@@ -1133,16 +1133,31 @@
         };
       }
 
-      // ── Popup gage auto si événement terminé ──
-      if (evtEnded && groupe.gage && !silent) {
-        // Trouver le dernier du classement (chargé plus bas dans sorted)
-        setTimeout(() => {
-          if (typeof sorted !== 'undefined' && sorted.length > 0) {
-            const loser    = sorted[sorted.length - 1];
-            const loserPts = (loser?.points_totaux || 0) + (loser?.bm_pts || 0);
-            showGameOver({ loser_pseudo: loser?.pseudo || '???', gage: groupe.gage, loser_pts: loserPts });
+      // ── Popup perdant : déclenché dès qu'un match du groupe est terminé ET scoré ──
+      if (groupe.gage && !silent) {
+        const sessionKey = `footzy_gameover_shown_${currentGroupeId}`;
+        if (!sessionStorage.getItem(sessionKey)) {
+          // Chercher si un match du groupe a des pronos scorés récemment (48h)
+          const since48h = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
+          const { data: scoredPronos } = await supabase
+            .from('pronostics')
+            .select('match_id, matchs(status, home_team, away_team)')
+            .eq('groupe_id', currentGroupeId)
+            .not('points', 'is', null)
+            .gte('updated_at', since48h)
+            .limit(1);
+
+          const hasFinishedMatch = scoredPronos?.some(p => p.matchs?.status === 'finished');
+
+          if (hasFinishedMatch && sorted.length > 0) {
+            sessionStorage.setItem(sessionKey, '1'); // ne montrer qu'une fois par session
+            setTimeout(() => {
+              const loser    = sorted[sorted.length - 1];
+              const loserPts = (loser?.groupe_pts || 0) + (loser?.bm_pts || 0);
+              showGameOver({ loser_pseudo: loser?.pseudo || '???', gage: groupe.gage, loser_pts: loserPts });
+            }, 800);
           }
-        }, 600);
+        }
       }
 
       // Boutons action groupe
@@ -1191,13 +1206,28 @@
       const bmTotaux = {};
       (allBM || []).forEach(b => { bmTotaux[b.to_user_id] = (bmTotaux[b.to_user_id] || 0) + b.points; });
 
+      // ── Points de groupe : somme des pronos du groupe uniquement ──
+      const { data: groupePronosPts } = await supabase
+        .from('pronostics')
+        .select('user_id, points')
+        .eq('groupe_id', currentGroupeId)
+        .not('points', 'is', null);
+      const groupePtsMap = {};
+      (groupePronosPts || []).forEach(p => {
+        groupePtsMap[p.user_id] = (groupePtsMap[p.user_id] || 0) + (p.points || 0);
+      });
+
       const sorted = (membres || [])
-        .map(m => ({ ...m.profiles, role: m.role, bm_pts: bmTotaux[m.user_id] ?? 0 }))
+        .map(m => ({
+          ...m.profiles,
+          role: m.role,
+          bm_pts: bmTotaux[m.user_id] ?? 0,
+          groupe_pts: groupePtsMap[m.user_id] || 0,  // points issus des pronos du groupe
+        }))
         .filter(Boolean)
-        .sort((a, b) => ((b.points_totaux||0)+(b.bm_pts||0)) - ((a.points_totaux||0)+(a.bm_pts||0)));
+        .sort((a, b) => ((b.groupe_pts||0)+(b.bm_pts||0)) - ((a.groupe_pts||0)+(a.bm_pts||0)));
 
       const lb = document.getElementById('groupe-leaderboard');
-      // Stocker pour le popup membre
       currentGroupe = groupe;
       currentIsAdmin = isAdmin;
       currentActionsLeft = actionsLeft;
@@ -1207,8 +1237,8 @@
         const rank    = i + 1;
         const isMe    = p.id === user.id;
         const canKick = isAdmin && !isMe && p.role !== 'admin';
-        const canBM   = !isMe; // Toujours disponible, quota géré en 24h
-        const total   = (p.points_totaux || 0) + (p.bm_pts || 0);
+        const canBM   = !isMe;
+        const total   = (p.groupe_pts || 0) + (p.bm_pts || 0);
         // Badge BM (affiché sous le score)
         const bmColor = p.bm_pts > 0 ? '#00C44F' : '#E8453C';
         const bmBadge = p.bm_pts !== 0

@@ -571,7 +571,7 @@
 
     <!-- ── [A] Header ── -->
     <header class="header">
-      <button class="header-back" onclick="history.back()" aria-label="Retour">
+      <button class="header-back" id="btn-back" aria-label="Retour">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M19 12H5M12 5l-7 7 7 7"/>
         </svg>
@@ -695,6 +695,17 @@
     const params  = new URLSearchParams(location.search);
     const matchId = params.get('id');
     if (!matchId) { window.location.href = '/src/pages/home.html'; return; }
+
+    // Bouton retour — fiable même en PWA / deep link
+    document.getElementById('btn-back').addEventListener('click', () => {
+      if (history.length > 1 && document.referrer) {
+        history.back();
+      } else if (matchId) {
+        window.location.href = '/src/pages/match.html?id=' + matchId;
+      } else {
+        window.location.href = '/src/pages/home.html';
+      }
+    });
 
     // Load match
     const { data: match } = await supabase.from('matchs').select('*').eq('id', matchId).single();

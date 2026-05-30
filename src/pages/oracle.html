@@ -4,14 +4,120 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Footzy — Oracle IA</title>
-  <link rel="stylesheet" href="/src/css/tokens.css" />
-  <link rel="stylesheet" href="/src/css/components.css" />
-  <link rel="stylesheet" href="/src/css/fz-components.css" />
-  <link rel="stylesheet" href="/src/css/pages.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
   <style>
-    @keyframes oraclePulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(0,224,90,0); transform: scale(1); }
-      50%       { box-shadow: 0 0 32px 8px rgba(0,224,90,0.18); transform: scale(1.04); }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --color-bg:             #F2F2F0;
+      --color-surface:        #FFFFFF;
+      --color-dark:           #0F0F0E;
+      --color-green:          #00E05A;
+      --color-green-dim:      #00C44F;
+      --color-text-primary:   #0F0F0E;
+      --color-text-secondary: #6B6966;
+      --color-text-tertiary:  #A8A49F;
+      --color-text-inverse:   #FFFFFF;
+      --color-border:         #E8E6E2;
+      --color-gold:           #F5A623;
+      --color-premium-bg:     #FFF9E8;
+      --radius-sm:   8px;
+      --radius-md:   12px;
+      --radius-lg:   16px;
+      --radius-xl:   20px;
+      --radius-full: 9999px;
+      --shadow-card:    0 1px 4px rgba(0,0,0,0.05), 0 0 0 1px var(--color-border);
+      --shadow-premium: 0 0 0 2px var(--color-gold);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--color-bg);
+      font-family: 'Geist', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      color: var(--color-text-primary);
+    }
+
+    /* ── Dot pattern ── */
+    .page {
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      padding-bottom: 90px;
+      position: relative;
+    }
+    .page::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(circle, #C8C5C0 1px, transparent 1px);
+      background-size: 22px 22px;
+      opacity: 0.35;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .content {
+      position: relative;
+      z-index: 1;
+      padding-top: 56px;
+    }
+
+    /* ── [A] Header ── */
+    .header {
+      position: fixed;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 100%; max-width: 430px;
+      height: 56px;
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px;
+      z-index: 100;
+    }
+    .header-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--color-green);
+      display: flex; align-items: center; justify-content: center;
+      font: 700 0.9rem/1 'Geist';
+      color: var(--color-dark);
+      cursor: pointer;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .header-logo {
+      font: italic 900 1.45rem/1 'Geist';
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+      color: var(--color-text-primary);
+    }
+    .header-logo span { color: var(--color-green); }
+    .header-pts {
+      background: var(--color-dark);
+      color: var(--color-text-inverse);
+      padding: 7px 13px;
+      border-radius: var(--radius-full);
+      font: 700 0.78rem/1 'Geist';
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+    .header-pts-val { color: var(--color-green); }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
     }
     @keyframes spin {
       to { transform: rotate(360deg); }
@@ -20,116 +126,208 @@
       from { opacity: 0; transform: translateY(20px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    @keyframes shimmer {
-      0%   { background-position: -200% center; }
-      100% { background-position:  200% center; }
-    }
+    .anim { opacity: 0; animation: fadeUp 320ms ease-out forwards; }
+    .anim-1 { animation-delay: 40ms; }
+    .anim-2 { animation-delay: 80ms; }
 
-    /* ── Header ── */
-    .oracle-header {
-      padding: 8px 20px 12px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    /* ── [B] Hero Oracle ── */
+    .oracle-hero {
+      background: var(--color-dark);
+      padding: 28px 16px 24px;
+      position: relative;
+      overflow: hidden;
     }
-    .oracle-logo {
+    .oracle-hero::after {
+      content: '✦';
+      position: absolute;
+      right: 16px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 5rem;
+      opacity: 0.05;
+      color: var(--color-green);
+      pointer-events: none;
+      line-height: 1;
+    }
+    .oracle-hero-top {
       display: flex;
       align-items: center;
       gap: 10px;
+      margin-bottom: 10px;
     }
-    .oracle-logo .icon-wrap {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: var(--bg-dark); color: var(--accent);
+    .oracle-icon-block {
+      width: 40px; height: 40px;
+      background: #1A1A19;
+      border-radius: var(--radius-md);
       display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
+      font-size: 1.1rem;
+      border: 1px solid rgba(255,255,255,0.08);
+      flex-shrink: 0;
     }
-    .oracle-logo .name {
-      font-size: 22px;
-      font-weight: 900;
-      letter-spacing: -0.025em;
-      line-height: 1.1;
+    .oracle-hero-title {
+      font: italic 900 2.8rem/0.95 'Geist';
+      text-transform: uppercase;
+      letter-spacing: -0.03em;
+      color: var(--color-text-inverse);
+      margin-bottom: 10px;
     }
+    .oracle-hero-title .accent { color: var(--color-green); }
     .oracle-premium-badge {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      font-size: 10px;
-      font-weight: 800;
+      gap: 5px;
+      background: rgba(245,166,35,0.15);
+      border: 1px solid rgba(245,166,35,0.4);
+      color: var(--color-gold);
+      padding: 5px 10px;
+      border-radius: var(--radius-full);
+      font: 700 0.65rem/1 'Geist';
       text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: var(--accent-strong);
-      background: var(--accent-soft);
-      border-radius: var(--r-pill);
-      padding: 3px 8px;
-      margin-top: 2px;
+      letter-spacing: 0.08em;
+      cursor: default;
+    }
+    .oracle-premium-badge--locked {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.35);
+      cursor: pointer;
+    }
+    .oracle-hero-desc {
+      font: 400 0.8rem/1.4 'Geist';
+      color: rgba(255,255,255,0.45);
+      margin-top: 10px;
+      max-width: 280px;
     }
 
-    /* ── Premium gate ── */
-    .oracle-gate {
-      margin: 16px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      overflow: hidden;
+    /* ── [C] Section label ── */
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font: 700 0.62rem/1 'Geist';
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+      padding: 20px 16px 12px;
     }
-    .oracle-gate-preview {
-      padding: 20px;
-      filter: blur(6px);
-      pointer-events: none;
-      user-select: none;
-      opacity: 0.5;
+    .section-label::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--color-green);
+      flex-shrink: 0;
     }
-    .oracle-gate-cta {
-      background: linear-gradient(180deg, rgba(250,250,248,0) 0%, rgba(250,250,248,0.98) 40%);
-      padding: 40px 20px 24px;
-      text-align: center;
-      margin-top: -80px;
-      position: relative;
-    }
-    .oracle-gate-cta h3 { font-size: 18px; font-weight: 800; margin-bottom: 8px; color: var(--text-primary); }
-    .oracle-gate-cta p  { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.6; }
 
-    /* ── Match picker ── */
-    .oracle-match-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
-      box-shadow: var(--shadow-xs);
-      padding: 14px;
+    /* ── Date separator ── */
+    .date-separator {
+      padding: 16px 16px 8px;
+      font: 700 0.62rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-text-tertiary);
+    }
+
+    /* ── [D] Match row ── */
+    .match-row {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      margin: 0 16px 8px;
+      box-shadow: var(--shadow-card);
       display: flex;
       align-items: center;
       gap: 12px;
       cursor: pointer;
-      transition: border-color 0.2s, transform 0.15s, background 0.2s;
+      transition: transform 150ms ease;
+      min-height: 68px;
+      opacity: 0;
+      animation: fadeUp 320ms ease-out forwards;
     }
-    .oracle-match-card:active { transform: scale(0.98); }
-    .oracle-match-card.selected { border-color: var(--accent); background: var(--accent-soft); }
-    .oracle-match-flags { font-size: 24px; flex-shrink: 0; }
-    .oracle-match-info  { flex: 1; min-width: 0; }
-    .oracle-match-name  { font-size: 13.5px; font-weight: 700; letter-spacing: -0.01em; }
-    .oracle-match-date  { font-size: 11.5px; color: var(--fg-faint); font-weight: 500; margin-top: 2px; }
-    .oracle-btn {
-      background: var(--accent);
-      color: var(--bg-dark);
+    .match-row:active { transform: scale(0.985); }
+    .match-row--live  { box-shadow: 0 0 0 2px var(--color-green); }
+    .match-row--past .match-row-name { color: var(--color-text-secondary); }
+    .match-row--past .match-row-date { color: var(--color-text-tertiary); }
+
+    .match-row-flags {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      width: 52px;
+    }
+    .match-row-flag { font-size: 1.45rem; line-height: 1; }
+    .match-row-info { flex: 1; min-width: 0; }
+    .match-row-name {
+      font: 700 0.95rem/1.2 'Geist';
+      color: var(--color-text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 3px;
+    }
+    .match-row-date {
+      font: 500 0.75rem/1 'Geist';
+      color: var(--color-text-secondary);
+      white-space: nowrap;
+    }
+
+    .match-row-live-badge {
+      background: var(--color-green);
+      color: var(--color-dark);
+      padding: 3px 7px;
+      border-radius: var(--radius-full);
+      font: 700 0.58rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      flex-shrink: 0;
+    }
+    .match-row-analysed-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--color-green);
+      flex-shrink: 0;
+      align-self: flex-start;
+      margin-top: 4px;
+    }
+
+    .btn-analyser {
+      background: var(--color-green);
+      color: var(--color-dark);
+      padding: 10px 16px;
+      border-radius: var(--radius-full);
+      font: 700 0.82rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
       border: none;
-      border-radius: var(--r-pill);
-      padding: 6px 12px;
-      font-size: 12px;
-      font-weight: 700;
       cursor: pointer;
       flex-shrink: 0;
-      transition: opacity 0.15s, transform 0.1s;
+      white-space: nowrap;
+      transition: background 150ms ease, transform 150ms ease;
     }
-    .oracle-btn:active   { opacity: 0.85; transform: scale(0.95); }
-    .oracle-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .cached-badge {
-      background: var(--bg-dark);
-      color: var(--accent);
-      border-radius: var(--r-pill);
-      padding: 5px 10px;
-      font-size: 11px;
-      font-weight: 700;
-      flex-shrink: 0;
+    .btn-analyser:hover  { background: var(--color-green-dim); }
+    .btn-analyser:active { transform: scale(0.94); }
+
+    .btn-analyser--past {
+      background: transparent;
+      border: 1.5px solid var(--color-border);
+      color: var(--color-text-secondary);
+      padding: 9px 14px;
+    }
+    .btn-analyser--past:hover { background: #F7F6F4; }
+
+    .btn-analyser--locked {
+      background: var(--color-border);
+      color: var(--color-text-tertiary);
+      position: relative;
+      cursor: pointer;
+    }
+
+    /* ── Skeleton ── */
+    .skeleton-row {
+      background: linear-gradient(90deg, #EEECE8 25%, #F5F4F1 50%, #EEECE8 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: var(--radius-lg);
+      height: 68px;
+      margin: 0 16px 8px;
     }
 
     /* ── Loading oracle ── */
@@ -142,23 +340,21 @@
       font-size: 56px;
       display: block;
       margin-bottom: 16px;
-      animation: oraclePulse 1.5s ease-in-out infinite;
     }
     .oracle-loading .text {
       font-size: 15px;
       font-weight: 700;
-      color: var(--text-secondary);
+      color: var(--color-text-secondary);
       margin-bottom: 8px;
     }
     .oracle-loading .sub {
       font-size: 12px;
-      color: var(--text-tertiary);
+      color: var(--color-text-tertiary);
     }
     .oracle-spinner {
-      width: 32px;
-      height: 32px;
+      width: 32px; height: 32px;
       border: 3px solid rgba(0,224,90,0.15);
-      border-top-color: var(--green-accent);
+      border-top-color: var(--color-green);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
       margin: 16px auto 0;
@@ -166,17 +362,16 @@
 
     /* ── Analysis card ── */
     .analysis-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--r-lg);
-      box-shadow: var(--shadow-sm);
+      margin: 0 16px;
+      background: var(--color-surface);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-card);
       overflow: hidden;
       animation: revealUp .45s cubic-bezier(.32,.72,0,1);
     }
     .analysis-header {
-      background: var(--bg-dark);
-      color: var(--fg-on-dark);
-      padding: 16px 16px 14px;
+      background: var(--color-dark);
+      padding: 20px 16px 16px;
       position: relative;
       overflow: hidden;
     }
@@ -184,333 +379,499 @@
       content: '';
       position: absolute; right: -60px; bottom: -60px;
       width: 180px; height: 180px;
-      background: radial-gradient(circle, rgba(0,224,90,0.30), transparent 65%);
+      background: radial-gradient(circle, rgba(0,224,90,0.20), transparent 65%);
       pointer-events: none;
     }
     .analysis-match-label {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--fg-on-dark-muted);
-      margin-bottom: 4px;
-      position: relative;
+      font: 500 0.68rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 8px;
     }
     .analysis-verdict {
       display: inline-flex;
       align-items: center;
-      padding: 4px 9px;
-      border-radius: var(--r-pill);
-      font-size: 10px;
-      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      font: 700 0.68rem/1 'Geist';
       letter-spacing: 0.04em;
       text-transform: uppercase;
-      color: var(--bg-dark);
-      background: var(--accent);
-      position: relative;
+      color: var(--color-dark);
+      background: var(--color-green);
+      margin-bottom: 14px;
     }
-
-    /* Score */
     .analysis-score-wrap {
-      padding: 14px 0 0;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 14px;
-      position: relative;
+      margin-bottom: 16px;
     }
     .analysis-team {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      flex: 1;
+      display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1;
     }
-    .analysis-team .flag  { font-size: 32px; }
-    .analysis-team .name  { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--fg-on-dark-muted); text-align: center; }
+    .analysis-team .flag { font-size: 2rem; line-height: 1; }
+    .analysis-team .name {
+      font: 700 0.72rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.45);
+      text-align: center;
+    }
     .analysis-score {
-      font-size: 52px;
-      font-weight: 900;
-      letter-spacing: -0.045em;
-      display: flex;
-      align-items: baseline;
-      gap: 14px;
+      font: italic 900 3rem/1 'Geist';
+      letter-spacing: -0.04em;
+      color: var(--color-text-inverse);
+      white-space: nowrap;
       flex-shrink: 0;
-      color: var(--fg-on-dark);
-      font-variant-numeric: tabular-nums;
-      line-height: 1;
     }
-    .analysis-score .sep { font-size: 22px; color: var(--fg-on-dark-muted); font-weight: 700; }
-
-    /* Confidence */
-    .confidence-wrap {
-      padding: 12px 20px 16px;
+    .analysis-score .sep {
+      font-size: 1.4rem;
+      color: rgba(255,255,255,0.25);
+      font-style: normal;
+      font-weight: 400;
+      margin: 0 4px;
+    }
+    .confidence-wrap { padding: 0; }
+    .confidence-label {
+      font: 700 0.6rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 6px;
       display: flex;
-      flex-direction: column;
-      gap: 6px;
+      justify-content: space-between;
+      align-items: center;
     }
-    .confidence-label { font-size: 11px; font-weight: 700; color: var(--fg-on-dark-muted); text-transform: uppercase; letter-spacing: 0.06em; }
-    .confidence-row { display: flex; align-items: center; gap: 10px; }
+    .confidence-pct { font: 900 1rem/1 'Geist'; color: var(--color-green); }
     .confidence-track {
-      flex: 1;
-      height: 10px;
-      background: var(--bg-dark-3);
-      border: 1px solid var(--border-on-dark);
-      border-radius: var(--r-pill);
+      height: 8px;
+      background: rgba(255,255,255,0.08);
+      border-radius: var(--radius-full);
       overflow: hidden;
     }
     .confidence-fill {
       height: 100%;
-      border-radius: var(--r-pill);
-      background: linear-gradient(90deg, var(--accent), var(--accent-strong));
-      box-shadow: 0 0 16px var(--accent-glow);
+      border-radius: var(--radius-full);
+      background: var(--color-green);
       transition: width 1.4s cubic-bezier(.22,1,.36,1);
     }
-    .confidence-pct { font-size: 18px; font-weight: 900; color: var(--accent); flex-shrink: 0; font-variant-numeric: tabular-nums; }
 
-    /* Analysis text */
+    /* Analysis sections */
     .analysis-section {
-      padding: 14px 16px;
-      border-top: 1px solid var(--border);
-      display: flex; flex-direction: column; gap: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
-    .analysis-block { }
     .analysis-block-hd {
       display: flex;
       align-items: center;
       gap: 6px;
       margin-bottom: 8px;
-      color: var(--accent-strong);
+      font: 700 0.72rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-text-secondary);
     }
-    .analysis-block-hd span { font-size: 12px; font-weight: 800; letter-spacing: 0.02em; }
     .analysis-text {
-      font-size: 13.5px;
-      line-height: 1.55;
-      color: var(--fg-muted);
-      margin: 0;
+      font: 400 0.85rem/1.55 'Geist';
+      color: var(--color-text-secondary);
     }
-
-    /* Facteur clé */
     .facteur-cle {
-      background: linear-gradient(135deg, #FFF6D8 0%, #FCE8B5 100%);
+      background: #FFF6D8;
       border: 1px solid rgba(212,165,0,0.25);
-      border-radius: 12px;
+      border-radius: var(--radius-md);
       padding: 12px;
     }
     .facteur-cle-hd {
       display: flex; align-items: center; gap: 6px;
-      margin-bottom: 4px; color: #7A5500;
+      margin-bottom: 4px;
+      font: 700 0.62rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #7A5500;
     }
-    .facteur-cle-hd span { font-size: 10px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
-    .facteur-cle p { margin: 0; font-size: 13px; font-weight: 600; color: #4A3500; line-height: 1.45; }
-
-    /* Buteur */
+    .facteur-cle p { font: 600 0.82rem/1.45 'Geist'; color: #4A3500; }
     .buteur-chip {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: var(--accent);
-      color: var(--bg-dark);
-      border-radius: var(--r-pill);
-      padding: 6px 12px;
-      font-size: 12px;
-      font-weight: 700;
+      background: var(--color-green);
+      color: var(--color-dark);
+      border-radius: var(--radius-full);
+      padding: 7px 14px;
+      font: 700 0.82rem/1 'Geist';
     }
-
-    /* Key players */
-    .players-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .player-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .players-grid { display: flex; flex-direction: column; gap: 6px; }
+    .player-row { display: flex; align-items: center; gap: 8px; }
     .player-avatar {
-      width: 22px; height: 22px;
+      width: 24px; height: 24px;
       border-radius: 50%;
-      background: var(--bg-dark); color: var(--fg-on-dark);
+      background: var(--color-dark);
+      color: var(--color-text-inverse);
       display: flex; align-items: center; justify-content: center;
-      font-size: 10px; font-weight: 800;
+      font: 700 0.62rem/1 'Geist';
       flex-shrink: 0;
     }
-    .player-name  { font-size: 13px; font-weight: 600; flex: 1; }
-    .player-role  { font-size: 11px; color: var(--fg-faint); font-weight: 600; margin-left: auto; }
-
-    /* Form */
+    .player-name  { font: 600 0.85rem/1 'Geist'; flex: 1; }
+    .player-role  { font: 500 0.75rem/1 'Geist'; color: var(--color-text-tertiary); }
     .form-wrap { display: flex; align-items: center; gap: 8px; }
-    .form-flag  { font-size: 18px; }
-    .form-team  { font-size: 13px; font-weight: 700; flex: 1; }
-    .form-dots  { display: inline-flex; gap: 4px; }
+    .form-flag { font-size: 1.1rem; }
+    .form-team { font: 700 0.82rem/1 'Geist'; flex: 1; }
+    .form-dots { display: inline-flex; gap: 4px; }
     .form-dot {
       width: 22px; height: 22px;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 800; color: #fff;
+      font: 700 0.65rem/1 'Geist';
+      color: #fff;
     }
-    .form-dot.W { background: var(--accent-strong); }
-    .form-dot.D { background: var(--fg-faint); }
+    .form-dot.W { background: var(--color-green-dim); color: var(--color-dark); }
+    .form-dot.D { background: var(--color-text-tertiary); }
     .form-dot.L { background: #C42B36; }
-
-    /* Stat bars */
-    .stats-list { display: flex; flex-direction: column; gap: 8px; }
-    .stat-row   { margin-bottom: 6px; }
-    .stat-row-label { font-size: 11px; font-weight: 700; color: var(--fg-faint); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+    .stats-list { display: flex; flex-direction: column; gap: 10px; }
+    .stat-row-label {
+      font: 700 0.62rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-text-tertiary);
+      margin-bottom: 4px;
+    }
     .stat-bar-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-    .stat-track { flex: 1; height: 6px; background: var(--bg-card-2); border-radius: var(--r-pill); overflow: hidden; }
-    .stat-fill  { height: 100%; border-radius: var(--r-pill); transition: width 1s cubic-bezier(.22,1,.36,1); }
-    .stat-fill.green { background: var(--accent); }
-    .stat-fill.gray  { background: var(--fg-muted); }
-    .stat-val   { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 30px; text-align: right; }
+    .stat-track {
+      flex: 1; height: 6px;
+      background: var(--color-border);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+    }
+    .stat-fill { height: 100%; border-radius: var(--radius-full); transition: width 1s cubic-bezier(.22,1,.36,1); }
+    .stat-fill.green { background: var(--color-green); }
+    .stat-fill.gray  { background: var(--color-text-tertiary); }
+    .stat-val { font: 700 0.82rem/1 'Geist'; min-width: 30px; text-align: right; }
+
+    /* ── Upsell bottom sheet ── */
+    .upsell-overlay {
+      position: fixed; inset: 0;
+      z-index: 9999;
+      background: rgba(0,0,0,0.75);
+      display: flex; align-items: flex-end; justify-content: center;
+    }
+    .upsell-sheet {
+      background: var(--color-surface);
+      border-radius: 20px 20px 0 0;
+      width: 100%; max-width: 430px;
+      padding: 20px 16px 40px;
+      animation: slideUp 280ms cubic-bezier(0.32,0.72,0,1);
+      text-align: center;
+    }
+    .upsell-handle {
+      width: 36px; height: 4px;
+      border-radius: 2px;
+      background: var(--color-border);
+      margin: 0 auto 20px;
+    }
+    .upsell-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .upsell-title {
+      font: 700 1rem/1.3 'Geist';
+      color: var(--color-text-primary);
+      margin-bottom: 8px;
+    }
+    .upsell-sub {
+      font: 400 0.85rem/1.5 'Geist';
+      color: var(--color-text-secondary);
+      margin-bottom: 20px;
+    }
+    .upsell-cta {
+      display: block; width: 100%;
+      background: var(--color-green);
+      color: var(--color-dark);
+      border: none;
+      border-radius: var(--radius-full);
+      padding: 14px 24px;
+      font: 700 0.9rem/1 'Geist';
+      cursor: pointer;
+      margin-bottom: 12px;
+      transition: background 150ms ease;
+    }
+    .upsell-cta:hover { background: var(--color-green-dim); }
+    .upsell-skip {
+      font: 400 0.82rem/1 'Geist';
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+
+    /* ── Nav bottom ── */
+    .nav-bottom {
+      position: fixed; bottom: 0;
+      left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 430px;
+      height: 80px;
+      background: var(--color-surface);
+      border-top: 1px solid var(--color-border);
+      display: flex; align-items: flex-start;
+      padding: 10px 0 0;
+      z-index: 100;
+    }
+    .nav-tab {
+      flex: 1;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      padding: 2px 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .nav-tab-icon  { font-size: 1.35rem; line-height: 1; transition: transform 150ms ease; }
+    .nav-tab:active .nav-tab-icon { transform: scale(0.88); }
+    .nav-tab-label {
+      font: 500 0.58rem/1 'Geist';
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+    }
+    .nav-tab.active .nav-tab-label { color: var(--color-green); font-weight: 700; }
   </style>
 </head>
 <body>
-  <div class="page-content">
+  <div class="page">
 
-    <!-- Header -->
-    <div class="oracle-header">
-      <div class="oracle-logo">
-        <span class="icon-wrap">✨</span>
-        <div>
-          <div class="name fz-grad-accent">Oracle IA</div>
-          <span class="oracle-premium-badge" id="plan-badge">⭐ Premium</span>
+    <!-- ── [A] Header ── -->
+    <header class="header">
+      <div class="header-avatar" id="user-avatar" onclick="window.location.href='/src/pages/profil.html'">?</div>
+      <div class="header-logo">FOOTZY<span>.</span></div>
+      <div class="header-pts"><span class="header-pts-val" id="pts-val">0</span> PTS</div>
+    </header>
+
+    <div class="content">
+
+      <!-- ── [B] Hero Oracle ── -->
+      <div class="oracle-hero anim anim-1">
+        <div class="oracle-hero-top">
+          <div class="oracle-icon-block">✦</div>
         </div>
+        <div class="oracle-hero-title">Oracle <span class="accent">IA</span></div>
+        <div id="plan-badge" class="oracle-premium-badge">⭐ PREMIUM</div>
+        <div class="oracle-hero-desc">Analyse IA pré-match · Score prédit · Buteurs probables</div>
       </div>
+
+      <!-- ── [C] Section label ── -->
+      <div class="section-label anim anim-2">Choisir un match à analyser</div>
+
+      <!-- ── [D] Liste ── -->
+      <div id="match-list" role="list">
+        <!-- Skeletons -->
+        <div class="skeleton-row"></div>
+        <div class="skeleton-row"></div>
+        <div class="skeleton-row"></div>
+        <div class="skeleton-row"></div>
+      </div>
+
+      <!-- Zone analyse -->
+      <div id="analysis-zone" style="padding:16px 0 0"></div>
+
     </div>
 
-    <div id="oracle-body" style="padding:0 0 16px">
-      <div style="text-align:center;padding:60px 20px;color:var(--text-tertiary)">Chargement…</div>
-    </div>
+    <!-- ── Nav bottom ── -->
+    <nav class="nav-bottom">
+      <a href="/src/pages/accueil.html" class="nav-tab">
+        <span class="nav-tab-icon">🏠</span>
+        <span class="nav-tab-label">Accueil</span>
+      </a>
+      <a href="/src/pages/home.html" class="nav-tab">
+        <span class="nav-tab-icon">⚽</span>
+        <span class="nav-tab-label">Matchs</span>
+      </a>
+      <a href="/src/pages/oracle.html" class="nav-tab active" aria-current="page">
+        <span class="nav-tab-icon">🔮</span>
+        <span class="nav-tab-label">Oracle</span>
+      </a>
+      <a href="/src/pages/groupe.html" class="nav-tab">
+        <span class="nav-tab-icon">👥</span>
+        <span class="nav-tab-label">Groupe</span>
+      </a>
+      <a href="/src/pages/profil.html" class="nav-tab">
+        <span class="nav-tab-icon">🪪</span>
+        <span class="nav-tab-label">Profil</span>
+      </a>
+    </nav>
 
   </div>
-
-  <!-- Bottom Nav -->
-  <nav class="bottom-nav">
-    <a href="/src/pages/accueil.html">
-      <span style="font-size:22px">🏠</span>
-      <span>Accueil</span>
-    </a>
-    <a href="/src/pages/home.html">
-      <span style="font-size:22px">⚽</span>
-      <span>Matchs</span>
-    </a>
-    <a href="/src/pages/oracle.html" class="active">
-      <span style="font-size:22px">🔮</span>
-      <span>Oracle</span>
-    </a>
-    <a href="/src/pages/groupe.html">
-      <span style="font-size:22px">🫂</span>
-      <span>Groupe</span>
-    </a>
-    <a href="/src/pages/profil.html">
-      <span style="font-size:22px">🪪</span>
-      <span>Profil</span>
-    </a>
-  </nav>
 
   <script type="module">
     import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
     import { createCheckout, checkPremiumAccess, PLANS } from '/src/js/lib/whop.js';
     import { formatKickoff } from '/src/js/lib/utils.js';
 
-    (async () => {
     const user    = await requireAuth();
     if (!user) throw new Error('not authed');
     const profile = await getCurrentProfile();
     const isPremium = await checkPremiumAccess(profile);
 
-    // Badge
+    // ── Header ──
+    if (profile) {
+      const av = document.getElementById('user-avatar');
+      if (profile.avatar_url) {
+        av.innerHTML = `<img src="${profile.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+      } else {
+        av.textContent = (profile.pseudo?.[0] || '?').toUpperCase();
+      }
+      document.getElementById('pts-val').textContent = (profile.points_totaux || 0).toLocaleString('fr-FR');
+    }
+
+    // ── Badge plan ──
     const badge = document.getElementById('plan-badge');
     if (!isPremium) {
-      badge.textContent = '🔒 Premium requis';
-      badge.style.color = 'var(--fg-faint)';
+      badge.textContent = '🔒 PREMIUM — débloquer';
+      badge.classList.add('oracle-premium-badge--locked');
+      badge.addEventListener('click', showUpsell);
     }
 
-    const body = document.getElementById('oracle-body');
-
-    // ── Premium gate for free users ──
-    if (!isPremium) {
-      body.innerHTML = `
-        <div class="oracle-gate" style="margin:16px">
-          <div class="oracle-gate-preview">
-            <div style="background:var(--accent-bg);border:1px solid var(--green-border);border-radius:18px;padding:18px 20px">
-              <div style="display:flex;justify-content:space-between;margin-bottom:12px">
-                <span style="font-size:13px;font-weight:700">🇫🇷 France vs Brésil 🇧🇷</span>
-                <span style="color:var(--green-accent);font-size:12px;font-weight:700">Victoire domicile</span>
-              </div>
-              <div style="display:flex;justify-content:center;gap:8px;font-size:48px;font-weight:900;font-style:italic;margin:12px 0">
-                <span>2</span><span style="opacity:.2;font-size:28px">–</span><span>1</span>
-              </div>
-              <div style="height:6px;background:var(--bg-muted);border-radius:50px;overflow:hidden;margin-bottom:4px">
-                <div style="height:100%;width:74%;background:linear-gradient(90deg,var(--accent),var(--accent-dark));border-radius:50px"></div>
-              </div>
-              <div style="font-size:11px;color:var(--text-tertiary);text-align:right">Confiance : 74%</div>
-            </div>
-          </div>
-          <div class="oracle-gate-cta">
-            <h3>🔮 Débloque l'Oracle IA</h3>
-            <p>Analyses tactiques, score prédit, joueurs clés, buteur probable… L'IA analyse chaque match pour toi.</p>
-            <button class="cta-primary" id="unlock-btn">Passer Premium — 9,99€</button>
-            <p style="font-size:11px;color:var(--text-tertiary);margin-top:10px">Accès complet · Sans engagement</p>
-          </div>
+    // ── Upsell sheet ──
+    function showUpsell() {
+      const el = document.createElement('div');
+      el.className = 'upsell-overlay';
+      el.innerHTML = `
+        <div class="upsell-sheet">
+          <div class="upsell-handle"></div>
+          <div class="upsell-icon">🔮</div>
+          <div class="upsell-title">Oracle IA — Fonctionnalité Premium</div>
+          <div class="upsell-sub">Débloquez l'analyse IA complète pour chaque match : score prédit, buteurs probables, analyse tactique.</div>
+          <button class="upsell-cta" id="upsell-btn">Passer Premium — 5,99€/mois</button>
+          <button class="upsell-skip">Continuer en Free</button>
         </div>`;
-      document.getElementById('unlock-btn').addEventListener('click', () => createCheckout(PLANS.premium, user.id, user.email));
-      return;
+      document.body.appendChild(el);
+      el.querySelector('#upsell-btn').addEventListener('click', () => createCheckout(PLANS.premium, user.id, user.email));
+      el.querySelector('.upsell-skip').addEventListener('click', () => el.remove());
+      el.addEventListener('click', e => { if (e.target === el) el.remove(); });
     }
 
-    // ── Load upcoming matches ──
-    const now = new Date().toISOString();
-    const { data: matches } = await supabase
-      .from('matchs')
-      .select('id, home_team, away_team, home_flag, away_flag, kickoff_at, phase, groupe')
-      .gt('kickoff_at', now)
-      .order('kickoff_at')
-      .limit(15);
+    // ── Load matches ──
+    const list = document.getElementById('match-list');
 
-    if (!matches?.length) {
-      body.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--text-tertiary)">
-        <div style="font-size:48px;margin-bottom:12px">🔮</div>
-        <div style="font-weight:700;color:var(--text-secondary)">Aucun match à venir</div>
-      </div>`;
-      return;
+    try {
+      const now  = new Date().toISOString();
+      const from = new Date(); from.setDate(from.getDate() - 2);
+
+      const { data: matches } = await supabase
+        .from('matchs')
+        .select('id, home_team, away_team, home_flag, away_flag, kickoff_at, status, phase, groupe')
+        .gte('kickoff_at', from.toISOString())
+        .order('kickoff_at')
+        .limit(20);
+
+      if (!matches?.length) {
+        list.innerHTML = `
+          <div style="text-align:center;padding:40px 16px;color:var(--color-text-tertiary)">
+            <div style="font-size:2.5rem;margin-bottom:12px">🔮</div>
+            <div style="font:400 0.88rem/1 'Geist'">Aucun match à analyser pour le moment</div>
+          </div>`;
+        return;
+      }
+
+      // Cached analyses
+      const matchIds = matches.map(m => m.id);
+      const { data: cached } = await supabase
+        .from('oracle_analyses').select('match_id').in('match_id', matchIds);
+      const cachedSet = new Set(cached?.map(c => c.match_id) || []);
+
+      // Group by day
+      const groups = {};
+      for (const m of matches) {
+        const d   = new Date(m.kickoff_at);
+        const key = d.toDateString();
+        if (!groups[key]) groups[key] = { label: formatDayLabel(d), items: [] };
+        groups[key].items.push(m);
+      }
+
+      let html = '';
+      let delay = 80;
+      for (const { label, items } of Object.values(groups)) {
+        if (Object.keys(groups).length > 1) {
+          html += `<div class="date-separator">${label}</div>`;
+        }
+        for (const m of items) {
+          const isLive    = m.status === 'live' || m.status === 'halftime';
+          const isPast    = m.status === 'finished';
+          const analysed  = cachedSet.has(m.id);
+          const d         = new Date(m.kickoff_at);
+          const dateStr   = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) + ' · ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+          let btnHTML;
+          if (isLive) {
+            btnHTML = `<span class="match-row-live-badge">LIVE</span>`;
+          } else if (isPast) {
+            btnHTML = `<button class="btn-analyser btn-analyser--past" aria-label="Voir analyse ${m.home_team} vs ${m.away_team}">Voir analyse</button>`;
+          } else if (!isPremium) {
+            btnHTML = `<button class="btn-analyser btn-analyser--locked" aria-label="Analyser ${m.home_team} vs ${m.away_team}" aria-disabled="true">🔒 Analyser</button>`;
+          } else {
+            btnHTML = `<button class="btn-analyser" aria-label="Analyser ${m.home_team} vs ${m.away_team}">Analyser</button>`;
+          }
+
+          html += `
+            <div class="match-row${isLive ? ' match-row--live' : ''}${isPast ? ' match-row--past' : ''}"
+              role="listitem"
+              data-match-id="${m.id}"
+              data-idx="${matchIds.indexOf(m.id)}"
+              style="animation-delay:${delay}ms">
+              <div class="match-row-flags">
+                <span class="match-row-flag">${m.home_flag || ''}</span>
+                <span class="match-row-flag">${m.away_flag || ''}</span>
+              </div>
+              <div class="match-row-info">
+                <div class="match-row-name">${m.home_team} vs ${m.away_team}</div>
+                <div class="match-row-date">${dateStr}</div>
+              </div>
+              ${analysed && !isLive ? '<span class="match-row-analysed-dot" title="Déjà analysé"></span>' : ''}
+              ${btnHTML}
+            </div>`;
+          delay += 40;
+        }
+      }
+
+      list.innerHTML = html;
+
+      // Click handlers
+      list.querySelectorAll('.match-row').forEach(row => {
+        row.addEventListener('click', () => {
+          const idx   = parseInt(row.dataset.idx);
+          const match = matches[idx];
+          if (!isPremium) { showUpsell(); return; }
+          analyzeMatch(match);
+        });
+      });
+
+    } catch(e) {
+      console.warn('Oracle list failed silently', e);
+      list.innerHTML = `<div style="text-align:center;padding:40px 16px;color:var(--color-text-tertiary)">Erreur de chargement</div>`;
     }
 
-    // Check which matches have cached analyses
-    const matchIds = matches.map(m => m.id);
-    const { data: cached } = await supabase
-      .from('oracle_analyses').select('match_id').in('match_id', matchIds);
-    const cachedSet = new Set(cached?.map(c => c.match_id) || []);
+    function formatDayLabel(d) {
+      const today = new Date();
+      const tom   = new Date(today); tom.setDate(today.getDate() + 1);
+      if (d.toDateString() === today.toDateString()) return 'Aujourd\'hui';
+      if (d.toDateString() === tom.toDateString())   return 'Demain';
+      return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
+    }
 
-    body.innerHTML = `
-      <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--text-tertiary);padding:20px 20px 10px">
-        Choisir un match à analyser
-      </p>
-      <div id="match-picker" style="display:flex;flex-direction:column;gap:8px;padding:0 16px">
-        ${matches.map((m, i) => `
-          <div class="oracle-match-card" data-idx="${i}" id="mc-${m.id}">
-            <span class="oracle-match-flags">${m.home_flag}${m.away_flag}</span>
-            <div class="oracle-match-info">
-              <div class="oracle-match-name">${m.home_team} vs ${m.away_team}</div>
-              <div class="oracle-match-date">${formatKickoff(m.kickoff_at)}</div>
-            </div>
-            ${cachedSet.has(m.id)
-              ? `<span class="cached-badge">🔮 Voir</span>`
-              : `<button class="oracle-btn" data-match-id="${m.id}">Analyser</button>`}
-          </div>`).join('')}
-      </div>
-      <div id="analysis-zone" style="padding:16px 16px 0"></div>`;
+    // ─────────────────────────────────────────
+    // ANALYSE
+    // ─────────────────────────────────────────
+    let currentMatchId = null;
 
-    // Click handlers
-    document.querySelectorAll('.oracle-match-card').forEach(card => {
-      card.addEventListener('click', () => analyzeMatch(matches[parseInt(card.dataset.idx)], card));
-    });
+    async function analyzeMatch(match) {
+      if (currentMatchId === match.id) return;
+      currentMatchId = match.id;
 
-    let currentCard = null;
-
-    async function analyzeMatch(match, card) {
-      if (currentCard) currentCard.classList.remove('selected');
-      currentCard = card;
-      card.classList.add('selected');
+      // Highlight selected row
+      document.querySelectorAll('.match-row').forEach(r => r.style.boxShadow = '');
+      const row = document.querySelector(`[data-match-id="${match.id}"]`);
+      if (row && match.status !== 'live' && match.status !== 'halftime') {
+        row.style.boxShadow = '0 0 0 2px var(--color-green)';
+      }
 
       const zone = document.getElementById('analysis-zone');
       zone.innerHTML = `
@@ -523,7 +884,6 @@
       zone.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
       try {
-        // Get JWT for API call
         const { data: { session } } = await supabase.auth.getSession();
         const jwt = session?.access_token;
 
@@ -531,13 +891,13 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwt}` },
           body: JSON.stringify({
-            matchId:    match.id,
-            homeTeam:   match.home_team,
-            awayTeam:   match.away_team,
-            homeFlag:   match.home_flag,
-            awayFlag:   match.away_flag,
-            phase:      match.phase,
-            kickoffAt:  match.kickoff_at,
+            matchId:   match.id,
+            homeTeam:  match.home_team,
+            awayTeam:  match.away_team,
+            homeFlag:  match.home_flag,
+            awayFlag:  match.away_flag,
+            phase:     match.phase,
+            kickoffAt: match.kickoff_at,
           })
         });
 
@@ -545,18 +905,26 @@
         const data = await res.json();
         renderAnalysis(data, match, zone);
 
-        // Mark as cached
-        const btn = card.querySelector('.oracle-btn');
-        if (btn) {
-          btn.outerHTML = `<span class="cached-badge">🔮 Voir</span>`;
+        // Mark as analysed
+        const dot = document.querySelector(`[data-match-id="${match.id}"] .match-row-analysed-dot`);
+        if (!dot) {
+          const info = document.querySelector(`[data-match-id="${match.id}"] .match-row-info`);
+          if (info) {
+            const d = document.createElement('span');
+            d.className = 'match-row-analysed-dot';
+            d.title = 'Déjà analysé';
+            info.after(d);
+          }
         }
 
       } catch (err) {
-        zone.innerHTML = `<div style="text-align:center;padding:32px;color:var(--danger)">
-          <div style="font-size:32px;margin-bottom:8px">⚠️</div>
-          <div style="font-weight:700">Erreur Oracle</div>
-          <div style="font-size:12px;margin-top:6px;color:var(--text-tertiary)">${err.message}</div>
-        </div>`;
+        zone.innerHTML = `
+          <div style="margin:0 16px;background:var(--color-surface);border-radius:var(--radius-lg);padding:28px 20px;text-align:center;box-shadow:var(--shadow-card)">
+            <div style="font-size:2rem;margin-bottom:8px">⚠️</div>
+            <div style="font:700 0.9rem/1 'Geist';color:var(--color-text-primary);margin-bottom:6px">Erreur Oracle</div>
+            <div style="font:400 0.78rem/1 'Geist';color:var(--color-text-tertiary)">${err.message}</div>
+          </div>`;
+        currentMatchId = null;
       }
     }
 
@@ -564,33 +932,28 @@
       const formDots = (form) => (form || 'WWDLD').split('').map(c =>
         `<span class="form-dot ${c}">${c}</span>`).join('');
 
-      const stats = d.stats || {};
+      const stats      = d.stats || {};
       const keyPlayers = Array.isArray(d.key_players) ? d.key_players : [];
-      const homeInitial = (match.home_team || '?')[0];
-      const awayInitial = (match.away_team || '?')[0];
 
       zone.innerHTML = `
         <div class="analysis-card">
-          <!-- Dark header with score + confidence -->
           <div class="analysis-header">
             <div class="analysis-match-label">${match.home_team} · ${match.away_team}</div>
             <div class="analysis-verdict">${d.verdict || '—'}</div>
-
-            <!-- Score -->
             <div class="analysis-score-wrap">
-              <span style="font-size:32px;line-height:1">${match.home_flag}</span>
-              <div class="analysis-score">
-                <span>${d.home_score ?? '?'}</span>
-                <span class="sep">·</span>
-                <span>${d.away_score ?? '?'}</span>
+              <div class="analysis-team">
+                <span class="flag">${match.home_flag}</span>
+                <span class="name">${match.home_team?.slice(0,3).toUpperCase()}</span>
               </div>
-              <span style="font-size:32px;line-height:1">${match.away_flag}</span>
+              <span class="analysis-score">${d.home_score ?? '?'}<span class="sep">–</span>${d.away_score ?? '?'}</span>
+              <div class="analysis-team">
+                <span class="flag">${match.away_flag}</span>
+                <span class="name">${match.away_team?.slice(0,3).toUpperCase()}</span>
+              </div>
             </div>
-
-            <!-- Confidence gauge -->
             <div class="confidence-wrap">
-              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
-                <span class="confidence-label">Confiance</span>
+              <div class="confidence-label">
+                <span>Confiance IA</span>
                 <span class="confidence-pct">${d.confidence ?? 0}%</span>
               </div>
               <div class="confidence-track">
@@ -599,33 +962,27 @@
             </div>
           </div>
 
-          <!-- Content sections -->
           <div class="analysis-section">
-
-            <!-- Analyse Oracle -->
-            <div class="analysis-block">
-              <div class="analysis-block-hd">✨<span>Analyse Oracle</span></div>
+            <div>
+              <div class="analysis-block-hd">✨ Analyse Oracle</div>
               <p class="analysis-text">${d.analysis || '—'}</p>
             </div>
 
-            <!-- Facteur clé -->
             ${d.facteur_cle ? `
             <div class="facteur-cle">
-              <div class="facteur-cle-hd">⚡<span>Facteur décisif</span></div>
+              <div class="facteur-cle-hd">⚡ Facteur décisif</div>
               <p>${d.facteur_cle}</p>
             </div>` : ''}
 
-            <!-- Buteur -->
             ${d.buteur ? `
-            <div class="analysis-block">
-              <div class="analysis-block-hd">⚽<span>Buteur probable</span></div>
+            <div>
+              <div class="analysis-block-hd">⚽ Buteur probable</div>
               <span class="buteur-chip">⚽ ${d.buteur}</span>
             </div>` : ''}
 
-            <!-- Key players -->
             ${keyPlayers.length ? `
-            <div class="analysis-block">
-              <div class="analysis-block-hd">⭐<span>Joueurs à surveiller</span></div>
+            <div>
+              <div class="analysis-block-hd">⭐ Joueurs à surveiller</div>
               <div class="players-grid">
                 ${keyPlayers.map(p => `
                   <div class="player-row">
@@ -636,9 +993,8 @@
               </div>
             </div>` : ''}
 
-            <!-- Forme récente -->
-            <div class="analysis-block">
-              <div class="analysis-block-hd">📈<span>Forme récente</span></div>
+            <div>
+              <div class="analysis-block-hd">📈 Forme récente</div>
               <div style="display:flex;flex-direction:column;gap:8px">
                 <div class="form-wrap">
                   <span class="form-flag">${match.home_flag}</span>
@@ -653,41 +1009,38 @@
               </div>
             </div>
 
-            <!-- Stats -->
-            <div class="analysis-block">
-              <div class="analysis-block-hd">📊<span>Forces en présence</span></div>
+            <div>
+              <div class="analysis-block-hd">📊 Forces en présence</div>
               <div class="stats-list">
                 ${[
-                  { label: 'Attaque', home: stats.home_attack || 0, away: stats.away_attack || 0 },
-                  { label: 'Défense', home: stats.home_defense || 0, away: stats.away_defense || 0 },
+                  { label: 'Attaque',  home: stats.home_attack  || 0, away: stats.away_attack  || 0 },
+                  { label: 'Défense',  home: stats.home_defense || 0, away: stats.away_defense || 0 },
                 ].map(s => `
-                  <div class="stat-row">
+                  <div>
                     <div class="stat-row-label">${s.label}</div>
                     <div class="stat-bar-row">
-                      <span style="font-size:16px">${match.home_flag}</span>
+                      <span style="font-size:1rem">${match.home_flag}</span>
                       <div class="stat-track"><div class="stat-fill green" style="width:${s.home}%"></div></div>
                       <span class="stat-val">${s.home}</span>
                     </div>
                     <div class="stat-bar-row">
-                      <span style="font-size:16px">${match.away_flag}</span>
+                      <span style="font-size:1rem">${match.away_flag}</span>
                       <div class="stat-track"><div class="stat-fill gray" style="width:${s.away}%"></div></div>
                       <span class="stat-val">${s.away}</span>
                     </div>
                   </div>`).join('')}
               </div>
             </div>
-
           </div>
         </div>`;
 
-      // Animate confidence bar
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          document.getElementById('conf-fill').style.width = (d.confidence || 0) + '%';
+          const fill = document.getElementById('conf-fill');
+          if (fill) fill.style.width = (d.confidence || 0) + '%';
         });
       });
     }
-    })();
   </script>
 </body>
 </html>

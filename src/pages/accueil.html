@@ -1464,6 +1464,15 @@
           matchs:   matchesMap[p.match_id]  || null,
         }));
 
+        // Dédupliquer : un seul prono par user+match (le plus récent, déjà trié par created_at desc)
+        const seenUM = new Set();
+        const deduped = enriched.filter(p => {
+          const key = `${p.user_id}:${p.match_id}`;
+          if (seenUM.has(key)) return false;
+          seenUM.add(key);
+          return true;
+        });
+
         // Fetch reactions
         const ids = posts.map(p => p.id);
         const { data: reactions } = await supabase
@@ -1478,7 +1487,7 @@
           if (r.type === 'heart') { rMap[r.prono_id].heart++; if (r.user_id === user.id) rMap[r.prono_id].myHeart = true; }
         });
 
-        list.innerHTML = enriched.map(p => {
+        list.innerHTML = deduped.map(p => {
           const prof  = p.profiles;
           const match = p.matchs;
           if (!prof || !match) return '';

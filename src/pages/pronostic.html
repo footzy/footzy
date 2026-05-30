@@ -860,12 +860,12 @@
 
     // Bouton retour — fiable même en PWA / deep link
     document.getElementById('btn-back').addEventListener('click', () => {
-      if (history.length > 1 && document.referrer) {
+      if (history.length > 1) {
         history.back();
-      } else if (matchId) {
-        window.location.href = '/src/pages/match.html?id=' + matchId;
       } else {
-        window.location.href = '/src/pages/home.html';
+        window.location.href = matchId
+          ? '/src/pages/match.html?id=' + matchId
+          : '/src/pages/home.html';
       }
     });
 

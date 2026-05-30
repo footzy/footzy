@@ -745,6 +745,7 @@
   <script type="module">
     import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
     import { checkPremiumAccess, createCheckout, PLANS } from '/src/js/lib/whop.js';
+    import { calculatePoints, statusLabel } from '/src/js/lib/scoring.js';
     // Quarts de finale CdM 2026 : verrouillage total après le 5 juillet 2026
     const QF_CUTOFF = new Date('2026-07-05T00:00:00Z');
     import { formatDate, toast } from '/src/js/lib/utils.js';
@@ -1155,13 +1156,16 @@
       if (e.target === document.getElementById('vainqueur-modal')) document.getElementById('vainqueur-modal').classList.remove('open');
     });
 
-    // Pronos history — tous les pronos, dédupliqués par match (1 par match, le plus récent)
+    // ─────────────────────────────────────────
+    // PRONOS + CALCUL DE POINTS AUTO
+    // ─────────────────────────────────────────
     const { data: pronosRaw } = await supabase
       .from('pronostics')
-      .select('*, matchs(home_team,away_team,home_flag,away_flag,home_score,away_score,status,kickoff_at)')
+      .select('*, matchs(home_team,away_team,home_flag,away_flag,home_score,away_score,status,kickoff_at,ht_home,ht_away,yellow_cards,buteurs_reels)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(40);
+
     // Déduplication : garder un seul prono par match_id (le plus récent)
     const seenMatches = new Set();
     const pronos = (pronosRaw || []).filter(p => {
@@ -1170,20 +1174,108 @@
       return true;
     }).slice(0, 10);
 
+    // ── Calcul automatique pour les matchs terminés sans points ──
+    const toUpdate = [];
+    for (const p of pronos) {
+      const m = p.matchs;
+      if (!m || m.status !== 'finished') continue;
+      if (p.points !== null && p.points !== undefined) continue; // déjà calculé
+      const result = calculatePoints(p, m);
+      if (!result) continue;
+      p.points = result.points;
+      p.status = result.status;
+      toUpdate.push({ id: p.id, points: result.points, status: result.status });
+    }
+
+    if (toUpdate.length) {
+      // Mise à jour en parallèle
+      await Promise.all(
+        toUpdate.map(u =>
+          supabase.from('pronostics')
+            .update({ points: u.points, status: u.status })
+            .eq('id', u.id)
+            .eq('user_id', user.id)
+        )
+      );
+      // Recalculer le total de points (tous les pronos, pas que les 10 affichés)
+      const { data: allPts } = await supabase
+        .from('pronostics')
+        .select('points')
+        .eq('user_id', user.id)
+        .not('points', 'is', null);
+      const newTotal = (allPts || []).reduce((s, p) => s + (p.points || 0), 0);
+      await supabase.from('profiles')
+        .update({ points_totaux: newTotal })
+        .eq('id', user.id);
+
+      // Scores exacts
+      const exactCount = pronos.filter(p => p.status === 'exact').length +
+        ((await supabase.from('pronostics').select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id).eq('status', 'exact')).count || 0);
+
+      // Mettre à jour les stats affichées
+      document.getElementById('stat-points').textContent = newTotal.toLocaleString('fr-FR');
+      const newPct = Math.min(100, Math.round(((newTotal - prevPalier) / (nextPalier - prevPalier)) * 100));
+      const bar = document.getElementById('points-bar');
+      if (bar) setTimeout(() => { bar.style.width = newPct + '%'; }, 100);
+    }
+
+    // Compter les scores exacts pour la stat
+    const exactsCount = pronos.filter(p => p.status === 'exact').length;
+    if (exactsCount > 0) {
+      const currentExacts = parseInt(document.getElementById('stat-exacts').textContent) || 0;
+      document.getElementById('stat-exacts').textContent = Math.max(currentExacts, exactsCount);
+    }
+
     const histEl = document.getElementById('pronos-history');
 
     function renderPronoCard(p) {
       const m = p.matchs;
-      const ptsClass = p.status === 'won' ? (p.points >= 5 ? 'fz-pts fz-pts--gold' : 'fz-pts') : p.status === 'lost' ? 'fz-pts fz-pts--zero' : 'fz-pts';
-      const ptsLabel = p.status === 'won' ? `+${p.points} pts` : p.status === 'lost' ? '0 pts' : 'En attente';
-      return `<div class="fz-card" data-prono-id="${p.id}" style="display:flex;align-items:center;gap:10px;padding:12px">
-        <span style="font-size:18px">${m?.home_flag || ''}</span>
-        <span style="font-size:13px;font-weight:600;color:var(--fg-muted)">vs</span>
-        <span style="font-size:18px">${m?.away_flag || ''}</span>
-        <span style="flex:1;font-size:13px;font-weight:700">${(m?.home_team||'').slice(0,3).toUpperCase()} ${p.home_score}—${p.away_score} ${(m?.away_team||'').slice(0,3).toUpperCase()}</span>
-        <span class="${ptsClass}">${ptsLabel}</span>
-        <button data-del="${p.id}" class="fz-iconbtn" style="width:30px;height:30px;color:#C42B36;flex-shrink:0" aria-label="Supprimer">🗑</button>
-      </div>`;
+      const isFinished = m?.status === 'finished';
+      const isLive = m?.status === 'live' || m?.status === 'halftime';
+
+      // Badge de statut
+      const sl = statusLabel(isLive ? 'live' : p.status);
+      let badge, ptsBadge;
+
+      if (isLive) {
+        badge = `<span style="background:#E8FFF1;color:#00C44F;border:1px solid rgba(0,196,79,0.3);border-radius:99px;padding:3px 10px;font:700 0.62rem/1 'Geist';text-transform:uppercase;letter-spacing:0.05em">🔴 En direct</span>`;
+        ptsBadge = '';
+      } else if (p.status === 'exact' || p.status === 'correct') {
+        badge = `<span style="background:${sl.bg};color:${sl.color};border:1px solid ${sl.border};border-radius:99px;padding:3px 10px;font:700 0.62rem/1 'Geist';text-transform:uppercase;letter-spacing:0.05em">${sl.emoji} ${sl.text}</span>`;
+        ptsBadge = `<span style="font:900 1rem/1 'Geist';color:${sl.color}">+${p.points ?? 0}</span><span style="font:700 0.65rem/1 'Geist';color:${sl.color};margin-left:2px">pts</span>`;
+      } else if (p.status === 'wrong') {
+        badge = `<span style="background:${sl.bg};color:${sl.color};border:1px solid ${sl.border};border-radius:99px;padding:3px 10px;font:700 0.62rem/1 'Geist';text-transform:uppercase;letter-spacing:0.05em">${sl.emoji} ${sl.text}</span>`;
+        ptsBadge = `<span style="font:900 1rem/1 'Geist';color:#A8A49F">0</span><span style="font:700 0.65rem/1 'Geist';color:#A8A49F;margin-left:2px">pts</span>`;
+      } else {
+        badge = `<span style="background:${sl.bg};color:${sl.color};border:1px solid ${sl.border};border-radius:99px;padding:3px 10px;font:700 0.62rem/1 'Geist';text-transform:uppercase;letter-spacing:0.05em">${sl.emoji} ${sl.text}</span>`;
+        ptsBadge = `<span style="font:700 0.72rem/1 'Geist';color:#A8A49F">—</span>`;
+      }
+
+      // Résultat réel (si match terminé)
+      const realScoreHtml = isFinished && m.home_score !== null
+        ? `<span style="font:400 0.68rem/1 'Geist';color:#A8A49F">Résultat : ${m.home_score}–${m.away_score}</span>`
+        : '';
+
+      const homeCode = (m?.home_team || '').slice(0, 3).toUpperCase();
+      const awayCode = (m?.away_team || '').slice(0, 3).toUpperCase();
+
+      return `
+        <div class="fz-card" data-prono-id="${p.id}" style="padding:14px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <span style="font-size:1.4rem;line-height:1">${m?.home_flag || ''}</span>
+            <span style="font:700 0.78rem/1 'Geist';text-transform:uppercase;color:#0F0F0E">${homeCode}</span>
+            <span style="font:900 1rem/1 'Geist';color:#00C44F;letter-spacing:-0.03em;flex:1;text-align:center">${p.home_score}–${p.away_score}</span>
+            <span style="font:700 0.78rem/1 'Geist';text-transform:uppercase;color:#0F0F0E">${awayCode}</span>
+            <span style="font-size:1.4rem;line-height:1">${m?.away_flag || ''}</span>
+            <button data-del="${p.id}" style="width:26px;height:26px;border-radius:50%;background:#F7F6F4;border:1px solid #E8E6E2;color:#A8A49F;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:4px" aria-label="Supprimer">🗑</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            ${badge}
+            ${realScoreHtml}
+            <div style="margin-left:auto;display:flex;align-items:baseline;gap:2px">${ptsBadge}</div>
+          </div>
+        </div>`;
     }
 
     function refreshHistoire() {
@@ -1192,7 +1284,7 @@
         return;
       }
       histEl.innerHTML = pronos.map(renderPronoCard).join('');
-      histEl.querySelectorAll('[data-del]').forEach(btn => {
+      histEl.querySelectorAll('button[data-del]').forEach(btn => {
         btn.addEventListener('click', async () => {
           const id = btn.dataset.del;
           const card = histEl.querySelector(`[data-prono-id="${id}"]`);

@@ -1062,11 +1062,20 @@
             .eq('match_id', matchId);
           if (error) throw error;
 
-          // Si le groupe sélectionné n'a pas encore de prono, en créer un
-          if (selectedGroupeId && !allPronos.some(p => p.groupe_id === selectedGroupeId)) {
-            await supabase.from('pronostics').insert({
-              user_id: user.id, match_id: matchId, groupe_id: selectedGroupeId, ...scoreFields
-            });
+          // Créer un prono pour le contexte sélectionné si absent
+          if (selectedGroupeId) {
+            if (!allPronos.some(p => p.groupe_id === selectedGroupeId)) {
+              await supabase.from('pronostics').insert({
+                user_id: user.id, match_id: matchId, groupe_id: selectedGroupeId, ...scoreFields
+              });
+            }
+          } else {
+            // Public : créer une row groupe_id = null si absente
+            if (!allPronos.some(p => p.groupe_id === null)) {
+              await supabase.from('pronostics').insert({
+                user_id: user.id, match_id: matchId, groupe_id: null, ...scoreFields
+              });
+            }
           }
         } else {
           // Premier prono : insérer pour le contexte sélectionné

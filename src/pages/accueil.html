@@ -1405,13 +1405,10 @@
       feedLoaded = true;
       const list = document.getElementById('feed-list');
       try {
+        // 3 requêtes séparées pour éviter les problèmes de FK join Supabase
         const { data: posts } = await supabase
           .from('pronostics')
-          .select(`
-            id, home_score, away_score, created_at, user_id, match_id,
-            profiles ( pseudo, avatar_url ),
-            matchs ( home_team, away_team, home_flag, away_flag, kickoff_at )
-          `)
+          .select('id, home_score, away_score, created_at, user_id, match_id')
           .order('created_at', { ascending: false })
           .limit(40);
 
@@ -1424,6 +1421,23 @@
             </div>`;
           return;
         }
+
+        // Requêtes complémentaires profiles + matchs (évite le FK join instable)
+        const uids  = [...new Set(posts.map(p => p.user_id))];
+        const mids  = [...new Set(posts.map(p => p.match_id))];
+        const [profRes, matchRes] = await Promise.all([
+          supabase.from('profiles').select('id, pseudo, avatar_url').in('id', uids),
+          supabase.from('matchs').select('id, home_team, away_team, home_flag, away_flag, kickoff_at').in('id', mids),
+        ]);
+        const profilesMap = Object.fromEntries((profRes.data || []).map(p => [p.id, p]));
+        const matchesMap  = Object.fromEntries((matchRes.data || []).map(m => [m.id, m]));
+
+        // Enrichir les posts avec profiles + matchs
+        const enriched = posts.map(p => ({
+          ...p,
+          profiles: profilesMap[p.user_id] || null,
+          matchs:   matchesMap[p.match_id]  || null,
+        }));
 
         // Fetch reactions
         const ids = posts.map(p => p.id);
@@ -1439,7 +1453,7 @@
           if (r.type === 'heart') { rMap[r.prono_id].heart++; if (r.user_id === user.id) rMap[r.prono_id].myHeart = true; }
         });
 
-        list.innerHTML = posts.map(p => {
+        list.innerHTML = enriched.map(p => {
           const prof  = p.profiles;
           const match = p.matchs;
           if (!prof || !match) return '';

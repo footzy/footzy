@@ -556,68 +556,76 @@
     </div>
   </div>
 
-  <!-- Match pronostique bottom sheet -->
+  <!-- Match pronostique bottom sheet — design v2 -->
   <div class="modal-overlay" id="match-prono-modal">
-    <div style="background:var(--bg-card);padding-bottom:calc(16px + env(safe-area-inset-bottom))">
-      <!-- Drag handle + close -->
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 16px 8px">
-        <h2 style="font-size:17px;font-weight:700">Mon pronostique</h2>
-        <button onclick="document.getElementById('match-prono-modal').classList.remove('open')" style="background:var(--bg-muted);border:1px solid var(--border);color:var(--text-primary);width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    <div style="background:#F2F2F0;border-radius:20px 20px 0 0;padding-bottom:calc(28px + env(safe-area-inset-bottom));font-family:'Geist',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;max-height:92dvh;overflow-y:auto">
+
+      <!-- Handle + close -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 16px 12px;background:#fff;border-radius:20px 20px 0 0;border-bottom:1px solid #E8E6E2">
+        <div style="font:italic 900 1.3rem/1 'Geist';text-transform:uppercase;letter-spacing:-0.02em;color:#0F0F0E">Votre pronostic</div>
+        <button onclick="document.getElementById('match-prono-modal').classList.remove('open')"
+          style="width:30px;height:30px;border-radius:50%;background:#F2F2F0;border:1px solid #E8E6E2;color:#0F0F0E;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
       </div>
 
       <!-- Match header -->
-      <div id="modal-match-header" style="padding:16px;text-align:center;border-bottom:1px solid var(--border)"></div>
+      <div id="modal-match-header" style="background:#fff;padding:14px 16px;text-align:center;border-bottom:1px solid #E8E6E2"></div>
 
-      <!-- Score exact -->
-      <div style="padding:20px 16px 12px">
-        <div style="font-size:12px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px">Score exact</div>
-        <div style="display:flex;align-items:center;justify-content:center;gap:20px">
-          <!-- Score équipe 1 -->
-          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1">
-            <span id="modal-flag1" style="font-size:32px"></span>
-            <span id="modal-name1" style="font-size:12px;font-weight:700;text-align:center"></span>
-            <div style="display:flex;align-items:center;gap:8px">
-              <button id="score1-minus" style="width:32px;height:32px;border-radius:50%;border:1.5px solid var(--border);background:transparent;color:var(--text-primary);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
-              <span id="score1-val" style="font-size:32px;font-weight:800;min-width:36px;text-align:center">0</span>
-              <button id="score1-plus" style="width:32px;height:32px;border-radius:50%;border:1.5px solid var(--green-accent);background:transparent;color:var(--green-accent);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
+      <!-- Score saisie -->
+      <div style="background:#fff;margin:12px 16px;border-radius:20px;padding:20px 16px;box-shadow:0 1px 4px rgba(0,0,0,0.05),0 0 0 1px #E8E6E2">
+        <div style="font:italic 900 1.4rem/1 'Geist';text-transform:uppercase;letter-spacing:-0.02em;color:#0F0F0E;margin-bottom:20px">Score exact</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:12px">
+
+          <!-- Équipe 1 -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+            <button id="score1-plus"
+              style="width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid #E8E6E2;font:700 1.2rem/1 'Geist';color:#0F0F0E;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent">+</button>
+            <div style="width:90px;height:90px;background:#F0EFED;border-radius:14px;display:flex;align-items:center;justify-content:center">
+              <span id="score1-val" style="font:900 3.6rem/1 'Geist';letter-spacing:-0.04em;color:#0F0F0E;white-space:nowrap">0</span>
             </div>
+            <button id="score1-minus"
+              style="width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid #E8E6E2;font:700 1.2rem/1 'Geist';color:#6B6966;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;opacity:0.35;pointer-events:none">−</button>
           </div>
 
-          <span style="font-size:20px;font-weight:800;color:var(--text-tertiary)">—</span>
+          <span style="font:900 1.8rem/1 'Geist';color:#A8A49F;flex-shrink:0;margin-top:20px">:</span>
 
-          <!-- Score équipe 2 -->
-          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1">
-            <span id="modal-flag2" style="font-size:32px"></span>
-            <span id="modal-name2" style="font-size:12px;font-weight:700;text-align:center"></span>
-            <div style="display:flex;align-items:center;gap:8px">
-              <button id="score2-minus" style="width:32px;height:32px;border-radius:50%;border:1.5px solid var(--border);background:transparent;color:var(--text-primary);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
-              <span id="score2-val" style="font-size:32px;font-weight:800;min-width:36px;text-align:center">0</span>
-              <button id="score2-plus" style="width:32px;height:32px;border-radius:50%;border:1.5px solid var(--green-accent);background:transparent;color:var(--green-accent);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
+          <!-- Équipe 2 -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+            <button id="score2-plus"
+              style="width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid #E8E6E2;font:700 1.2rem/1 'Geist';color:#0F0F0E;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent">+</button>
+            <div style="width:90px;height:90px;background:#F0EFED;border-radius:14px;display:flex;align-items:center;justify-content:center">
+              <span id="score2-val" style="font:900 3.6rem/1 'Geist';letter-spacing:-0.04em;color:#0F0F0E;white-space:nowrap">0</span>
             </div>
+            <button id="score2-minus"
+              style="width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid #E8E6E2;font:700 1.2rem/1 'Geist';color:#6B6966;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;opacity:0.35;pointer-events:none">−</button>
           </div>
+
         </div>
 
         <!-- Résultat calculé -->
-        <div id="modal-result-badge" style="margin-top:20px;text-align:center;padding:10px;border-radius:12px;background:var(--bg-muted);font-size:13px;font-weight:700"></div>
+        <div id="modal-result-badge" style="margin-top:16px;text-align:center;padding:10px 14px;border-radius:12px;background:#F0EFED;font:700 0.82rem/1 'Geist';color:#6B6966;text-transform:uppercase;letter-spacing:0.04em"></div>
       </div>
 
       <!-- Points info -->
-      <div style="margin:0 16px 16px;display:flex;gap:8px">
-        <div style="flex:1;background:var(--accent-bg);border:1px solid rgba(0,224,90,0.15);border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:18px;font-weight:800;color:var(--green-accent)">+3</div>
-          <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px">Bon résultat</div>
+      <div style="margin:0 16px 12px;display:flex;gap:8px">
+        <div style="flex:1;background:#fff;border:1px solid #E8E6E2;border-radius:14px;padding:12px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
+          <div style="font:900 1.1rem/1 'Geist';color:#00E05A">+3</div>
+          <div style="font:500 0.65rem/1 'Geist';color:#A8A49F;margin-top:4px;text-transform:uppercase;letter-spacing:0.06em">Bon résultat</div>
         </div>
-        <div style="flex:1;background:var(--accent-bg);border:1px solid rgba(0,224,90,0.15);border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:18px;font-weight:800;color:var(--green-accent)">+7</div>
-          <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px">Score exact</div>
+        <div style="flex:1;background:#fff;border:1px solid #E8E6E2;border-radius:14px;padding:12px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
+          <div style="font:900 1.1rem/1 'Geist';color:#00E05A">+7</div>
+          <div style="font:500 0.65rem/1 'Geist';color:#A8A49F;margin-top:4px;text-transform:uppercase;letter-spacing:0.06em">Score exact</div>
         </div>
       </div>
 
-      <!-- Save -->
+      <!-- Bouton valider -->
       <div style="padding:0 16px">
-        <button class="cta-primary" id="save-prono-btn" style="height:50px;font-size:15px">Enregistrer mon pronostique</button>
-        <div id="save-prono-msg" style="text-align:center;font-size:12px;color:var(--text-tertiary);margin-top:8px;display:none"></div>
+        <button id="save-prono-btn"
+          style="width:100%;height:56px;background:#00E05A;color:#0F0F0E;border:none;border-radius:9999px;font:900 1rem/1 'Geist';text-transform:uppercase;letter-spacing:0.04em;cursor:pointer;transition:background 150ms,transform 150ms;display:flex;align-items:center;justify-content:center">
+          Valider mon prono
+        </button>
+        <div id="save-prono-msg" style="text-align:center;font:400 0.78rem/1 'Geist';color:#A8A49F;margin-top:8px;display:none"></div>
       </div>
+
     </div>
   </div>
 
@@ -1635,9 +1643,16 @@
       const badge = document.getElementById('modal-result-badge');
       document.getElementById('score1-val').textContent = modalScore1;
       document.getElementById('score2-val').textContent = modalScore2;
-      if (modalScore1 > modalScore2)      { badge.textContent = `🟢 Victoire ${name1}`; badge.style.color = 'var(--green-accent)'; }
-      else if (modalScore1 < modalScore2) { badge.textContent = `🟢 Victoire ${name2}`; badge.style.color = 'var(--green-accent)'; }
-      else                                { badge.textContent = '🤝 Match nul'; badge.style.color = 'var(--text-secondary)'; }
+      if (modalScore1 > modalScore2)      { badge.textContent = `Victoire ${name1}`; badge.style.color = '#00E05A'; }
+      else if (modalScore1 < modalScore2) { badge.textContent = `Victoire ${name2}`; badge.style.color = '#00E05A'; }
+      else                                { badge.textContent = 'Match nul'; badge.style.color = '#6B6966'; }
+      // Disable − buttons at 0
+      const m1 = document.getElementById('score1-minus');
+      const m2 = document.getElementById('score2-minus');
+      m1.style.opacity       = modalScore1 === 0 ? '0.3' : '1';
+      m1.style.pointerEvents = modalScore1 === 0 ? 'none' : 'auto';
+      m2.style.opacity       = modalScore2 === 0 ? '0.3' : '1';
+      m2.style.pointerEvents = modalScore2 === 0 ? 'none' : 'auto';
     }
 
     function openPronoModal(m, existing) {
@@ -1691,7 +1706,7 @@
         home_score: modalScore1,
         away_score: modalScore2,
       }, { onConflict: 'user_id,match_id,groupe_id' });
-      btn.disabled = false; btn.textContent = 'Enregistrer mon pronostique';
+      btn.disabled = false; btn.textContent = 'Valider mon prono';
       if (error) { toast('Erreur ❌ ' + error.message); return; }
       toast('Pronostique enregistré ✅');
       document.getElementById('match-prono-modal').classList.remove('open');

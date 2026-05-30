@@ -859,6 +859,15 @@
     let currentSorted = [];
     let currentIsAdmin = false;
     let currentActionsLeft = 0;
+    let currentNextResetMs = null;
+
+    function formatReset(ms) {
+      const diff = ms - Date.now();
+      if (diff <= 0) return 'maintenant';
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      return h > 0 ? `dans ${h}h ${m}min` : `dans ${m}min`;
+    }
 
     // Écouter les notifications personnelles (kick + suppression groupe)
     supabase.channel(`notif-${user.id}`)
@@ -992,15 +1001,22 @@
         .select('user_id, role, bonus_malus_pts, profiles(id,pseudo,points_totaux,streak_quotidien)')
         .eq('groupe_id', currentGroupeId);
 
-      // Compter les actions bonus/malus déjà envoyées par moi dans ce groupe
+      // Compter les actions bonus/malus dans les 24 dernières heures (fenêtre glissante)
+      const MAX_ACTIONS = 3;
+      const since24h = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
       const { data: myActions } = await supabase
         .from('bonus_malus')
-        .select('id')
+        .select('id, created_at')
         .eq('groupe_id', currentGroupeId)
-        .eq('from_user_id', user.id);
+        .eq('from_user_id', user.id)
+        .gte('created_at', since24h)
+        .order('created_at', { ascending: true });
       const actionsUsed = myActions?.length || 0;
-      const MAX_ACTIONS = 3;
       const actionsLeft = Math.max(0, MAX_ACTIONS - actionsUsed);
+      // Quand la prochaine action se libèrera (oldest action + 24h)
+      const nextResetMs = actionsUsed >= MAX_ACTIONS && myActions?.length
+        ? new Date(myActions[0].created_at).getTime() + 24 * 3600 * 1000
+        : null;
 
       const myMembership = membres?.find(m => m.user_id === user.id);
 
@@ -1149,17 +1165,17 @@
         .sort((a, b) => ((b.points_totaux||0)+(b.bm_pts||0)) - ((a.points_totaux||0)+(a.bm_pts||0)));
 
       const lb = document.getElementById('groupe-leaderboard');
-      const gameEnCours = groupe.statut === 'en_cours';
       // Stocker pour le popup membre
       currentGroupe = groupe;
       currentIsAdmin = isAdmin;
       currentActionsLeft = actionsLeft;
+      currentNextResetMs = nextResetMs;
       currentSorted = sorted;
       lb.innerHTML = sorted.map((p, i) => {
         const rank    = i + 1;
         const isMe    = p.id === user.id;
         const canKick = isAdmin && !isMe && p.role !== 'admin';
-        const canBM   = gameEnCours && !isMe;
+        const canBM   = !isMe; // Toujours disponible, quota géré en 24h
         const total   = (p.points_totaux || 0) + (p.bm_pts || 0);
         const bmBadge = p.bm_pts !== 0
           ? `<span style="font:700 0.65rem/1 'Geist',system-ui;color:${p.bm_pts > 0 ? '#00E05A' : '#FF4444'};margin-left:4px">${p.bm_pts > 0 ? '+' : ''}${p.bm_pts}</span>`
@@ -1239,8 +1255,11 @@
 
     function openBMModal(targetId, targetPseudo, actionsLeft, groupe) {
       document.getElementById('bm-target-name').textContent = targetPseudo;
+      const resetTxt = currentNextResetMs ? ` · rechargement ${formatReset(currentNextResetMs)}` : '';
       document.getElementById('bm-actions-left').textContent =
-        actionsLeft > 0 ? `${actionsLeft} action${actionsLeft > 1 ? 's' : ''} restante${actionsLeft > 1 ? 's' : ''}` : '⛔ Plus d\'actions disponibles';
+        actionsLeft > 0
+          ? `${actionsLeft} action${actionsLeft > 1 ? 's' : ''} restante${actionsLeft > 1 ? 's' : ''} · reset 24h`
+          : `⛔ Épuisé${resetTxt}`;
 
       const grid = document.getElementById('bm-options');
       grid.innerHTML = BM_OPTIONS.map((o, idx) => `
@@ -1425,10 +1444,9 @@
             <div style="font-size:11px;font-weight:600;color:${currentActionsLeft > 0 ? 'var(--green-accent)' : 'var(--danger)'}">
               ${currentActionsLeft > 0
                 ? `${currentActionsLeft} action${currentActionsLeft > 1 ? 's' : ''} restante${currentActionsLeft > 1 ? 's' : ''}`
-                : 'Plus d\'actions disponibles'}
+                : currentNextResetMs ? `⛔ ${formatReset(currentNextResetMs)}` : '⛔ Épuisé'}
             </div>
           </div>
-          ${gameEnCours ? `
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             ${BM_OPTIONS.map((o, idx) => `
               <button class="mp-bm-btn" data-idx="${idx}" data-tid="${p.id}" data-tpseudo="${p.pseudo}"
@@ -1444,11 +1462,6 @@
               </button>
             `).join('')}
           </div>
-          ` : `
-          <div style="text-align:center;padding:14px;font-size:13px;color:var(--text-tertiary);background:var(--bg-surface);border-radius:12px;border:1px solid var(--border)">
-            ⏳ Les bonus/malus sont disponibles quand le jeu est lancé
-          </div>
-          `}
         </div>
         ` : ''}
 

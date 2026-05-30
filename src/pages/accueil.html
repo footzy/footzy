@@ -1871,11 +1871,48 @@
 
     // Polling live toutes les 60s + sync scores via API serveur
     setInterval(async () => {
-      // Appeler /api/sync-live pour mettre à jour les scores en DB
-      // (fallback si le cron Vercel n'est pas actif sur plan Free)
       try { await fetch('/api/sync-live'); } catch {}
       loadLive();
     }, 60_000);
+
+    // ── Push Notifications (PWA) ──
+    await registerPushNotifications();
+
+    async function registerPushNotifications() {
+      try {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+        // Enregistrer le service worker
+        const reg = await navigator.serviceWorker.register('/sw.js');
+
+        // Vérifier si déjà abonné
+        const existing = await reg.pushManager.getSubscription();
+        if (existing) return; // déjà abonné, pas besoin de re-demander
+
+        // Demander permission seulement si l'user est sur la page depuis > 3s
+        await new Promise(r => setTimeout(r, 3000));
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') return;
+
+        // Créer la subscription
+        const VAPID_PUBLIC = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly:     true,
+          applicationServerKey: VAPID_PUBLIC,
+        });
+
+        // Sauvegarder en DB
+        await fetch('/api/push-subscribe', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ subscription: sub.toJSON(), userId: user.id }),
+        });
+
+        console.log('[push] Souscription enregistrée ✅');
+      } catch(e) {
+        console.warn('[push] Inscription échouée silencieusement:', e.message);
+      }
+    }
   </script>
 </body>
 </html>

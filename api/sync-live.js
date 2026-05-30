@@ -1,18 +1,16 @@
 /**
- * /api/sync-live — Mise à jour automatique des scores live + calcul points
+ * /api/sync-live — Scores live + notifications push + calcul points
  *
- * Appelé :
- *  - Par accueil.html toutes les 60s quand un match live est en cours
- *  - Par un cron Vercel toutes les minutes (si plan Pro)
- *
+ * Appelé toutes les 60s (cron Vercel Pro ou client-triggered)
  * Actions :
- *  1. Récupère les matchs live depuis la football API
- *  2. Met à jour home_score, away_score, minute dans Supabase
- *  3. Quand finished=true → status='finished' + calcul des points de tous les pronos
- *  4. Met à jour points_totaux des profils (pronos publics uniquement)
+ *  1. Récupère matchs live depuis la football API
+ *  2. Met à jour scores/minute dans Supabase
+ *  3. Détecte nouveaux buts/cartons/changements → push notifications
+ *  4. Quand finished → calcule les points de tous les pronos
  */
 
 import { createClient } from '@supabase/supabase-js';
+import webpush from 'web-push';
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL,
@@ -22,22 +20,25 @@ const supabase = createClient(
 const API_HOST = 'free-api-live-football-data.p.rapidapi.com';
 const API_KEY  = process.env.VITE_RAPIDAPI_KEY;
 
+// Config Web Push VAPID
+webpush.setVapidDetails(
+  'mailto:support@footzy.app',
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
 
   try {
     // ── 1. Récupérer les matchs live depuis l'API football ──
     const apiRes = await fetch(`https://${API_HOST}/football-current-live`, {
-      headers: {
-        'x-rapidapi-host': API_HOST,
-        'x-rapidapi-key':  API_KEY,
-      }
+      headers: { 'x-rapidapi-host': API_HOST, 'x-rapidapi-key': API_KEY }
     });
     const apiData = await apiRes.json();
     const liveFromApi = apiData?.response?.live || apiData?.response || [];
 
     if (!liveFromApi.length) {
-      // Pas de match en direct → vérifier si des matchs schedulés doivent passer live
       await checkScheduledToLive();
       return res.json({ status: 'ok', live: 0, updated: 0, finished: 0 });
     }
@@ -78,12 +79,26 @@ export default async function handler(req, res) {
       await supabase.from('matchs').update(updateData).eq('id', dbMatch.id);
       updated++;
 
+      // ── 3. Détecter les événements (buts, cartons, changements) ──
+      await detectAndNotifyEvents(dbMatch, apiMatch, updateData);
+
       if (isFinished) {
         justFinished.push({ ...dbMatch, ...updateData });
+        // Notif fin de match
+        const homeFlag = dbMatch.home_flag || '⚽';
+        const awayFlag = dbMatch.away_flag || '⚽';
+        await sendPushToAll({
+          type:    'fulltime',
+          title:   `⏱ Coup de sifflet final !`,
+          body:    `${homeFlag} ${dbMatch.home_team} ${updateData.home_score} - ${updateData.away_score} ${dbMatch.away_team} ${awayFlag}`,
+          tag:     `ft-${dbMatch.id}`,
+          vibrate: [200, 100, 200],
+          data:    { url: '/src/pages/accueil.html' },
+        });
       }
     }
 
-    // ── 3. Calcul automatique des points pour les matchs terminés ──
+    // ── 4. Calcul automatique des points pour les matchs terminés ──
     for (const match of justFinished) {
       await calculatePoints(match);
     }
@@ -193,4 +208,106 @@ async function calculatePoints(match) {
   }
 
   console.log(`[sync-live] Points calculés pour ${updates.length} pronos, match: ${match.home_team} ${rh}-${ra} ${match.away_team}`);
+}
+
+// ── Détecter nouveaux buts / cartons / changements et envoyer push ──
+async function detectAndNotifyEvents(dbMatch, apiMatch, newData) {
+  try {
+    const matchId = dbMatch.id;
+    const homeFlag = dbMatch.home_flag || '⚽';
+    const awayFlag = dbMatch.away_flag || '⚽';
+    const ht = dbMatch.home_team, at = dbMatch.away_team;
+
+    // But(s) marqué(s) — comparer avec le score précédent en DB
+    const prevHome = dbMatch.home_score ?? 0;
+    const prevAway = dbMatch.away_score ?? 0;
+    const newHome  = newData.home_score ?? prevHome;
+    const newAway  = newData.away_score ?? prevAway;
+
+    if (newHome > prevHome) {
+      const scorer = await getLastScorer(matchId, 'home');
+      await sendPushToAll({
+        type:    'goal',
+        title:   `⚽ BUT ! ${homeFlag} ${ht}`,
+        body:    `${ht} ${newHome} - ${newAway} ${at}${scorer ? ` · ${scorer}` : ''} (${newData.minute}')`,
+        tag:     `goal-${matchId}-${newHome}-${newAway}`,
+        vibrate: [100, 30, 100, 30, 200],
+        data:    { url: '/src/pages/accueil.html' },
+      });
+    }
+    if (newAway > prevAway) {
+      const scorer = await getLastScorer(matchId, 'away');
+      await sendPushToAll({
+        type:    'goal',
+        title:   `⚽ BUT ! ${awayFlag} ${at}`,
+        body:    `${ht} ${newHome} - ${newAway} ${at}${scorer ? ` · ${scorer}` : ''} (${newData.minute}')`,
+        tag:     `goal-${matchId}-${newHome}-${newAway}`,
+        vibrate: [100, 30, 100, 30, 200],
+        data:    { url: '/src/pages/accueil.html' },
+      });
+    }
+
+    // Mi-temps
+    if (!dbMatch.ht_home && apiMatch.status?.halfs?.secondHalfStarted && newData.minute > 45) {
+      await supabase.from('matchs').update({
+        ht_home: newHome, ht_away: newAway
+      }).eq('id', matchId);
+      await sendPushToAll({
+        type:  'halftime',
+        title: `⏸ Mi-temps`,
+        body:  `${homeFlag} ${ht} ${newHome} - ${newAway} ${at} ${awayFlag}`,
+        tag:   `ht-${matchId}`,
+        data:  { url: '/src/pages/accueil.html' },
+      });
+    }
+
+  } catch(e) {
+    console.warn('detectAndNotifyEvents error:', e.message);
+  }
+}
+
+// ── Récupérer le dernier buteur depuis l'API ──
+async function getLastScorer(matchId, side) {
+  try {
+    const ep = side === 'home' ? 'football-get-hometeam-lineup' : 'football-get-awayteam-lineup';
+    // Utiliser match_event_all_stats pour les buteurs si disponible
+    const r = await fetch(`https://${API_HOST}/football-get-match-all-stats?match_id=${matchId}`, {
+      headers: { 'x-rapidapi-host': API_HOST, 'x-rapidapi-key': API_KEY }
+    });
+    const d = await r.json();
+    const goals = d?.response?.goals || d?.goals || [];
+    const last = [...goals].reverse().find(g => g.side === side || g.team === side);
+    return last?.player || last?.name || null;
+  } catch { return null; }
+}
+
+// ── Envoyer une push notification à TOUS les users abonnés ──
+async function sendPushToAll(payload) {
+  try {
+    const { data: subs } = await supabase
+      .from('push_subscriptions')
+      .select('endpoint, p256dh, auth');
+
+    if (!subs?.length) return;
+
+    const notifPayload = JSON.stringify(payload);
+    const results = await Promise.allSettled(
+      subs.map(sub =>
+        webpush.sendNotification(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+          notifPayload
+        ).catch(e => {
+          // Subscription expirée → supprimer
+          if (e.statusCode === 410) {
+            supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
+          }
+        })
+      )
+    );
+
+    const sent = results.filter(r => r.status === 'fulfilled').length;
+    console.log(`[push] ${payload.title} → ${sent}/${subs.length} envoyées`);
+  } catch(e) {
+    console.warn('sendPushToAll error:', e.message);
+  }
 }

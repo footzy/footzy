@@ -174,69 +174,6 @@
       flex-shrink: 0;
     }
 
-    /* Visibility selector */
-    .groupe-select-wrap {
-      border-top: 1px solid var(--color-border);
-      padding-top: 12px;
-    }
-    .groupe-select-label {
-      font: 700 0.58rem/1 'Geist';
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--color-text-tertiary);
-      margin-bottom: 6px;
-    }
-    .visibility-btn {
-      width: 100%;
-      height: 44px;
-      background: var(--color-surface-score);
-      border: 1.5px solid var(--color-border);
-      border-radius: var(--radius-lg);
-      padding: 0 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      transition: border-color 150ms ease;
-    }
-    .visibility-btn:active { border-color: var(--color-green); }
-    .visibility-btn-left { display: flex; align-items: center; gap: 8px; }
-    .visibility-icon { font-size: 1.05rem; line-height: 1; }
-    .visibility-val {
-      font: 600 0.88rem/1 'Geist';
-      color: var(--color-text-primary);
-    }
-    .visibility-option {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 16px;
-      border-bottom: 1px solid var(--color-border);
-      cursor: pointer;
-      transition: background 120ms ease;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .visibility-option:last-child { border-bottom: none; }
-    .visibility-option:active { background: var(--color-bg); }
-    .visibility-opt-icon { font-size: 1.4rem; line-height: 1; flex-shrink: 0; }
-    .visibility-opt-info { flex: 1; min-width: 0; }
-    .visibility-opt-name {
-      font: 700 0.9rem/1 'Geist';
-      color: var(--color-text-primary);
-      margin-bottom: 3px;
-    }
-    .visibility-opt-sub {
-      font: 400 0.7rem/1 'Geist';
-      color: var(--color-text-tertiary);
-    }
-    .visibility-opt-check {
-      color: var(--color-green);
-      font-size: 1rem;
-      font-weight: 700;
-      flex-shrink: 0;
-    }
-
     /* ── [C] Saisie score ── */
     .prono-section {
       background: var(--color-surface);
@@ -704,17 +641,6 @@
             <span class="match-header-name" id="away-name">—</span>
           </div>
         </div>
-        <!-- Visibility selector -->
-        <div class="groupe-select-wrap">
-          <div class="groupe-select-label">Pronostiquer pour</div>
-          <button class="visibility-btn" id="visibility-btn">
-            <div class="visibility-btn-left">
-              <span class="visibility-icon" id="visibility-icon">🌍</span>
-              <span class="visibility-val" id="visibility-val">Public</span>
-            </div>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--color-text-tertiary)"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-        </div>
       </div>
 
       <!-- ── [C] Saisie score ── -->
@@ -840,7 +766,7 @@
     import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
     import { searchPlayer } from '/src/js/lib/football-api.js';
     import { isBeforeKickoff } from '/src/js/lib/utils.js';
-    import { checkPremiumAccess, createCheckout, PLANS } from '/src/js/lib/whop.js';
+    import { checkPremiumAccess } from '/src/js/lib/whop.js';
 
     (async () => {
     const user    = await requireAuth();
@@ -899,108 +825,6 @@
       document.getElementById('chip-add-btn').style.display = 'none';
     }
 
-    // Load groups
-    const { data: memberships } = await supabase
-      .from('groupe_membres')
-      .select('groupe_id, groupes(id,nom,code)')
-      .eq('user_id', user.id);
-
-    // Build visibility options : Public (Premium only) en premier, puis les groupes
-    const visibilityOptions = [
-      {
-        id:     'public',
-        label:  'Public',
-        sub:    isPremium ? 'Visible dans le feed communauté' : 'Réservé aux membres Premium',
-        icon:   '🌍',
-        locked: !isPremium,
-      },
-      ...(memberships || []).map(m => ({
-        id:     m.groupes.id,
-        label:  m.groupes.nom,
-        sub:    `Groupe · ${m.groupes.code || ''}`,
-        icon:   '👥',
-        locked: false,
-      }))
-    ];
-    // Par défaut : première option non verrouillée
-    let selectedVis = visibilityOptions.find(o => !o.locked) || visibilityOptions[0];
-
-    function updateVisibilityBtn() {
-      document.getElementById('visibility-icon').textContent = selectedVis.locked ? '🔒' : selectedVis.icon;
-      document.getElementById('visibility-val').textContent  = selectedVis.label;
-    }
-    updateVisibilityBtn();
-
-    // Upsell Premium (feed public)
-    function showPublicUpsell() {
-      const ov = document.createElement('div');
-      ov.className = 'sheet-overlay';
-      ov.innerHTML = `
-        <div class="sheet">
-          <div class="sheet-handle"></div>
-          <div style="padding:28px 20px 8px;text-align:center">
-            <div style="font-size:2.8rem;margin-bottom:14px">⭐</div>
-            <div style="font:italic 900 1.6rem/1.1 'Geist';text-transform:uppercase;letter-spacing:-0.02em;margin-bottom:10px">Feed Communauté</div>
-            <div style="font:400 0.88rem/1.6 'Geist';color:var(--color-text-secondary);margin-bottom:24px">
-              Partage tes pronostics publiquement,<br>montre ton niveau à toute la communauté<br>et récolte des réactions 🔥❤️
-            </div>
-            <button id="upsell-cta" style="width:100%;height:54px;background:var(--color-green);color:var(--color-dark);border:none;border-radius:9999px;font:900 0.95rem/1 'Geist';text-transform:uppercase;letter-spacing:0.04em;cursor:pointer;margin-bottom:10px">
-              Passer Premium ✦
-            </button>
-            <button id="upsell-cancel" style="width:100%;height:40px;background:transparent;border:none;font:500 0.82rem/1 'Geist';color:var(--color-text-secondary);cursor:pointer">
-              Pas maintenant
-            </button>
-          </div>
-        </div>`;
-      document.body.appendChild(ov);
-      ov.querySelector('#upsell-cta').addEventListener('click', () => {
-        createCheckout(PLANS.premium, user.id, user.email);
-        ov.remove();
-      });
-      ov.querySelector('#upsell-cancel').addEventListener('click', () => ov.remove());
-      ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
-    }
-
-    document.getElementById('visibility-btn').addEventListener('click', () => {
-      const overlay = document.createElement('div');
-      overlay.className = 'sheet-overlay';
-      overlay.innerHTML = `
-        <div class="sheet">
-          <div class="sheet-handle"></div>
-          <div class="sheet-title">
-            <span>Pronostiquer pour</span>
-            <button class="sheet-close" id="vis-close">✕</button>
-          </div>
-          ${visibilityOptions.map(opt => `
-            <div class="visibility-option${opt.locked ? ' visibility-option--locked' : ''}" data-id="${opt.id}" data-locked="${opt.locked}">
-              <span class="visibility-opt-icon" style="${opt.locked ? 'opacity:.45' : ''}">${opt.icon}</span>
-              <div class="visibility-opt-info">
-                <div class="visibility-opt-name" style="${opt.locked ? 'color:var(--color-text-tertiary)' : ''}">${opt.label}</div>
-                <div class="visibility-opt-sub">${opt.sub}</div>
-              </div>
-              ${opt.locked
-                ? '<span style="background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.4);color:#F5A623;padding:3px 8px;border-radius:999px;font:700 0.6rem/1 Geist;text-transform:uppercase;letter-spacing:.06em;flex-shrink:0">⭐ PREMIUM</span>'
-                : (opt.id === selectedVis.id ? '<span class="visibility-opt-check">✓</span>' : '')}
-            </div>`).join('')}
-        </div>`;
-      document.body.appendChild(overlay);
-
-      overlay.querySelector('#vis-close').addEventListener('click', () => overlay.remove());
-      overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
-      overlay.querySelectorAll('.visibility-option').forEach(item => {
-        item.addEventListener('click', () => {
-          if (item.dataset.locked === 'true') {
-            overlay.remove();
-            showPublicUpsell();
-            return;
-          }
-          selectedVis = visibilityOptions.find(o => o.id === item.dataset.id);
-          updateVisibilityBtn();
-          overlay.remove();
-          if (navigator.vibrate) navigator.vibrate(15);
-        });
-      });
-    });
 
     // State
     let homeScore = 0, awayScore = 0;
@@ -1358,11 +1182,6 @@
       errEl.style.display = 'none';
       if (!beforeKickoff) return;
 
-      // Sécurité : le feed public est réservé aux Premium
-      if (selectedVis.id === 'public' && !isPremium) {
-        showPublicUpsell();
-        return;
-      }
 
       const btn = document.getElementById('btn-valider');
       btn.disabled = true;
@@ -1380,7 +1199,7 @@
         ht_away:      htAwayScore,
         yellow_cards: yellowCards,
       };
-      const selectedGroupeId = selectedVis.id !== 'public' ? selectedVis.id : null;
+      const selectedGroupeId = null; // groupe_id géré par la page groupe dédiée
 
       try {
         // Récupérer tous les pronos existants pour user+match

@@ -1166,9 +1166,25 @@
         })();
       }
 
-      // ── Recherche (tous) ──
+      // ── Helper : ajouter le joueur tapé directement ──
+      function addPlayerManually(nom) {
+        if (!nom || buteurs.length >= 3 || buteurs.includes(nom)) return;
+        buteurs.push(nom);
+        renderChips();
+        overlay.remove();
+        if (navigator.vibrate) navigator.vibrate(20);
+      }
+
+      // ── Recherche + fallback saisie manuelle ──
       setTimeout(() => input.focus(), 300);
       let searchTimeout;
+      input.addEventListener('keydown', e => {
+        // Entrée = ajouter directement si pas de résultats API
+        if (e.key === 'Enter') {
+          const q = input.value.trim();
+          if (q.length >= 2) addPlayerManually(q);
+        }
+      });
       input.addEventListener('input', () => {
         clearTimeout(searchTimeout);
         const q = input.value.trim();
@@ -1177,7 +1193,18 @@
           try {
             const res = await searchPlayer(q);
             if (!res.length) {
-              results.innerHTML = '<div class="player-results-empty">Aucun joueur trouvé</div>';
+              // Pas de résultat API → proposer d'ajouter manuellement
+              results.innerHTML = `
+                <div style="padding:14px 16px">
+                  <div style="font:400 0.78rem/1 'Geist';color:var(--color-text-tertiary);margin-bottom:10px">
+                    Aucun résultat API — tu peux ajouter directement :
+                  </div>
+                  <div class="player-result" id="manual-add" data-name="${q}" style="display:flex;align-items:center;justify-content:space-between">
+                    <span>${q}</span>
+                    <span style="font:700 0.7rem/1 'Geist';color:var(--color-green);background:var(--color-green-bg);padding:4px 8px;border-radius:999px">+ Ajouter</span>
+                  </div>
+                </div>`;
+              results.querySelector('#manual-add')?.addEventListener('click', () => addPlayerManually(q));
               return;
             }
             results.innerHTML = res.slice(0, 6).map(p => {

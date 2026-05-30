@@ -226,16 +226,22 @@
       <h1 id="group-name" style="font:900 italic 30px/1.05 var(--font);text-transform:uppercase;letter-spacing:-0.02em;color:#0F0F0E">Chargement…</h1>
     </div>
 
-    <!-- Invite code + switcher -->
-    <div class="invite-bar">
-      <div class="invite-code-box">
-        <div class="invite-code-label">INVITE CODE</div>
-        <div class="invite-code-row">
-          <span id="group-code" class="invite-code-val">—</span>
-          <button class="invite-share-btn" id="share-btn" title="Partager">
+    <!-- Invite code + gage pill (une seule ligne) -->
+    <div style="display:flex;gap:8px;padding:0 16px 10px;align-items:stretch">
+      <!-- Invite code -->
+      <div style="flex:1;background:#FAFAF8;border:1px solid #E0DCD6;border-radius:10px;padding:8px 12px">
+        <div style="font:700 9px/1 'Geist',system-ui;color:#A09890;text-transform:uppercase;letter-spacing:0.10em;margin-bottom:5px">INVITE CODE</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span id="group-code" style="font:700 15px/1 'Geist',system-ui;color:#0F0F0E;letter-spacing:0.05em">—</span>
+          <button id="share-btn" title="Partager" style="background:none;border:none;cursor:pointer;color:#6B6560;display:flex;align-items:center;padding:2px">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
           </button>
         </div>
+      </div>
+      <!-- Gage pill — affiché par JS quand jeu en cours -->
+      <div id="gage-pill-bar" style="display:none;background:#0F0F0E;border-radius:10px;padding:8px 12px;min-width:110px;max-width:150px;cursor:pointer">
+        <div style="font:700 9px/1 'Geist',system-ui;color:#00E05A;text-transform:uppercase;letter-spacing:0.10em;margin-bottom:5px">GAGE EN COURS</div>
+        <div id="gage-pill-text" style="font:600 12px/1.3 'Geist',system-ui;color:#FAFAF8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">—</div>
       </div>
     </div>
 
@@ -757,6 +763,10 @@
       // Gage display
       gageDisplay.textContent = groupe.gage || 'Aucun gage défini…';
       gageDisplay.style.color = groupe.gage ? 'var(--text-primary)' : 'var(--text-tertiary)';
+      // Gage pill dans la barre d'invite
+      const gagePillBar = document.getElementById('gage-pill-bar');
+      const gagePillText = document.getElementById('gage-pill-text');
+      if (gagePillBar && groupe.gage && evtActive) { gagePillBar.style.display = ''; if (gagePillText) gagePillText.textContent = groupe.gage; }
 
       // Admin : édition gage (seulement si événement pas terminé)
       if (isAdmin && !evtEnded) {

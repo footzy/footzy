@@ -382,13 +382,15 @@
 
     /* Leaderboard header colonnes */
     .lb-header {
-      display: flex; padding: 12px 30px 8px;
-      font: 500 0.62rem/1 'Geist', system-ui;
-      color: var(--pg-text-2); letter-spacing: 0.08em; text-transform: uppercase;
+      display: flex; align-items: center;
+      padding: 4px 16px 10px;
+      font: 700 0.6rem/1 'Geist', system-ui;
+      color: #A8A49F; letter-spacing: 0.1em; text-transform: uppercase;
     }
-    .lb-header__rank { width: 24px; }
-    .lb-header__name { flex: 1; padding-left: 52px; }
-    .lb-header__score { width: 80px; text-align: right; }
+    /* 20px rank + 12px margin + 44px avatar + 12px margin = 88px */
+    .lb-header__rank { width: 20px; flex-shrink: 0; text-align: center; }
+    .lb-header__name { flex: 1; padding-left: 68px; }
+    .lb-header__score { text-align: right; flex-shrink: 0; }
 
     /* Skeleton */
     .lb-skeleton {
@@ -398,49 +400,81 @@
     }
     @keyframes skShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-    /* Rows classement v2 */
+    /* ── Classement redesign v3 ── */
     @keyframes rowIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
     .lb2 {
-      display: flex; align-items: center; padding: 12px 14px;
-      background: var(--pg-surface); border-radius: 16px; margin: 0 16px 8px;
-      min-height: 64px; box-shadow: var(--pg-shadow); cursor: pointer;
+      display: flex; align-items: center;
+      padding: 12px 16px;
+      background: #FFFFFF;
+      border-radius: 18px;
+      margin: 0 16px 8px;
+      min-height: 68px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
       animation: rowIn 300ms ease-out both;
+      transition: opacity 120ms ease;
     }
-    .lb2:active { opacity: 0.8; }
+    .lb2:active { opacity: 0.82; }
     .lb2--me { background: var(--pg-green) !important; box-shadow: none; }
 
-    .lb2__rank { font: 900 1.1rem/1 'Geist', system-ui; color: var(--pg-text-2); width: 24px; flex-shrink: 0; text-align: center; }
-    .lb2__rank--1 { color: var(--pg-gold); font-size: 1.3rem; }
-    .lb2__rank--2 { color: var(--pg-silver); }
-    .lb2__rank--3 { color: var(--pg-bronze); }
-    .lb2--me .lb2__rank { color: rgba(255,255,255,0.8); }
-
-    .lb2__av {
-      border-radius: 50%; background: #E0DDD8; display: flex; align-items: center;
-      justify-content: center; font: 700 0.75rem/1 'Geist', system-ui;
-      color: var(--pg-text-1); overflow: hidden; flex-shrink: 0; margin: 0 12px;
+    /* Rang */
+    .lb2__rank {
+      font: 700 0.8rem/1 'Geist', system-ui;
+      color: #C8C5C0;
+      width: 20px; flex-shrink: 0; text-align: center;
     }
-    .lb2__av--1 { width: 44px; height: 44px; font-size: 0.9rem; }
-    .lb2__av--2 { width: 40px; height: 40px; font-size: 0.85rem; }
-    .lb2__av--3 { width: 36px; height: 36px; }
-    .lb2__av--n { width: 32px; height: 32px; font-size: 0.7rem; }
-    .lb2--me .lb2__av { border: 2.5px solid white; background: rgba(0,0,0,0.15); color: white; }
+    .lb2__rank--1 { color: #C4972A; font-size: 1.05rem; font-weight: 900; }
+    .lb2__rank--2 { color: #9CA3AF; font-weight: 900; font-size: 0.95rem; }
+    .lb2__rank--3 { color: #CD7C3F; font-weight: 900; }
+    .lb2--me .lb2__rank { color: rgba(255,255,255,0.65); }
 
+    /* Avatar — taille unique 44px pour tous les rangs */
+    .lb2__av {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: #E8E6E2;
+      display: flex; align-items: center; justify-content: center;
+      font: 700 0.9rem/1 'Geist', system-ui;
+      color: #0F0F0E;
+      overflow: hidden; flex-shrink: 0;
+      margin: 0 12px;
+    }
+    .lb2__av img { width: 100%; height: 100%; object-fit: cover; }
+    /* Annule les variantes de taille */
+    .lb2__av--1, .lb2__av--2, .lb2__av--3, .lb2__av--n {
+      width: 44px; height: 44px; font-size: 0.9rem;
+    }
+    .lb2--me .lb2__av { border: 2px solid rgba(255,255,255,0.45); background: rgba(0,0,0,0.12); color: white; }
+
+    /* Infos */
     .lb2__info { flex: 1; min-width: 0; }
-    .lb2__name { font: 700 0.95rem/1.2 'Geist', system-ui; color: var(--pg-text-1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .lb2--me .lb2__name { font-weight: 900; color: white; }
-    .lb2__sub { font: 500 0.58rem/1 'Geist', system-ui; color: var(--pg-text-2); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; }
-    .lb2--me .lb2__sub { color: rgba(255,255,255,0.75); }
+    .lb2__name {
+      font: 700 0.95rem/1.2 'Geist', system-ui;
+      color: #0F0F0E;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .lb2--me .lb2__name { font-weight: 900; color: white; font-size: 1rem; }
+    .lb2__sub {
+      font: 700 0.58rem/1 'Geist', system-ui;
+      color: #A8A49F;
+      letter-spacing: 0.06em; text-transform: uppercase; margin-top: 4px;
+    }
+    .lb2--me .lb2__sub { color: rgba(255,255,255,0.72); }
 
-    .lb2__score { font: 900 1.5rem/1 'Geist', system-ui; color: var(--pg-text-1); text-align: right; white-space: nowrap; flex-shrink: 0; }
-    .lb2__score--1 { font-size: 2.2rem; }
-    .lb2__score--2 { font-size: 2.0rem; }
-    .lb2__score--3 { font-size: 1.8rem; }
-    .lb2__score--zero { color: var(--pg-text-2); }
+    /* Score — grand pour tous */
+    .lb2__score {
+      font: 900 1.75rem/1 'Geist', system-ui;
+      color: #0F0F0E;
+      text-align: right; white-space: nowrap; flex-shrink: 0;
+      letter-spacing: -0.03em;
+    }
+    .lb2__score--1 { font-size: 2.4rem; }
+    .lb2__score--2 { font-size: 2.1rem; }
+    .lb2__score--3 { font-size: 1.9rem; }
+    .lb2__score--zero { color: #C8C5C0; font-size: 1.5rem; }
     .lb2--me .lb2__score { color: white; }
-
-    .lb2__kick { background: none; border: 1px solid var(--pg-danger); color: var(--pg-danger); border-radius: 8px; padding: 4px 8px; font: 600 0.7rem/1 'Geist', system-ui; cursor: pointer; margin-right: 6px; flex-shrink: 0; }
-    .lb2__bm { background: var(--pg-surface); border: 1.5px solid var(--pg-border); border-radius: 8px; padding: 4px 10px; font-size: 14px; cursor: pointer; margin-right: 6px; flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -1177,16 +1211,22 @@
         const canKick = isAdmin && !isMe && p.role !== 'admin';
         const canBM   = !isMe; // Toujours disponible, quota géré en 24h
         const total   = (p.points_totaux || 0) + (p.bm_pts || 0);
+        // Badge BM (affiché sous le score)
+        const bmColor = p.bm_pts > 0 ? '#00C44F' : '#E8453C';
         const bmBadge = p.bm_pts !== 0
-          ? `<span style="font:700 0.65rem/1 'Geist',system-ui;color:${p.bm_pts > 0 ? '#00E05A' : '#FF4444'};margin-left:4px">${p.bm_pts > 0 ? '+' : ''}${p.bm_pts}</span>`
+          ? `<div style="font:700 0.58rem/1 'Geist',system-ui;color:${bmColor};text-align:right;margin-top:3px;letter-spacing:0.04em">${p.bm_pts > 0 ? '+' : ''}${p.bm_pts} BM</div>`
           : '';
         const rk = rank === 1 ? '1' : rank === 2 ? '2' : rank === 3 ? '3' : 'n';
+
+        // Avatar : photo ou initiales
         const avatarInner = p.avatar_url
-          ? `<img src="${p.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+          ? `<img src="${p.avatar_url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='<span>${(p.pseudo?.[0]||'?').toUpperCase()}</span>'">`
           : `<span>${(p.pseudo?.[0]||'?').toUpperCase()}</span>`;
+
+        // Sous-titre
         const sub = isMe
-          ? (rank === 1 ? '🥇 EN TÊTE !' : 'EN PROGRESSION')
-          : p.streak_quotidien > 0 ? `🔥 ${p.streak_quotidien}j` : '';
+          ? (rank === 1 ? '🥇 EN TÊTE !' : rank <= 3 ? '🏆 SUR LE PODIUM' : '⚡ EN PROGRESSION')
+          : p.streak_quotidien >= 3 ? `🔥 ${p.streak_quotidien}J DE STREAK` : '';
 
         return `<div class="lb2${isMe ? ' lb2--me' : ''}" data-memberid="${p.id}" style="${silent ? 'animation:none' : `animation-delay:${i * 60}ms`}">
           <div class="lb2__rank lb2__rank--${rk}">${rank}</div>
@@ -1195,9 +1235,10 @@
             <div class="lb2__name leaderboard-pseudo">${isMe ? 'VOUS' : p.pseudo}</div>
             ${sub ? `<div class="lb2__sub">${sub}</div>` : ''}
           </div>
-          ${canKick ? `<button class="kick-btn lb2__kick" data-uid="${p.id}">Exclure</button>` : ''}
-          ${canBM   ? `<button class="bm-btn lb2__bm" data-uid="${p.id}" data-pseudo="${p.pseudo}" title="Bonus / Malus">⚡</button>` : ''}
-          <div class="lb2__score lb2__score--${rk}${total === 0 ? ' lb2__score--zero' : ''}">${total}${bmBadge}</div>
+          <div style="text-align:right;flex-shrink:0">
+            <div class="lb2__score lb2__score--${rk}${total === 0 ? ' lb2__score--zero' : ''}">${total}</div>
+            ${bmBadge}
+          </div>
         </div>`;
       }).join('');
 

@@ -127,16 +127,21 @@
     .anim-4 { animation-delay: 220ms; }
     .anim-5 { animation-delay: 280ms; }
 
-    /* ── Hero titre ── */
-    .hero-title {
-      padding: 24px 16px 20px;
+    /* ── Titres de section grands ── */
+    .section-big-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 0 16px;
+      margin-bottom: 14px;
+      gap: 10px;
     }
-    .hero-title h1 {
-      font: italic 900 3rem/0.95 'Geist';
+    .section-big-title {
+      font: italic 900 2.2rem/0.95 'Geist';
       text-transform: uppercase;
       letter-spacing: -0.03em;
       color: var(--color-text-primary);
-      margin-bottom: 8px;
+      flex: 1;
     }
     .hero-live-badge {
       display: inline-flex;
@@ -149,6 +154,8 @@
       font: 700 0.72rem/1 'Geist';
       letter-spacing: 0.06em;
       text-transform: uppercase;
+      flex-shrink: 0;
+      margin-top: 4px;
     }
     .live-dot {
       width: 7px; height: 7px;
@@ -157,7 +164,7 @@
       animation: livePulse 1.4s ease-in-out infinite;
     }
 
-    /* ── Section label ── */
+    /* ── Section label (petit — défi, actu) ── */
     .section-label {
       display: flex;
       align-items: center;
@@ -178,10 +185,58 @@
     }
 
     /* ── Section spacing ── */
-    .matches-live-section  { margin-bottom: 28px; }
+    .matches-live-section  { padding-top: 20px; margin-bottom: 28px; }
     .upcoming-section      { margin-bottom: 28px; }
     .defi-section          { margin-bottom: 28px; }
     .actu-section          { margin-bottom: 28px; }
+
+    /* ── Carte countdown (prochain match) ── */
+    .match-countdown-card {
+      flex-shrink: 0;
+      width: calc(100vw - 48px);
+      max-width: 382px;
+      background: var(--color-surface);
+      border-radius: var(--radius-xl);
+      padding: 16px;
+      box-shadow: var(--shadow-card);
+      scroll-snap-align: start;
+      position: relative;
+      overflow: hidden;
+    }
+    .match-countdown-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--color-border);
+      border-radius: 20px 20px 0 0;
+    }
+    .match-countdown-badge {
+      background: var(--color-dark);
+      color: var(--color-text-inverse);
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      font: 700 0.72rem/1 'Geist';
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+    .countdown-vs-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+    .countdown-vs {
+      font: italic 900 2.8rem/1 'Geist';
+      letter-spacing: -0.04em;
+      color: var(--color-text-tertiary);
+    }
+    .countdown-kickoff {
+      font: 700 0.78rem/1 'Geist';
+      color: var(--color-text-secondary);
+      letter-spacing: 0.02em;
+    }
 
     /* ── Carousel live ── */
     .matches-live-scroll {
@@ -566,18 +621,15 @@
 
     <div class="content">
 
-      <!-- ── [B] Hero titre ── -->
-      <section class="hero-title anim anim-1">
-        <h1>Aujourd'hui</h1>
-        <div class="hero-live-badge" id="hero-live-badge" style="display:none">
-          <span class="live-dot"></span>
-          <span id="hero-live-count">0 match en direct</span>
-        </div>
-      </section>
-
       <!-- ── [C] Matchs en direct ── -->
-      <section class="matches-live-section anim anim-2" id="live-section">
-        <div class="section-label">Matchs en direct</div>
+      <section class="matches-live-section anim anim-1" id="live-section">
+        <div class="section-big-header">
+          <span class="section-big-title">Matchs en direct</span>
+          <div class="hero-live-badge" id="hero-live-badge" style="display:none">
+            <span class="live-dot"></span>
+            <span id="hero-live-count">LIVE</span>
+          </div>
+        </div>
         <div class="matches-live-scroll" id="live-scroll">
           <div class="match-live-card" style="display:flex;align-items:center;justify-content:center;min-height:160px">
             <div style="text-align:center">
@@ -589,8 +641,10 @@
       </section>
 
       <!-- ── [D] Prochains matchs ── -->
-      <section class="upcoming-section anim anim-3" id="upcoming-section">
-        <div class="section-label">Prochains matchs</div>
+      <section class="upcoming-section anim anim-2" id="upcoming-section">
+        <div class="section-big-header">
+          <span class="section-big-title">Prochains matchs</span>
+        </div>
         <div id="upcoming-list">
           <div class="match-upcoming-card"><div class="skeleton" style="width:100%;height:20px"></div></div>
           <div class="match-upcoming-card"><div class="skeleton" style="width:100%;height:20px"></div></div>
@@ -598,7 +652,7 @@
       </section>
 
       <!-- ── [E] Défi quotidien ── -->
-      <section class="defi-section anim anim-4">
+      <section class="defi-section anim anim-3">
         <div class="section-label">Défi quotidien</div>
         <div class="defi-card" id="defi-card">
           <div class="defi-card-top">
@@ -616,7 +670,7 @@
       </section>
 
       <!-- ── [F] Actu Flash ── -->
-      <section class="actu-section anim anim-5">
+      <section class="actu-section anim anim-4">
         <div class="section-label">Actu Flash</div>
         <div id="actu-list">
           <div style="margin:0 16px"><div class="skeleton" style="height:80px;border-radius:16px;margin-bottom:8px"></div></div>
@@ -710,8 +764,61 @@
     }
 
     // ─────────────────────────────────────────
-    // [C] MATCHS EN DIRECT
+    // [C] MATCHS EN DIRECT + COUNTDOWN
     // ─────────────────────────────────────────
+    let _countdownTimer = null;
+
+    function formatCountdown(kickoffAt) {
+      const diff = new Date(kickoffAt) - Date.now();
+      if (diff <= 0) return '⚡ Coup d\'envoi !';
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      if (h > 0) return `${h}h ${String(m).padStart(2,'0')}min`;
+      return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+
+    function showCountdownCard(match) {
+      if (_countdownTimer) clearInterval(_countdownTimer);
+      const scroll  = document.getElementById('live-scroll');
+      const phase   = phaseLabel(match);
+      const kickoff = new Date(match.kickoff_at);
+      const hour    = kickoff.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+      scroll.innerHTML = `
+        <div class="match-countdown-card">
+          <div class="match-card-top">
+            <span class="match-phase">${phase}</span>
+            <span class="match-countdown-badge" id="cd-badge">⏱ ${formatCountdown(match.kickoff_at)}</span>
+          </div>
+          <div class="match-score-row">
+            <div class="match-team">
+              <span class="match-team-flag">${match.home_flag || ''}</span>
+              <span class="match-team-code">${match.home_team?.slice(0,3).toUpperCase() || ''}</span>
+            </div>
+            <div class="countdown-vs-block">
+              <span class="countdown-vs">VS</span>
+              <span class="countdown-kickoff">${hour}</span>
+            </div>
+            <div class="match-team">
+              <span class="match-team-flag">${match.away_flag || ''}</span>
+              <span class="match-team-code">${match.away_team?.slice(0,3).toUpperCase() || ''}</span>
+            </div>
+          </div>
+        </div>`;
+
+      _countdownTimer = setInterval(() => {
+        const badge = document.getElementById('cd-badge');
+        if (!badge) { clearInterval(_countdownTimer); return; }
+        const text = formatCountdown(match.kickoff_at);
+        badge.textContent = `⏱ ${text}`;
+        if (text.includes('Coup d\'envoi')) {
+          clearInterval(_countdownTimer);
+          setTimeout(loadLive, 3000); // recharger pour passer en live
+        }
+      }, 1000);
+    }
+
     async function loadLive() {
       const { data: matches } = await supabase
         .from('matchs')
@@ -719,17 +826,36 @@
         .in('status', ['live', 'halftime'])
         .order('kickoff_at');
 
-      const scroll     = document.getElementById('live-scroll');
-      const heroBadge  = document.getElementById('hero-live-badge');
-      const heroCount  = document.getElementById('hero-live-count');
+      const scroll      = document.getElementById('live-scroll');
+      const heroBadge   = document.getElementById('hero-live-badge');
+      const heroCount   = document.getElementById('hero-live-count');
       const liveSection = document.getElementById('live-section');
 
       if (!matches?.length) {
-        liveSection.style.display = 'none';
-        heroBadge.style.display   = 'none';
+        // Chercher le prochain match à venir (dans les 24h)
+        const next24h = new Date(Date.now() + 24 * 3600 * 1000).toISOString();
+        const { data: next } = await supabase
+          .from('matchs')
+          .select('id, home_team, away_team, home_flag, away_flag, kickoff_at, phase, groupe')
+          .eq('status', 'scheduled')
+          .gt('kickoff_at', new Date().toISOString())
+          .lte('kickoff_at', next24h)
+          .order('kickoff_at')
+          .limit(1)
+          .maybeSingle();
+
+        if (next) {
+          liveSection.style.display = '';
+          heroBadge.style.display   = 'none';
+          showCountdownCard(next);
+        } else {
+          liveSection.style.display = 'none';
+          heroBadge.style.display   = 'none';
+        }
         return;
       }
 
+      if (_countdownTimer) { clearInterval(_countdownTimer); _countdownTimer = null; }
       liveSection.style.display = '';
       heroBadge.style.display   = 'inline-flex';
       heroCount.textContent     = `${matches.length} match${matches.length > 1 ? 's' : ''} en direct`;

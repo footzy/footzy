@@ -731,6 +731,31 @@
       margin-bottom: 6px;
     }
     .feed-empty-sub { font: 400 0.82rem/1.4 'Geist'; }
+    .feed-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--color-border);
+    }
+    .feed-action-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding: 8px 0;
+      border-radius: var(--radius-md);
+      border: 1.5px solid var(--color-border);
+      background: var(--color-bg);
+      font: 600 0.75rem/1 'Geist';
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: border-color 150ms ease, color 150ms ease, transform 100ms ease;
+    }
+    .feed-action-btn:active { transform: scale(0.96); }
+    .feed-action-btn--danger { color: var(--color-danger); border-color: rgba(232,69,60,0.25); }
 
     /* ── Skeleton loader ── */
     @keyframes shimmer {
@@ -1467,8 +1492,21 @@
           const fireLabel  = r.fire  ? ` ${r.fire}`  : '';
           const heartLabel = r.heart ? ` ${r.heart}` : '';
 
+          // Boutons action : seulement pour ses propres pronos + avant coup d'envoi
+          const isOwn         = p.user_id === user.id;
+          const beforeKickoff = match.kickoff_at ? new Date(match.kickoff_at) > Date.now() : true;
+          const actionsHtml   = (isOwn && beforeKickoff) ? `
+            <div class="feed-actions">
+              <button class="feed-action-btn" onclick="window.editFeedProno('${p.match_id}')">
+                ✏️ Modifier
+              </button>
+              <button class="feed-action-btn feed-action-btn--danger" onclick="window.deleteFeedProno('${p.id}', this)">
+                🗑 Supprimer
+              </button>
+            </div>` : '';
+
           return `
-            <div class="feed-card">
+            <div class="feed-card" data-prono-id="${p.id}">
               <div class="feed-card-header">
                 <div class="feed-avatar">${avatar}</div>
                 <div class="feed-user-info">
@@ -1496,6 +1534,7 @@
                   ❤️<span>${heartLabel}</span>
                 </button>
               </div>
+              ${actionsHtml}
             </div>`;
         }).filter(Boolean).join('');
 
@@ -1505,6 +1544,45 @@
           `<div class="feed-empty"><div class="feed-empty-icon">⚠️</div><div class="feed-empty-sub">Impossible de charger le feed</div></div>`;
       }
     }
+
+    window.editFeedProno = function(matchId) {
+      window.location.href = '/src/pages/pronostic.html?id=' + matchId;
+    };
+
+    window.deleteFeedProno = async function(pronoId, btn) {
+      if (btn.dataset.confirming === 'true') {
+        // 2ème tap : supprimer
+        btn.textContent = '…';
+        btn.disabled = true;
+        const { error } = await supabase.from('pronostics').delete()
+          .eq('id', pronoId).eq('user_id', user.id);
+        if (!error) {
+          const card = document.querySelector(`[data-prono-id="${pronoId}"]`);
+          if (card) {
+            card.style.transition = 'opacity 200ms ease, transform 200ms ease';
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.96)';
+            setTimeout(() => card.remove(), 210);
+          }
+          if (navigator.vibrate) navigator.vibrate([15, 10, 30]);
+        } else {
+          btn.textContent = '🗑 Supprimer';
+          btn.disabled = false;
+          btn.dataset.confirming = 'false';
+        }
+        return;
+      }
+      // 1er tap : demander confirmation
+      btn.dataset.confirming = 'true';
+      btn.textContent = 'Confirmer ?';
+      // Reset auto après 3s si pas de 2ème tap
+      setTimeout(() => {
+        if (btn.dataset.confirming === 'true') {
+          btn.dataset.confirming = 'false';
+          btn.textContent = '🗑 Supprimer';
+        }
+      }, 3000);
+    };
 
     window.reactFeed = async function(pronoId, type, btn) {
       const span    = btn.querySelector('span');

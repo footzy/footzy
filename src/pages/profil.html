@@ -71,9 +71,184 @@
     .fz-tog-sl:before { content:'';position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.22s;box-shadow:0 1px 4px rgba(0,0,0,.18); }
     .fz-tog input:checked + .fz-tog-sl { background:var(--accent,#00E05A); }
     .fz-tog input:checked + .fz-tog-sl:before { transform:translateX(18px); }
-    /* Gear button */
-    #settings-btn { position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);right:16px;z-index:200;width:38px;height:38px;border-radius:50%;background:var(--bg-surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--fg-muted);box-shadow:0 2px 8px rgba(0,0,0,.08); }
-    #settings-btn:active { transform:scale(.94); }
+    /* Settings btn (dans header) */
+    #settings-btn { width:36px;height:36px;border-radius:50%;background:#FAFAF8;border:1px solid #E8E6E2;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#6B6966; }
+    #settings-btn:active { opacity:0.7; }
+
+    /* ═══════════════════════════════════════
+       DESIGN SYSTEM PROFIL v1.0
+       ═══════════════════════════════════════ */
+    :root {
+      --pp-bg: #F2F2F0; --pp-surface: #FFFFFF; --pp-dark: #0F0F0E;
+      --pp-green: #00E05A; --pp-text-1: #0F0F0E; --pp-text-2: #6B6966;
+      --pp-text-3: #A8A49F; --pp-border: #E8E6E2;
+      --pp-shadow: 0 1px 4px rgba(0,0,0,0.05), 0 0 0 1px var(--pp-border);
+    }
+    body { background: var(--pp-bg) !important; }
+
+    /* [B] Hero identité */
+    .pp-hero {
+      padding: 72px 16px 24px;
+    }
+    #pseudo-el {
+      font: italic 900 3.2rem/0.95 'Geist', system-ui !important;
+      color: var(--pp-text-1) !important;
+      text-transform: uppercase !important;
+      letter-spacing: -0.03em !important;
+      margin: 0 0 6px !important;
+      display: block !important;
+      word-break: break-word !important;
+    }
+    .pp-hero__meta {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .pp-hero__since {
+      font: 500 0.72rem/1 'Geist', system-ui;
+      color: var(--pp-text-2);
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .pp-hero__sep { width: 20px; height: 1px; background: var(--pp-border); flex-shrink: 0; }
+    #plan-badge {}
+    .pp-plan-pill {
+      padding: 5px 10px; border-radius: 8px;
+      font: 700 0.68rem/1 'Geist', system-ui;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      border: 1.5px solid var(--pp-text-1);
+      background: transparent; color: var(--pp-text-1);
+    }
+    .pp-plan-pill--premium {
+      border-color: var(--pp-green); color: var(--pp-green);
+    }
+    #edit-profile-btn {
+      display: inline-flex !important; align-items: center !important;
+      gap: 6px !important; background: var(--pp-green) !important;
+      color: var(--pp-text-1) !important; padding: 12px 20px !important;
+      border-radius: 9999px !important; font: 700 0.82rem/1 'Geist',system-ui !important;
+      text-transform: uppercase !important; letter-spacing: 0.04em !important;
+      border: none !important; cursor: pointer !important;
+    }
+    #edit-profile-btn:active { opacity: 0.85; }
+
+    /* [C] Grille stats */
+    .pp-stats {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px; padding: 0 16px 24px;
+    }
+    .pp-stat {
+      background: var(--pp-surface); border-radius: 16px;
+      padding: 16px; box-shadow: var(--pp-shadow); min-height: 110px;
+    }
+    .pp-stat--dark { background: var(--pp-dark) !important; }
+    .pp-stat__header {
+      display: flex; align-items: center; gap: 6px; margin-bottom: 10px;
+    }
+    .pp-stat__icon { font-size: 14px; line-height: 1; flex-shrink: 0; }
+    .pp-stat__label {
+      font: 700 0.62rem/1.2 'Geist', system-ui;
+      text-transform: uppercase; letter-spacing: 0.08em; color: var(--pp-text-2);
+    }
+    .pp-stat--dark .pp-stat__icon,
+    .pp-stat--dark .pp-stat__label { color: var(--pp-green); }
+    .pp-stat__val {
+      font: 900 2.8rem/1 'Geist', system-ui;
+      color: var(--pp-text-1); display: block;
+    }
+    .pp-stat__val--sm { font-size: 2.2rem; }
+    .pp-stat__val--green { color: var(--pp-green) !important; }
+    .pp-stat__sub {
+      font: 700 0.62rem/1 'Geist', system-ui;
+      color: var(--pp-text-2); text-transform: uppercase;
+      letter-spacing: 0.06em; margin-top: 6px; display: block;
+    }
+    .pp-stat--dark .pp-stat__sub { color: var(--pp-green); }
+    /* Barre progression points */
+    .pp-stat__bar { height: 4px; background: var(--pp-border); border-radius: 2px; margin-top: 12px; }
+    .pp-stat__bar-fill {
+      height: 100%; background: var(--pp-green); border-radius: 2px;
+      width: 0%; transition: width 800ms ease-out;
+    }
+    /* Streak dots */
+    .pp-streak-val { display: flex; align-items: baseline; gap: 4px; }
+    .pp-streak-jrs { font: 900 0.9rem/1 'Geist', system-ui; color: var(--pp-text-1); }
+    .pp-streak-dots { display: flex; gap: 4px; margin-top: 10px; }
+    .pp-streak-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--pp-border);
+    }
+    .pp-streak-dot--on { background: var(--pp-green); }
+
+    /* [D] Trophées */
+    .pp-section-hd {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px;
+    }
+    .pp-section-hd__left { display: flex; align-items: center; gap: 8px; }
+    .pp-section-hd__title {
+      font: 700 0.9rem/1 'Geist', system-ui;
+      color: var(--pp-text-1); text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .pp-section-hd__count {
+      font: 500 0.72rem/1 'Geist', system-ui;
+      color: var(--pp-text-2); text-transform: uppercase;
+    }
+    .pp-badges-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .pp-badge {
+      background: var(--pp-surface); border-radius: 12px; padding: 12px 8px;
+      box-shadow: var(--pp-shadow);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      cursor: pointer; transition: transform 150ms ease;
+    }
+    .pp-badge:active { transform: scale(1.05); }
+    .pp-badge--locked { opacity: 0.45; }
+    .pp-badge__emoji { font-size: 28px; line-height: 1; }
+    .pp-badge__label {
+      font: 500 0.58rem/1.2 'Geist', system-ui;
+      color: var(--pp-text-1); text-transform: uppercase; letter-spacing: 0.04em;
+      text-align: center;
+    }
+    .pp-badge--locked .pp-badge__label { color: var(--pp-text-3); }
+
+    /* Section label style (vainqueur, pronos) */
+    .pp-section-label {
+      display: flex; align-items: center; gap: 6px;
+      font: 700 0.72rem/1 'Geist', system-ui;
+      color: var(--pp-text-2); text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+    .pp-section-label::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--pp-green); flex-shrink: 0;
+    }
+
+    /* Vainqueur card */
+    .pp-vainqueur {
+      background: var(--pp-surface); border-radius: 16px; padding: 16px;
+      box-shadow: var(--pp-shadow); display: flex; align-items: center; gap: 12px;
+    }
+    .pp-vainqueur__info { flex: 1; min-width: 0; }
+    .pp-vainqueur__sub {
+      font: 500 0.6rem/1 'Geist', system-ui; color: var(--pp-text-2);
+      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;
+    }
+    .pp-vainqueur__team {
+      font: 700 0.95rem/1.2 'Geist', system-ui; color: var(--pp-text-1);
+    }
+    .pp-vainqueur__btn {
+      background: var(--pp-surface); border: 1.5px solid var(--pp-border);
+      border-radius: 8px; padding: 8px 14px;
+      font: 600 0.75rem/1 'Geist', system-ui; color: var(--pp-text-1);
+      cursor: pointer; flex-shrink: 0; min-height: 36px;
+    }
+    .pp-vainqueur__btn:active { border-color: var(--pp-text-1); }
+
+    /* Logout discret */
+    #logout-btn {
+      background: none !important; border: none !important;
+      color: var(--pp-text-2) !important;
+      font: 500 0.85rem/1 'Geist', system-ui !important;
+      cursor: pointer !important; text-decoration: none !important;
+      padding: 8px 0 !important;
+    }
+    #logout-btn:hover { color: var(--pp-text-1) !important; text-decoration: underline !important; }
   </style>
 </head>
 <body>
@@ -83,17 +258,20 @@
   </button>
 
   <div class="page-content">
-    <!-- Centered identity -->
-    <div style="padding:12px 20px 18px;display:flex;flex-direction:column;align-items:center;gap:10px">
-      <div style="position:relative">
-        <div class="fz-avatar fz-avatar--lg fz-avatar--accent" id="avatar-el">?</div>
-        <span id="premium-star" style="display:none;position:absolute;bottom:-2px;right:-2px;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#FFE08A,#D4A100);border:3px solid var(--bg);display:flex;align-items:center;justify-content:center;font-size:11px">⭐</span>
+    <!-- [B] Hero identité -->
+    <div class="pp-hero">
+      <h2 id="pseudo-el">—</h2>
+      <div class="pp-hero__meta">
+        <span class="pp-hero__since" id="member-since">MEMBRE DEPUIS 2026</span>
+        <span class="pp-hero__sep"></span>
+        <div id="plan-badge"></div>
       </div>
-      <h2 style="margin:4px 0 0;font-size:22px;font-weight:800;letter-spacing:-0.025em" id="pseudo-el">—</h2>
-      <div id="plan-badge"></div>
-      <button id="edit-profile-btn" style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-surface);border:1px solid var(--border);border-radius:50px;padding:7px 16px;font-size:13px;font-weight:600;color:var(--text-secondary);cursor:pointer">
-        ✏️ Modifier le profil
-      </button>
+      <button id="edit-profile-btn">✏ MODIFIER</button>
+    </div>
+    <!-- Avatar caché (utilisé par la modale d'édition) -->
+    <div style="display:none">
+      <div id="avatar-el"></div>
+      <span id="premium-star"></span>
     </div>
 
     <!-- Edit profile modal -->
@@ -189,51 +367,80 @@
     <!-- Links display -->
     <div id="links-display" style="padding:0 20px 16px;display:none;justify-content:center;flex-wrap:wrap;gap:8px"></div>
 
-    <!-- Stats 2×2 -->
-    <div style="padding:0 20px 18px">
-      <div class="fz-stat-grid">
-        <div class="fz-stat-tile">
-          <div class="fz-stat-tile__num accent" id="stat-points">0</div>
-          <div class="fz-stat-tile__label">Points totaux</div>
+    <!-- [C] Grille stats -->
+    <div class="pp-stats">
+      <!-- Points totaux -->
+      <div class="pp-stat">
+        <div class="pp-stat__header">
+          <span class="pp-stat__icon">⊙</span>
+          <span class="pp-stat__label">POINTS TOTAUX</span>
         </div>
-        <div class="fz-stat-tile">
-          <div class="fz-stat-tile__num" id="stat-rang">—</div>
-          <div class="fz-stat-tile__label">Rang mondial</div>
+        <span class="pp-stat__val" id="stat-points">0</span>
+        <div class="pp-stat__bar"><div class="pp-stat__bar-fill" id="points-bar"></div></div>
+      </div>
+      <!-- Rang mondial (carte sombre) -->
+      <div class="pp-stat pp-stat--dark">
+        <div class="pp-stat__header">
+          <span class="pp-stat__icon">⊕</span>
+          <span class="pp-stat__label">RANG MONDIAL</span>
         </div>
-        <div class="fz-stat-tile">
-          <div class="fz-stat-tile__num" id="stat-exacts">0</div>
-          <div class="fz-stat-tile__label">Scores exacts</div>
+        <span class="pp-stat__val pp-stat__val--green" id="stat-rang">—</span>
+        <span class="pp-stat__sub" id="stat-rang-pct"></span>
+      </div>
+      <!-- Scores exacts -->
+      <div class="pp-stat">
+        <div class="pp-stat__header">
+          <span class="pp-stat__icon">⚽</span>
+          <span class="pp-stat__label">SCORES EXACTS</span>
         </div>
-        <div class="fz-stat-tile">
-          <div class="fz-stat-tile__num" id="stat-streak" style="display:inline-flex;align-items:baseline;gap:4px">0<span style="font-size:20px">🔥</span></div>
-          <div class="fz-stat-tile__label">Streak quotidien</div>
+        <span class="pp-stat__val pp-stat__val--sm" id="stat-exacts">0</span>
+        <span class="pp-stat__sub">CE MOIS-CI</span>
+      </div>
+      <!-- Streak -->
+      <div class="pp-stat">
+        <div class="pp-stat__header">
+          <span class="pp-stat__icon" id="streak-icon">🔥</span>
+          <span class="pp-stat__label">STREAK</span>
         </div>
+        <div class="pp-streak-val">
+          <span class="pp-stat__val pp-stat__val--sm" id="stat-streak">0</span>
+          <span class="pp-streak-jrs">Jrs</span>
+        </div>
+        <div class="pp-streak-dots" id="streak-dots"></div>
       </div>
     </div>
 
-    <!-- Pronostic vainqueur -->
-    <div class="fz-section-h"><span class="fz-section-h__dot"></span><span class="fz-section-h__title">Mon pronostic vainqueur</span></div>
-    <div style="padding:0 20px 18px">
-      <div class="fz-card" id="vainqueur-card" style="display:flex;align-items:center;gap:14px;padding:14px">
-        <span style="font-size:38px;line-height:1" id="vainqueur-flag">❓</span>
-        <div style="flex:1">
-          <div style="font-size:11px;font-weight:700;color:var(--fg-faint);text-transform:uppercase;letter-spacing:0.06em">Coupe du Monde 2026</div>
-          <div style="font-size:17px;font-weight:800;letter-spacing:-0.015em" id="vainqueur-team">Non encore défini</div>
+    <!-- [E] Mon pronostic vainqueur -->
+    <div style="padding:0 16px 24px">
+      <div class="pp-section-label">MON PRONOSTIC VAINQUEUR</div>
+      <div class="pp-vainqueur" id="vainqueur-card">
+        <span style="font-size:32px;line-height:1;flex-shrink:0" id="vainqueur-flag">❓</span>
+        <div class="pp-vainqueur__info">
+          <div class="pp-vainqueur__sub">COUPE DU MONDE 2026</div>
+          <div class="pp-vainqueur__team" id="vainqueur-team">Non encore défini</div>
         </div>
-        <button id="edit-vainqueur-btn" class="fz-btn fz-btn--ghost" style="padding:8px 14px;font-size:13px">Modifier</button>
+        <button id="edit-vainqueur-btn" class="pp-vainqueur__btn">Modifier</button>
       </div>
     </div>
 
-    <!-- Badges -->
-    <div class="fz-section-h"><span class="fz-section-h__dot"></span><span class="fz-section-h__title">Badges</span></div>
-    <div style="padding:0 20px 18px">
-      <div class="fz-bgrid" id="badges-grid"></div>
+    <!-- [D] Mes trophées -->
+    <div style="padding:0 16px 24px">
+      <div class="pp-section-hd">
+        <div class="pp-section-hd__left">
+          <span style="font-size:18px;color:#00E05A">🏆</span>
+          <span class="pp-section-hd__title">MES TROPHÉES</span>
+        </div>
+        <span class="pp-section-hd__count" id="badges-count">0 DÉVERROUILLÉS</span>
+      </div>
+      <div class="pp-badges-grid" id="badges-grid"></div>
     </div>
 
-    <!-- Historique pronos -->
-    <div class="fz-section-h"><span class="fz-section-h__dot"></span><span class="fz-section-h__title">Mes pronos publics</span></div>
-    <div id="pronos-history" class="fz-stack fz-stack--sm" style="margin-bottom:18px">
-      <div style="text-align:center;padding:16px;color:var(--fg-faint)">Chargement...</div>
+    <!-- [F] Mes pronos publics -->
+    <div style="padding:0 16px 24px">
+      <div class="pp-section-label">MES PRONOS PUBLICS</div>
+      <div id="pronos-history" class="fz-stack fz-stack--sm">
+        <div style="text-align:center;padding:24px 0;font:400 0.88rem/1 'Geist',system-ui;color:#A8A49F">Chargement…</div>
+      </div>
     </div>
 
     <!-- Mid upgrade CTA -->
@@ -249,35 +456,33 @@
       </div>
     </div>
 
-    <!-- Logout -->
-    <div style="padding:8px 20px 24px;display:flex;justify-content:center">
-      <button id="logout-btn" style="display:inline-flex;align-items:center;gap:6px;color:var(--fg-faint);font-size:13px;font-weight:600;padding:8px 12px">
-        Se déconnecter
-      </button>
+    <!-- [G] Déconnexion — lien texte discret -->
+    <div style="padding:8px 16px 24px;text-align:center">
+      <button id="logout-btn">Se déconnecter</button>
     </div>
   </div>
 
   <!-- Bottom Nav -->
   <nav class="bottom-nav">
     <a href="/src/pages/accueil.html">
-      <span style="font-size:22px">🏠</span>
-      <span>Accueil</span>
+      <span class="nav-icon">🏠</span>
+      <span>ACCUEIL</span>
     </a>
     <a href="/src/pages/home.html">
-      <span style="font-size:22px">⚽</span>
-      <span>Matchs</span>
+      <span class="nav-icon">⚽</span>
+      <span>MATCHS</span>
     </a>
     <a href="/src/pages/oracle.html">
-      <span style="font-size:22px">🔮</span>
-      <span>Oracle</span>
+      <span class="nav-icon">🔮</span>
+      <span>ORACLE</span>
     </a>
     <a href="/src/pages/groupe.html">
-      <span style="font-size:22px">🫂</span>
-      <span>Groupe</span>
+      <span class="nav-icon">🫂</span>
+      <span>GROUPE</span>
     </a>
     <a href="/src/pages/profil.html" class="active">
-      <span style="font-size:22px">🪪</span>
-      <span>Profil</span>
+      <span class="nav-icon">🪪</span>
+      <span>PROFIL</span>
     </a>
   </nav>
 
@@ -555,18 +760,47 @@
     } else {
       mainAvatarEl.textContent = profile?.pseudo?.[0]?.toUpperCase() || '?';
     }
-    document.getElementById('pseudo-el').textContent = profile?.pseudo || '';
-    document.getElementById('stat-points').textContent = (profile?.points_totaux || 0).toLocaleString('fr-FR');
+    // Pseudo — taille adaptative selon longueur
+    const pseudo = profile?.pseudo || '';
+    const pseudoEl = document.getElementById('pseudo-el');
+    pseudoEl.textContent = pseudo;
+    if (pseudo.length > 14) pseudoEl.style.fontSize = '1.9rem';
+    else if (pseudo.length > 10) pseudoEl.style.fontSize = '2.4rem';
+
+    // Membre depuis
+    const since = new Date(user.created_at || Date.now()).getFullYear();
+    const sinceEl = document.getElementById('member-since');
+    if (sinceEl) sinceEl.textContent = `MEMBRE DEPUIS ${since}`;
+
+    // Points totaux
+    const pts = profile?.points_totaux || 0;
+    document.getElementById('stat-points').textContent = pts.toLocaleString('fr-FR');
+    // Barre progression vers palier suivant
+    const PALIERS = [500, 1000, 2500, 5000, 10000];
+    const nextPalier = PALIERS.find(p => p > pts) || PALIERS[PALIERS.length - 1];
+    const prevPalier = PALIERS[PALIERS.indexOf(nextPalier) - 1] || 0;
+    const pct = Math.min(100, Math.round(((pts - prevPalier) / (nextPalier - prevPalier)) * 100));
+    setTimeout(() => { const b = document.getElementById('points-bar'); if (b) b.style.width = pct + '%'; }, 100);
+
+    // Scores exacts
     document.getElementById('stat-exacts').textContent = profile?.scores_exacts || 0;
-    const streakEl = document.getElementById('stat-streak');
-    streakEl.innerHTML = `${profile?.streak_quotidien || 0}<span style="font-size:20px">🔥</span>`;
+
+    // Streak + dots
+    const streak = profile?.streak_quotidien || 0;
+    document.getElementById('stat-streak').textContent = streak;
+    if (streak >= 5) document.getElementById('streak-icon').style.animation = 'pulse 1.5s ease-in-out infinite';
+    const dotsEl = document.getElementById('streak-dots');
+    if (dotsEl) {
+      dotsEl.innerHTML = Array.from({length: 7}, (_, i) =>
+        `<div class="pp-streak-dot${i < streak ? ' pp-streak-dot--on' : ''}"></div>`
+      ).join('');
+    }
 
     const hasPremium = await checkPremiumAccess(profile);
     if (hasPremium) {
-      document.getElementById('plan-badge').innerHTML = '<span class="fz-plan fz-plan--premium">⭐ Premium</span>';
-      document.getElementById('premium-star').style.display = 'flex';
+      document.getElementById('plan-badge').innerHTML = '<span class="pp-plan-pill pp-plan-pill--premium">PRO PLAYER</span>';
     } else {
-      document.getElementById('plan-badge').innerHTML = '<span class="fz-plan fz-plan--free">Gratuit</span>';
+      document.getElementById('plan-badge').innerHTML = '<span class="pp-plan-pill">FREE</span>';
       document.getElementById('mid-cta-wrap').style.display = 'block';
       document.getElementById('upgrade-mid-btn').addEventListener('click', () => createCheckout(PLANS.premium, user.id, user.email));
     }
@@ -635,10 +869,15 @@
       upsell.addEventListener('click', e => { if (e.target === upsell) upsell.remove(); });
     }
 
-    // World rank
+    // World rank + percentile
     const { count } = await supabase.from('profiles').select('id', { count: 'exact', head: true })
       .gt('points_totaux', profile?.points_totaux || 0);
-    document.getElementById('stat-rang').textContent = '#' + ((count || 0) + 1);
+    const { count: totalCount } = await supabase.from('profiles').select('id', { count: 'exact', head: true });
+    const myRank = (count || 0) + 1;
+    document.getElementById('stat-rang').textContent = '#' + myRank;
+    const pctRank = totalCount > 0 ? Math.round((myRank / totalCount) * 100) : 100;
+    const pctEl = document.getElementById('stat-rang-pct');
+    if (pctEl) pctEl.textContent = pctRank <= 5 ? '↑ TOP 5%' : pctRank <= 10 ? '↑ TOP 10%' : pctRank <= 25 ? '↑ TOP 25%' : '';
 
     // Badges
     const BADGES = [
@@ -685,11 +924,15 @@
     ];
     const { data: userBadges } = await supabase.from('badges_utilisateur').select('badge_code').eq('user_id', user.id);
     const earnedCodes = new Set(userBadges?.map(b => b.badge_code) || []);
-    document.getElementById('badges-grid').innerHTML = BADGES.map(b => `
-      <div class="fz-bcell ${earnedCodes.has(b.code) ? '' : 'is-locked'}">
-        <button class="fz-bcell__info" data-badge="${b.code}">i</button>
-        <span class="fz-bcell__emoji">${b.emoji}</span>
-        <span class="fz-bcell__label">${b.name}</span>
+    // Badges débloqués en premier
+    const sorted = [...BADGES.filter(b => earnedCodes.has(b.code)), ...BADGES.filter(b => !earnedCodes.has(b.code))];
+    const unlockedCount = earnedCodes.size;
+    const countEl = document.getElementById('badges-count');
+    if (countEl) countEl.textContent = `${unlockedCount} DÉVERROUILLÉ${unlockedCount > 1 ? 'S' : ''}`;
+    document.getElementById('badges-grid').innerHTML = sorted.map(b => `
+      <div class="pp-badge${earnedCodes.has(b.code) ? '' : ' pp-badge--locked'}" data-badge="${b.code}">
+        <span class="pp-badge__emoji">${earnedCodes.has(b.code) ? b.emoji : '🔒'}</span>
+        <span class="pp-badge__label">${b.name}</span>
       </div>`).join('');
 
     // Modal info badge
@@ -709,7 +952,7 @@
     badgeModal.addEventListener('click', e => { if (e.target === badgeModal) badgeModal.classList.remove('open'); });
 
     document.getElementById('badges-grid').addEventListener('click', e => {
-      const btn = e.target.closest('.fz-bcell__info');
+      const btn = e.target.closest('.pp-badge');
       if (!btn) return;
       const code = btn.dataset.badge;
       const b = BADGES.find(x => x.code === code);

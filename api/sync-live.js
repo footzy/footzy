@@ -65,7 +65,10 @@ export default async function handler(req, res) {
       if (!apiMatch) continue;
 
       const isFinished = apiMatch.status?.finished === true;
-      const minute = parseInt(apiMatch.status?.liveTime?.short) || dbMatch.minute || 0;
+      // Parser la minute : l'API renvoie "64‎'‎" → extraire uniquement les chiffres
+      const rawMin = apiMatch.status?.liveTime?.short || apiMatch.status?.liveTime?.long || '';
+      const minuteMatch = rawMin.match(/(\d+)/);
+      const minute = minuteMatch ? parseInt(minuteMatch[1]) : (dbMatch.minute || 0);
 
       const updateData = {
         home_score:  apiMatch.home?.score ?? dbMatch.home_score,

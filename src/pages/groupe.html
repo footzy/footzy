@@ -972,7 +972,7 @@
         const activeTab = document.querySelector('.tab-btn.active')?.dataset?.tab;
         if (activeTab === 'pronos') loadGroupePronos(true);
         else if (activeTab === 'tous') loadTousPronos(true);
-        else loadGroupe();
+        else loadGroupe(true); // silent = pas d'animation au refresh
       }, 5000);
       // 1 groupe par user : masquer créer ET rejoindre
       isAlreadyInGroup = true;
@@ -983,7 +983,7 @@
       document.getElementById('tab-btn-tous').style.display = '';
     }
 
-    async function loadGroupe() {
+    async function loadGroupe(silent = false) {
       const { data: groupe } = await supabase.from('groupes').select('*').eq('id', currentGroupeId).single();
       if (!groupe) return;
       document.getElementById('group-name').textContent = groupe.nom;
@@ -1188,7 +1188,7 @@
           ? (rank === 1 ? '🥇 EN TÊTE !' : 'EN PROGRESSION')
           : p.streak_quotidien > 0 ? `🔥 ${p.streak_quotidien}j` : '';
 
-        return `<div class="lb2${isMe ? ' lb2--me' : ''}" data-memberid="${p.id}" style="animation-delay:${i * 60}ms">
+        return `<div class="lb2${isMe ? ' lb2--me' : ''}" data-memberid="${p.id}" style="${silent ? 'animation:none' : `animation-delay:${i * 60}ms`}">
           <div class="lb2__rank lb2__rank--${rk}">${rank}</div>
           <div class="lb2__av lb2__av--${rk}">${avatarInner}</div>
           <div class="lb2__info">

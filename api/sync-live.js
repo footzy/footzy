@@ -10,7 +10,6 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import webpush from 'web-push';
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL,
@@ -20,12 +19,18 @@ const supabase = createClient(
 const API_HOST = 'free-api-live-football-data.p.rapidapi.com';
 const API_KEY  = process.env.VITE_RAPIDAPI_KEY;
 
-// Config Web Push VAPID
-webpush.setVapidDetails(
-  'mailto:support@footzy.app',
-  process.env.VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
-);
+// webpush initialisé à la demande (pas au démarrage — évite crash si clés absentes)
+let _webpush = null;
+async function getWebPush() {
+  if (_webpush) return _webpush;
+  const pub  = process.env.VAPID_PUBLIC_KEY;
+  const priv = process.env.VAPID_PRIVATE_KEY;
+  if (!pub || !priv) return null; // Push désactivé si clés manquantes
+  const wp = (await import('web-push')).default;
+  wp.setVapidDetails('mailto:support@footzy.app', pub, priv);
+  _webpush = wp;
+  return _webpush;
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -294,9 +299,12 @@ async function sendPushToAll(payload) {
     if (!subs?.length) return;
 
     const notifPayload = JSON.stringify(payload);
+    const wp = await getWebPush();
+    if (!wp) { console.log('[push] VAPID keys not configured, skipping'); return; }
+
     const results = await Promise.allSettled(
       subs.map(sub =>
-        webpush.sendNotification(
+        wp.sendNotification(
           { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
           notifPayload
         ).catch(e => {

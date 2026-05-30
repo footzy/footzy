@@ -495,6 +495,65 @@
       text-align: center;
     }
 
+    /* ── Grille joueurs Premium ── */
+    .player-grid-wrap {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .player-grid-team {
+      font: 700 0.58rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-text-tertiary);
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .player-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 14px;
+    }
+    .player-grid:last-child { margin-bottom: 0; }
+    .player-chip-select {
+      background: var(--color-surface-score);
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-full);
+      padding: 7px 12px;
+      font: 600 0.78rem/1 'Geist';
+      color: var(--color-text-primary);
+      cursor: pointer;
+      transition: background 120ms ease, border-color 120ms ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .player-chip-select:active {
+      background: var(--color-green-bg);
+      border-color: var(--color-green);
+      color: var(--color-green-dim);
+    }
+    .player-chip-select.already {
+      background: var(--color-green);
+      border-color: var(--color-green);
+      color: var(--color-dark);
+      pointer-events: none;
+    }
+    .player-grid-loading {
+      padding: 20px 16px;
+      text-align: center;
+      font: 400 0.82rem/1 'Geist';
+      color: var(--color-text-tertiary);
+      border-bottom: 1px solid var(--color-border);
+    }
+    .player-free-hint {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 16px;
+      background: rgba(245,166,35,0.07);
+      border-bottom: 1px solid rgba(245,166,35,0.2);
+      font: 500 0.75rem/1.3 'Geist';
+      color: #B87B10;
+      cursor: pointer;
+    }
+
     /* ── [F] CTA bar fixe ── */
     .cta-bar {
       position: fixed; bottom: 0; left: 50%;
@@ -764,9 +823,9 @@
 
   <script type="module">
     import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
-    import { searchPlayer } from '/src/js/lib/football-api.js';
+    import { searchPlayer, getLineups } from '/src/js/lib/football-api.js';
     import { isBeforeKickoff } from '/src/js/lib/utils.js';
-    import { checkPremiumAccess } from '/src/js/lib/whop.js';
+    import { checkPremiumAccess, createCheckout, PLANS } from '/src/js/lib/whop.js';
 
     (async () => {
     const user    = await requireAuth();
@@ -993,14 +1052,19 @@
       const overlay = document.createElement('div');
       overlay.className = 'sheet-overlay';
       overlay.innerHTML = `
-        <div class="sheet">
+        <div class="sheet" style="max-height:82vh">
           <div class="sheet-handle"></div>
           <div class="sheet-title">
-            <span>Choisir un buteur</span>
+            <span>Choisir un buteur (max 3)</span>
             <button class="sheet-close" id="sheet-close">✕</button>
           </div>
+          ${isPremium
+            ? `<div class="player-grid-loading" id="player-grid-area">⏳ Chargement des joueurs…</div>`
+            : `<div class="player-free-hint" id="player-free-hint">
+                ⭐ <span>Passe Premium pour voir la liste des joueurs directement</span>
+               </div>`}
           <input class="player-search-input" id="player-search"
-            placeholder="Rechercher un joueur…" autocomplete="off" />
+            placeholder="${isPremium ? 'Ou rechercher un joueur…' : 'Rechercher un joueur…'}" autocomplete="off" />
           <div id="player-results"></div>
         </div>`;
       document.body.appendChild(overlay);
@@ -1011,9 +1075,94 @@
       overlay.querySelector('#sheet-close').addEventListener('click', () => overlay.remove());
       overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 
-      // Auto-focus after animation
-      setTimeout(() => input.focus(), 300);
+      // Upsell si Free clique sur le hint
+      overlay.querySelector('#player-free-hint')?.addEventListener('click', () => {
+        overlay.remove();
+        createCheckout(PLANS.premium, user.id, user.email);
+      });
 
+      // ── Premium : charger les joueurs ──
+      if (isPremium) {
+        (async () => {
+          const gridArea = overlay.querySelector('#player-grid-area');
+          try {
+            let home = [], away = [];
+
+            // 1. Essai composition API (si fixture_id disponible)
+            const fixtureId = match.fixture_id || match.api_id || match.external_id;
+            if (fixtureId) {
+              const data = await getLineups(fixtureId);
+              const lineups = data?.response || [];
+              lineups.forEach(t => {
+                const players = [
+                  ...(t.startXI || []),
+                  ...(t.substitutes || [])
+                ].map(p => p?.player?.name).filter(Boolean);
+                // Associer à home ou away par nom d'équipe
+                const tname = (t.team?.name || '').toLowerCase();
+                const hname = (match.home_team || '').toLowerCase().slice(0, 5);
+                if (tname.includes(hname) || hname.includes(tname.slice(0, 5))) {
+                  home = players;
+                } else {
+                  away = players;
+                }
+              });
+            }
+
+            // 2. Fallback : recherche par nom d'équipe
+            if (!home.length && match.home_team) {
+              const r = await searchPlayer(match.home_team.split(/[\s-]/)[0]);
+              home = (r || []).slice(0, 12).map(p => p.name || p.player?.name || p.strPlayer).filter(Boolean);
+            }
+            if (!away.length && match.away_team) {
+              const r = await searchPlayer(match.away_team.split(/[\s-]/)[0]);
+              away = (r || []).slice(0, 12).map(p => p.name || p.player?.name || p.strPlayer).filter(Boolean);
+            }
+
+            if (!home.length && !away.length) {
+              gridArea.remove();
+              return;
+            }
+
+            function chipsHtml(players) {
+              return players.map(nom => {
+                const already = buteurs.includes(nom);
+                return `<button class="player-chip-select${already ? ' already' : ''}" data-name="${nom}">${nom}${already ? ' ✓' : ''}</button>`;
+              }).join('');
+            }
+
+            gridArea.className = 'player-grid-wrap';
+            gridArea.innerHTML = `
+              ${home.length ? `
+                <div class="player-grid-team">${match.home_flag || ''} ${match.home_team || ''}</div>
+                <div class="player-grid" id="grid-home">${chipsHtml(home)}</div>` : ''}
+              ${away.length ? `
+                <div class="player-grid-team">${match.away_flag || ''} ${match.away_team || ''}</div>
+                <div class="player-grid" id="grid-away">${chipsHtml(away)}</div>` : ''}`;
+
+            // Listeners sur les chips
+            gridArea.querySelectorAll('.player-chip-select:not(.already)').forEach(chip => {
+              chip.addEventListener('click', () => {
+                const nom = chip.dataset.name;
+                if (buteurs.length >= 3) return;
+                if (!buteurs.includes(nom)) {
+                  buteurs.push(nom);
+                  renderChips();
+                }
+                overlay.remove();
+                if (navigator.vibrate) navigator.vibrate(20);
+              });
+            });
+
+          } catch(e) {
+            console.warn('Player grid failed', e);
+            overlay.querySelector('#player-grid-area')?.remove();
+          }
+        })();
+      }
+
+      // ── Recherche (tous) ──
+      setTimeout(() => input.focus(), 300);
       let searchTimeout;
       input.addEventListener('input', () => {
         clearTimeout(searchTimeout);

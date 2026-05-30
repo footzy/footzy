@@ -72,6 +72,22 @@
       </div>
     </div>
 
+    <!-- Buteurs réels -->
+    <div class="fz-section-h" id="scorers-section" style="display:none"><span class="fz-section-h__dot"></span><span class="fz-section-h__title">Buteurs</span></div>
+    <div class="fz-card" style="margin:0 20px 16px;display:none" id="scorers-card">
+      <div id="scorers-wrapper">
+        <div style="color:var(--fg-faint);font-size:13px;text-align:center">Aucun but</div>
+      </div>
+    </div>
+
+    <!-- Compositions -->
+    <div class="fz-section-h" id="lineups-section"><span class="fz-section-h__dot"></span><span class="fz-section-h__title">Compositions</span></div>
+    <div class="fz-card" style="margin:0 20px 16px" id="lineups-card">
+      <div id="lineups-wrapper">
+        <div style="color:var(--fg-faint);font-size:13px;text-align:center">Compositions disponibles 1h avant le match</div>
+      </div>
+    </div>
+
     <!-- Oracle IA -->
     <div class="fz-section-h"><span class="fz-section-h__dot"></span><span class="fz-section-h__title">Oracle IA</span></div>
     <div style="padding:0 20px 16px" id="oracle-wrap">
@@ -233,25 +249,79 @@
       pronoCta.addEventListener('click', () => window.location.href = `/src/pages/pronostic.html?id=${matchId}`);
     }
 
-    // Stats
-    if (match.possession_home != null) {
-      document.getElementById('stats-wrapper').innerHTML = `
+    // ── Render helpers ──────────────────────────────────────────────────────────
+
+    function renderStats(stats) {
+      const el = document.getElementById('stats-wrapper');
+      if (!stats?.possession_home) {
+        el.innerHTML = `<div style="color:var(--fg-faint);font-size:13px;text-align:center">Stats disponibles en direct</div>`;
+        return;
+      }
+      const rows = [
+        { label:'POSS',    h: stats.possession_home+'%',     a: stats.possession_away+'%',     hp: stats.possession_home,                                ap: stats.possession_away },
+        { label:'TIRS',    h: stats.shots_home,              a: stats.shots_away,              hp: Math.min(100,(stats.shots_home||0)*5),                ap: Math.min(100,(stats.shots_away||0)*5) },
+        { label:'CADRÉS',  h: stats.shots_on_target_home,    a: stats.shots_on_target_away,    hp: Math.min(100,(stats.shots_on_target_home||0)*10),      ap: Math.min(100,(stats.shots_on_target_away||0)*10) },
+        { label:'CORNERS', h: stats.corners_home,            a: stats.corners_away,            hp: Math.min(100,(stats.corners_home||0)*10),             ap: Math.min(100,(stats.corners_away||0)*10) },
+        { label:'FAUTES',  h: stats.fouls_home,              a: stats.fouls_away,              hp: Math.min(100,(stats.fouls_home||0)*5),                ap: Math.min(100,(stats.fouls_away||0)*5) },
+      ].filter(r => r.h != null);
+      el.innerHTML = rows.map(r => `
         <div class="stat-bar-row">
-          <span class="stat-bar-label">${match.possession_home}%</span>
-          <div class="stat-bar-track"><div class="stat-bar-fill home" style="width:${match.possession_home}%"></div></div>
-          <span class="stat-bar-label" style="text-align:left;color:var(--fg-faint);font-size:9px">POSS</span>
-          <div class="stat-bar-track"><div class="stat-bar-fill away" style="width:${match.possession_away}%"></div></div>
-          <span class="stat-bar-label">${match.possession_away}%</span>
-        </div>
-        ${match.shots_home != null ? `<div class="stat-bar-row">
-          <span class="stat-bar-label">${match.shots_home}</span>
-          <div class="stat-bar-track"><div class="stat-bar-fill home" style="width:${Math.min(100, match.shots_home*10)}%"></div></div>
-          <span class="stat-bar-label" style="text-align:left;color:var(--fg-faint);font-size:9px">TIRS</span>
-          <div class="stat-bar-track"><div class="stat-bar-fill away" style="width:${Math.min(100, match.shots_away*10)}%"></div></div>
-          <span class="stat-bar-label">${match.shots_away}</span>
-        </div>` : ''}
-      `;
+          <span class="stat-bar-label">${r.h}</span>
+          <div class="stat-bar-track"><div class="stat-bar-fill home" style="width:${r.hp}%"></div></div>
+          <span class="stat-bar-label" style="text-align:center;color:var(--fg-faint);font-size:9px">${r.label}</span>
+          <div class="stat-bar-track"><div class="stat-bar-fill away" style="width:${r.ap}%"></div></div>
+          <span class="stat-bar-label">${r.a}</span>
+        </div>`).join('');
     }
+
+    function renderLineups(lineups) {
+      const el = document.getElementById('lineups-wrapper');
+      if (!lineups?.home?.starting?.length) {
+        el.innerHTML = `<div style="color:var(--fg-faint);font-size:13px;text-align:center">Compositions disponibles 1h avant le match</div>`;
+        return;
+      }
+      const tag = lineups.confirmed
+        ? `<span style="font-size:10px;font-weight:700;color:var(--accent-strong);background:var(--accent-soft);padding:2px 8px;border-radius:99px">✓ Confirmées</span>`
+        : `<span style="font-size:10px;font-weight:700;color:var(--fg-faint);background:var(--bg-card-2);padding:2px 8px;border-radius:99px">Prédites</span>`;
+      const side = (s) => s.starting.map(p => `
+        <div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--bg-card-2)">
+          <span style="width:18px;font-size:10px;font-weight:700;color:var(--fg-faint);text-align:center;flex-shrink:0">${p.number}</span>
+          <span style="font-size:12px;font-weight:${p.captain?'800':'500'};color:var(--fg);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}${p.captain?' ©':''}</span>
+          <span style="font-size:9px;color:var(--fg-faint);flex-shrink:0">${p.position}</span>
+        </div>`).join('');
+      el.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">${tag}</div>
+        <div style="display:flex;gap:12px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:10px;font-weight:700;color:var(--fg-faint);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">${match.home_team} · ${lineups.home.formation}</div>
+            ${side(lineups.home)}
+          </div>
+          <div style="width:1px;background:var(--bg-card-2);flex-shrink:0"></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:10px;font-weight:700;color:var(--fg-faint);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">${match.away_team} · ${lineups.away.formation}</div>
+            ${side(lineups.away)}
+          </div>
+        </div>`;
+    }
+
+    function renderScorers(buteurs) {
+      const show = buteurs?.length > 0;
+      document.getElementById('scorers-section').style.display = show ? '' : 'none';
+      document.getElementById('scorers-card').style.display    = show ? '' : 'none';
+      if (!show) return;
+      document.getElementById('scorers-wrapper').innerHTML = buteurs.map(b => `
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bg-card-2)">
+          <span style="font-size:15px">⚽</span>
+          <span style="font-size:14px;font-weight:600;color:var(--fg);flex:1">${b.name}</span>
+          <span style="font-size:12px;color:var(--fg-faint)">${b.team==='home'?match.home_team:match.away_team}</span>
+          <span style="font-size:12px;font-weight:700;color:var(--fg-faint);min-width:30px;text-align:right">${b.minute}'</span>
+        </div>`).join('');
+    }
+
+    // Initial render
+    renderStats(match.stats);
+    renderLineups(match.lineups);
+    renderScorers(match.buteurs_reels);
 
     // Oracle
     const hasMid = await checkPremiumAccess(profile);
@@ -332,12 +402,19 @@
 
     // Scores mis à jour via Supabase Realtime ci-dessous (agent IA écrit dans la DB)
 
-    // Supabase realtime
+    // Supabase Realtime — agent IA met à jour la DB toutes les 60s
     supabase.channel('match-' + matchId)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matchs', filter: `id=eq.${matchId}` }, ({ new: m }) => {
+        // Score + statut
         document.getElementById('score-home').textContent = m.home_score;
         document.getElementById('score-away').textContent = m.away_score;
         updateStatus(m);
+        // Stats live
+        renderStats(m.stats);
+        // Lineups (quand disponibles)
+        if (m.lineups) renderLineups(m.lineups);
+        // Buteurs réels (fin de match)
+        if (m.buteurs_reels) renderScorers(m.buteurs_reels);
       })
       .subscribe();
 

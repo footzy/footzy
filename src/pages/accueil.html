@@ -1869,8 +1869,13 @@
     // ─────────────────────────────────────────
     await Promise.all([loadLive(), loadUpcoming(), loadDefi(), loadActu()]);
 
-    // Polling live toutes les 60s
-    setInterval(loadLive, 60_000);
+    // Polling live toutes les 60s + sync scores via API serveur
+    setInterval(async () => {
+      // Appeler /api/sync-live pour mettre à jour les scores en DB
+      // (fallback si le cron Vercel n'est pas actif sur plan Free)
+      try { await fetch('/api/sync-live'); } catch {}
+      loadLive();
+    }, 60_000);
   </script>
 </body>
 </html>

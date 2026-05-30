@@ -11,7 +11,14 @@
     { "source": "/pronostic/:id", "destination": "/pronostic.html?id=:id" }
   ],
   "functions": {
-    "api/whop-webhook.js": { "maxDuration": 10 },
-    "api/resolve-match.js": { "maxDuration": 30 }
-  }
+    "api/whop-webhook.js":  { "maxDuration": 10 },
+    "api/resolve-match.js": { "maxDuration": 30 },
+    "api/sync-live.js":     { "maxDuration": 30 }
+  },
+  "crons": [
+    {
+      "path": "/api/sync-live",
+      "schedule": "* * * * *"
+    }
+  ]
 }

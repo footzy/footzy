@@ -197,10 +197,12 @@
       flex-shrink: 0;
       width: calc(100vw - 48px);
       max-width: 382px;
-      background: var(--color-surface);
+      background:
+        radial-gradient(ellipse at 50% 85%, rgba(0,224,90,0.12) 0%, transparent 60%),
+        #0F0F0E;
       border-radius: var(--radius-xl);
-      padding: 16px;
-      box-shadow: var(--shadow-card);
+      padding: 18px 16px;
+      box-shadow: 0 0 0 1px rgba(0,224,90,0.22), 0 14px 44px rgba(0,0,0,0.38);
       scroll-snap-align: start;
       position: relative;
       overflow: hidden;
@@ -210,13 +212,25 @@
       position: absolute;
       top: 0; left: 0; right: 0;
       height: 3px;
-      background: var(--color-border);
+      background: var(--color-green);
       border-radius: 20px 20px 0 0;
     }
+    /* Centre du terrain — texture subtile */
+    .match-countdown-card::after {
+      content: '';
+      position: absolute;
+      width: 170px; height: 170px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255,255,255,0.045);
+      bottom: -60px; left: 50%;
+      transform: translateX(-50%);
+      pointer-events: none;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.02);
+    }
     .match-countdown-badge {
-      background: var(--color-dark);
-      color: var(--color-text-inverse);
-      padding: 4px 10px;
+      background: var(--color-green);
+      color: var(--color-dark);
+      padding: 5px 11px;
       border-radius: var(--radius-sm);
       font: 700 0.72rem/1 'Geist';
       letter-spacing: 0.02em;
@@ -232,11 +246,11 @@
     .countdown-vs {
       font: italic 900 2.8rem/1 'Geist';
       letter-spacing: -0.04em;
-      color: var(--color-text-tertiary);
+      color: rgba(0,224,90,0.18);
     }
     .countdown-kickoff {
       font: 700 0.78rem/1 'Geist';
-      color: var(--color-text-secondary);
+      color: rgba(255,255,255,0.45);
       letter-spacing: 0.02em;
     }
 
@@ -256,17 +270,19 @@
       flex-shrink: 0;
       width: calc(100vw - 48px);
       max-width: 382px;
-      background: var(--color-surface);
+      background:
+        radial-gradient(ellipse at 50% 85%, rgba(0,224,90,0.09) 0%, transparent 58%),
+        #0F0F0E;
       border-radius: var(--radius-xl);
-      padding: 16px;
-      box-shadow: var(--shadow-live);
+      padding: 18px 16px;
+      box-shadow: 0 0 0 2px var(--color-green), 0 8px 36px rgba(0,224,90,0.22);
       scroll-snap-align: start;
       cursor: pointer;
-      transition: transform 150ms ease;
+      transition: transform 150ms ease, box-shadow 150ms ease;
       position: relative;
       overflow: hidden;
     }
-    .match-live-card:active { transform: scale(0.98); }
+    .match-live-card:active { transform: scale(0.98); box-shadow: 0 0 0 2px var(--color-green), 0 4px 16px rgba(0,224,90,0.15); }
     .match-live-card::before {
       content: '';
       position: absolute;
@@ -814,6 +830,34 @@
     }
     .feed-fab:active { transform: scale(0.90); box-shadow: 0 2px 8px rgba(0,224,90,0.3); }
 
+    /* ── Textes cartes sombres (countdown + live) ── */
+    .match-countdown-card .match-phase,
+    .match-live-card .match-phase { color: rgba(255,255,255,0.38); }
+
+    .match-countdown-card .match-team-flag { font-size: 2.8rem; }
+    .match-live-card .match-team-flag      { font-size: 2.6rem; }
+
+    .match-countdown-card .match-team-code,
+    .match-live-card .match-team-code {
+      color: rgba(255,255,255,0.82);
+      letter-spacing: 0.07em;
+    }
+
+    .match-live-card .match-score { color: #FFFFFF; }
+
+    /* Prono banners adaptés fond sombre */
+    .match-live-card .prono-banner--live   { background: rgba(0,224,90,0.13);    border-color: rgba(0,224,90,0.4); }
+    .match-live-card .prono-banner--danger { background: rgba(232,69,60,0.13);   border-color: rgba(232,69,60,0.4); }
+    .match-live-card .prono-banner--none   { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
+    .match-live-card .prono-banner--none .prono-banner-dot    { background: rgba(255,255,255,0.28); }
+    .match-live-card .prono-banner--none .prono-banner-status { color: rgba(255,255,255,0.38); }
+    .match-live-card .prono-banner-score  { color: rgba(255,255,255,0.72); }
+    .match-live-card .prono-banner-cta    {
+      background: rgba(255,255,255,0.07);
+      border-color: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.65);
+    }
+
     /* ── Skeleton loader ── */
     @keyframes shimmer {
       0%   { background-position: -400px 0; }
@@ -1047,6 +1091,10 @@
       const kickoff = new Date(match.kickoff_at);
       const hour    = kickoff.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
+      // Titre dynamique → "Prochain match"
+      const titleEl = document.querySelector('#live-section .section-big-title');
+      if (titleEl) titleEl.textContent = 'Prochain match';
+
       scroll.innerHTML = `
         <div class="match-countdown-card">
           <div class="match-card-top">
@@ -1056,7 +1104,7 @@
           <div class="match-score-row">
             <div class="match-team">
               <span class="match-team-flag">${match.home_flag || ''}</span>
-              <span class="match-team-code">${match.home_team?.slice(0,3).toUpperCase() || ''}</span>
+              <span class="match-team-code">${shortName(match.home_team)}</span>
             </div>
             <div class="countdown-vs-block">
               <span class="countdown-vs">VS</span>
@@ -1064,7 +1112,7 @@
             </div>
             <div class="match-team">
               <span class="match-team-flag">${match.away_flag || ''}</span>
-              <span class="match-team-code">${match.away_team?.slice(0,3).toUpperCase() || ''}</span>
+              <span class="match-team-code">${shortName(match.away_team)}</span>
             </div>
           </div>
         </div>`;
@@ -1121,6 +1169,9 @@
       liveSection.style.display = '';
       heroBadge.style.display   = 'inline-flex';
       heroCount.textContent     = `${matches.length} match${matches.length > 1 ? 's' : ''} en direct`;
+      // Titre dynamique → "Matchs en direct"
+      const titleEl = document.querySelector('#live-section .section-big-title');
+      if (titleEl) titleEl.textContent = 'Matchs en direct';
 
       // Fetch my pronos for these live matches
       const matchIds = matches.map(m => m.id);

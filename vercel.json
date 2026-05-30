@@ -12,13 +12,6 @@
   ],
   "functions": {
     "api/whop-webhook.js":  { "maxDuration": 10 },
-    "api/resolve-match.js": { "maxDuration": 30 },
-    "api/sync-live.js":     { "maxDuration": 30 }
-  },
-  "crons": [
-    {
-      "path": "/api/sync-live",
-      "schedule": "* * * * *"
-    }
-  ]
+    "api/resolve-match.js": { "maxDuration": 30 }
+  }
 }

@@ -169,7 +169,7 @@
 
   <script type="module">
     import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
-    import { startLivePolling } from '/src/js/lib/football-api.js';
+    // startLivePolling retiré — scores mis à jour par agent IA via Supabase Realtime
     import { checkPremiumAccess, createCheckout, getBoostPrice, getBoostTiming, PLANS } from '/src/js/lib/whop.js';
     import { calculerStatutLive, formatStatut } from '/src/js/lib/points.js';
     import { formatKickoff, isBeforeKickoff, toast } from '/src/js/lib/utils.js';
@@ -330,14 +330,7 @@
       gpEl.innerHTML = `<div style="color:var(--fg-faint);font-size:13px;text-align:center;padding:16px"><a href="/src/pages/onboarding.html" style="color:var(--accent-strong)">Rejoins un groupe</a> pour voir les pronos</div>`;
     }
 
-    // Live polling
-    if (match.status === 'live') {
-      startLivePolling(matchId, match.home_team, match.away_team, supabase, (upd) => {
-        document.getElementById('score-home').textContent = upd.home_score;
-        document.getElementById('score-away').textContent = upd.away_score;
-        document.getElementById('match-minute').textContent = upd.minute;
-      });
-    }
+    // Scores mis à jour via Supabase Realtime ci-dessous (agent IA écrit dans la DB)
 
     // Supabase realtime
     supabase.channel('match-' + matchId)

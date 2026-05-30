@@ -879,7 +879,7 @@
 
   <script type="module">
     import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
-    import { searchPlayer, getLineups } from '/src/js/lib/football-api.js';
+    // football-api.js retiré — agent IA à venir
     import { isBeforeKickoff } from '/src/js/lib/utils.js';
     import { checkPremiumAccess, createCheckout, PLANS } from '/src/js/lib/whop.js';
 
@@ -1188,184 +1188,61 @@
       const overlay = document.createElement('div');
       overlay.className = 'sheet-overlay';
       overlay.innerHTML = `
-        <div class="sheet" style="max-height:82vh">
+        <div class="sheet" style="max-height:60vh">
           <div class="sheet-handle"></div>
           <div class="sheet-title">
-            <span>Choisir un buteur (max 3)</span>
+            <span>Ajouter un buteur (max 3)</span>
             <button class="sheet-close" id="sheet-close">✕</button>
           </div>
-          ${isPremium
-            ? `<div class="player-grid-loading" id="player-grid-area">⏳ Chargement des joueurs…</div>`
-            : `<div class="player-free-hint" id="player-free-hint">
-                ⭐ <span>Passe Premium pour voir la liste des joueurs directement</span>
-               </div>`}
-          <input class="player-search-input" id="player-search"
-            placeholder="${isPremium ? 'Ou rechercher un joueur…' : 'Rechercher un joueur…'}" autocomplete="off" />
-          <div id="player-results"></div>
+          <div style="padding:16px">
+            <input class="player-search-input" id="player-search"
+              placeholder="Nom du joueur…" autocomplete="off" style="margin-bottom:12px" />
+            <div id="player-results"></div>
+            <div style="font:400 0.72rem/1.4 'Geist';color:var(--color-text-tertiary);margin-top:8px;text-align:center">
+              Tape un nom et appuie sur Entrée ↵
+            </div>
+          </div>
         </div>`;
       document.body.appendChild(overlay);
 
-      const input   = overlay.querySelector('#player-search');
-      const results = overlay.querySelector('#player-results');
+      const input = overlay.querySelector('#player-search');
 
       overlay.querySelector('#sheet-close').addEventListener('click', () => overlay.remove());
       overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 
-      // Upsell si Free clique sur le hint
-      overlay.querySelector('#player-free-hint')?.addEventListener('click', () => {
-        overlay.remove();
-        createCheckout(PLANS.premium, user.id, user.email);
-      });
-
-      // ── Premium : charger les joueurs ──
-      if (isPremium) {
-        (async () => {
-          const gridArea = overlay.querySelector('#player-grid-area');
-          try {
-            let home = [], away = [];
-
-            // 1. Essai composition API (si fixture_id disponible)
-            const fixtureId = match.fixture_id || match.api_id || match.external_id;
-            if (fixtureId) {
-              const data = await getLineups(fixtureId);
-              // Nouveau format : { home: [{name, pos}], away: [{name, pos}] }
-              if (data?.home?.length || data?.away?.length) {
-                home = (data.home || []).map(p => p.name).filter(Boolean);
-                away = (data.away || []).map(p => p.name).filter(Boolean);
-              } else if (data?.response) {
-                // Ancien format (fallback)
-                (data.response || []).forEach(t => {
-                  const players = [
-                    ...(t.startXI || []),
-                    ...(t.substitutes || [])
-                  ].map(p => p?.player?.name).filter(Boolean);
-                  const tname = (t.team?.name || '').toLowerCase();
-                  const hname = (match.home_team || '').toLowerCase().slice(0, 5);
-                  if (tname.includes(hname) || hname.includes(tname.slice(0, 5))) {
-                    home = players;
-                  } else {
-                    away = players;
-                  }
-                });
-              }
-            }
-
-            // Pas de composition disponible → message informatif
-            if (!home.length && !away.length) {
-              gridArea.className = '';
-              gridArea.style.cssText = 'padding:14px 16px;border-bottom:1px solid var(--color-border)';
-              gridArea.innerHTML = `<div style="font:400 0.8rem/1.4 'Geist';color:var(--color-text-tertiary);display:flex;align-items:center;gap:8px">
-                <span>📋</span>
-                <span>Composition indisponible pour ce match.<br>Utilisez la recherche ci-dessous.</span>
-              </div>`;
-              setTimeout(() => input.focus(), 100);
-              return;
-            }
-
-            function chipsHtml(players) {
-              return players.map(nom => {
-                const already = buteurs.includes(nom);
-                return `<button class="player-chip-select${already ? ' already' : ''}" data-name="${nom}">${nom}${already ? ' ✓' : ''}</button>`;
-              }).join('');
-            }
-
-            gridArea.className = 'player-grid-wrap';
-            gridArea.innerHTML = `
-              ${home.length ? `
-                <div class="player-grid-team">${match.home_flag || ''} ${match.home_team || ''}</div>
-                <div class="player-grid" id="grid-home">${chipsHtml(home)}</div>` : ''}
-              ${away.length ? `
-                <div class="player-grid-team">${match.away_flag || ''} ${match.away_team || ''}</div>
-                <div class="player-grid" id="grid-away">${chipsHtml(away)}</div>` : ''}`;
-
-            // Listeners sur les chips
-            gridArea.querySelectorAll('.player-chip-select:not(.already)').forEach(chip => {
-              chip.addEventListener('click', () => {
-                const nom = chip.dataset.name;
-                if (buteurs.length >= 3) return;
-                if (!buteurs.includes(nom)) {
-                  buteurs.push(nom);
-                  renderChips();
-                }
-                overlay.remove();
-                if (navigator.vibrate) navigator.vibrate(20);
-              });
-            });
-
-          } catch(e) {
-            console.warn('Player grid failed', e);
-            const g = overlay.querySelector('#player-grid-area');
-            if (g) {
-              g.className = '';
-              g.style.cssText = 'padding:14px 16px;border-bottom:1px solid var(--color-border)';
-              g.innerHTML = `<div style="font:400 0.8rem/1.4 'Geist';color:var(--color-text-tertiary);display:flex;align-items:center;gap:8px">
-                <span>📋</span><span>Composition indisponible. Utilisez la recherche.</span>
-              </div>`;
-            }
-            setTimeout(() => input.focus(), 100);
-          }
-        })();
-      }
-
-      // ── Helper : ajouter le joueur tapé directement ──
-      function addPlayerManually(nom) {
+      // Ajouter le joueur tapé (Entrée ou clic sur le bouton)
+      function addPlayer(nom) {
         if (!nom || buteurs.length >= 3 || buteurs.includes(nom)) return;
         buteurs.push(nom);
         renderChips();
+        updatePointsPreview();
         overlay.remove();
         if (navigator.vibrate) navigator.vibrate(20);
       }
 
-      // ── Recherche + fallback saisie manuelle ──
-      setTimeout(() => input.focus(), 300);
-      let searchTimeout;
+      setTimeout(() => input.focus(), 200);
+
       input.addEventListener('keydown', e => {
-        // Entrée = ajouter directement si pas de résultats API
         if (e.key === 'Enter') {
-          const q = input.value.trim();
-          if (q.length >= 2) addPlayerManually(q);
+          e.preventDefault();
+          addPlayer(input.value.trim());
         }
       });
+
+      // Bouton "Ajouter" qui apparaît dès 2 caractères
       input.addEventListener('input', () => {
-        clearTimeout(searchTimeout);
         const q = input.value.trim();
-        if (q.length < 2) { results.innerHTML = ''; return; }
-        searchTimeout = setTimeout(async () => {
-          try {
-            const res = await searchPlayer(q);
-            if (!res.length) {
-              // Pas de résultat API → proposer d'ajouter manuellement
-              results.innerHTML = `
-                <div style="padding:14px 16px">
-                  <div style="font:400 0.78rem/1 'Geist';color:var(--color-text-tertiary);margin-bottom:10px">
-                    Aucun résultat API — tu peux ajouter directement :
-                  </div>
-                  <div class="player-result" id="manual-add" data-name="${q}" style="display:flex;align-items:center;justify-content:space-between">
-                    <span>${q}</span>
-                    <span style="font:700 0.7rem/1 'Geist';color:var(--color-green);background:var(--color-green-bg);padding:4px 8px;border-radius:999px">+ Ajouter</span>
-                  </div>
-                </div>`;
-              results.querySelector('#manual-add')?.addEventListener('click', () => addPlayerManually(q));
-              return;
-            }
-            results.innerHTML = res.slice(0, 6).map(p => {
-              const name = p.name || p.player?.name || p.strPlayer || String(p);
-              return `<div class="player-result" data-name="${name}">${name}</div>`;
-            }).join('');
-            results.querySelectorAll('.player-result').forEach(item => {
-              item.addEventListener('click', () => {
-                const nom = item.dataset.name;
-                if (buteurs.length < 3 && !buteurs.includes(nom)) {
-                  buteurs.push(nom);
-                  renderChips();
-                }
-                overlay.remove();
-              });
-            });
-          } catch(e) {
-            console.warn('Player search failed', e);
-          }
-        }, 350);
+        const results = overlay.querySelector('#player-results');
+        if (q.length >= 2) {
+          results.innerHTML = `
+            <div class="player-result" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" id="add-btn">
+              <span style="font:600 0.88rem/1 'Geist'">${q}</span>
+              <span style="font:700 0.7rem/1 'Geist';color:var(--color-green);background:var(--color-green-bg);border:1px solid rgba(0,196,79,0.3);padding:5px 10px;border-radius:999px">+ Ajouter</span>
+            </div>`;
+          results.querySelector('#add-btn').addEventListener('click', () => addPlayer(q));
+        } else {
+          results.innerHTML = '';
+        }
       });
     }
 

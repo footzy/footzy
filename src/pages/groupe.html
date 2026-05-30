@@ -208,6 +208,150 @@
       padding: 2px;
     }
     .invite-share-btn:active { color: #00E05A; }
+
+    /* ═══════════════════════════════════════
+       DESIGN SYSTEM GROUPE v1.0
+       ═══════════════════════════════════════ */
+    :root {
+      --pg-bg: #F2F2F0; --pg-surface: #FFFFFF; --pg-dark: #0F0F0E;
+      --pg-green: #00E05A; --pg-text-1: #0F0F0E; --pg-text-2: #6B6966;
+      --pg-text-3: #A8A49F; --pg-border: #E8E6E2;
+      --pg-gold: #F5A623; --pg-silver: #9B9B9B; --pg-bronze: #CD7F32;
+      --pg-danger: #FF4444;
+      --pg-shadow: 0 1px 4px rgba(0,0,0,0.05), 0 0 0 1px var(--pg-border);
+    }
+    body { background: var(--pg-bg) !important; }
+
+    /* Hero */
+    .grp-hero { padding: 28px 16px 20px; text-align: center; }
+    .grp-hero__label {
+      font: 500 0.75rem/1 'Geist', system-ui; color: var(--pg-text-2);
+      letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 6px;
+    }
+    #group-name {
+      font: italic 900 2.6rem/1.0 'Geist', system-ui !important;
+      color: var(--pg-text-1) !important; letter-spacing: -0.02em !important;
+      text-transform: uppercase !important; word-break: break-word !important;
+      text-align: center !important; margin: 0 !important;
+    }
+
+    /* Info grid */
+    .grp-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px 20px; }
+    .grp-invite {
+      background: var(--pg-surface); border-radius: 16px; padding: 14px;
+      box-shadow: var(--pg-shadow); min-height: 76px;
+    }
+    .grp-invite__lbl {
+      font: 500 0.58rem/1 'Geist', system-ui; letter-spacing: 0.1em;
+      color: var(--pg-text-2); text-transform: uppercase; margin-bottom: 8px;
+    }
+    .grp-invite__row { display: flex; align-items: center; gap: 8px; }
+    #group-code {
+      font: 900 1.35rem/1 'Geist', system-ui !important;
+      letter-spacing: 0.04em !important; color: var(--pg-text-1) !important;
+    }
+    #share-btn {
+      background: none !important; border: none !important; cursor: pointer;
+      color: var(--pg-text-2); display: flex; align-items: center; padding: 4px;
+      min-width: 32px; min-height: 32px;
+    }
+    .grp-gage {
+      background: var(--pg-dark); border-radius: 16px; padding: 14px;
+      min-height: 76px; cursor: pointer;
+    }
+    .grp-gage:active { opacity: 0.85; }
+    .grp-gage__top { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+    .grp-gage__icon {
+      width: 22px; height: 22px; background: var(--pg-green); border-radius: 6px;
+      display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0;
+    }
+    .grp-gage__lbl {
+      font: 500 0.58rem/1 'Geist', system-ui; letter-spacing: 0.1em;
+      color: var(--pg-green); text-transform: uppercase;
+    }
+    .grp-gage__txt {
+      font: 600 0.82rem/1.3 'Geist', system-ui; color: #FFFFFF;
+      overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    }
+
+    /* Tabs — sticky sous header, underline noir */
+    .tabs {
+      display: flex !important; background: var(--pg-surface) !important;
+      border-bottom: 1px solid var(--pg-border) !important; padding: 0 16px !important;
+      position: sticky !important; top: 56px !important; z-index: 50 !important;
+      backdrop-filter: none !important; border-radius: 0 !important;
+    }
+    .tab-btn {
+      flex: 1; padding: 14px 4px !important; text-align: center !important;
+      font: 600 0.82rem/1 'Geist', system-ui !important; cursor: pointer;
+      color: var(--pg-text-2) !important;
+      border: none !important; border-bottom: 2.5px solid transparent !important;
+      background: none !important; border-radius: 0 !important; box-shadow: none !important;
+      margin-bottom: -1px; transition: color 200ms, border-color 200ms;
+    }
+    .tab-btn.active { color: var(--pg-text-1) !important; border-bottom-color: var(--pg-text-1) !important; }
+
+    /* Leaderboard header colonnes */
+    .lb-header {
+      display: flex; padding: 12px 30px 8px;
+      font: 500 0.62rem/1 'Geist', system-ui;
+      color: var(--pg-text-2); letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .lb-header__rank { width: 24px; }
+    .lb-header__name { flex: 1; padding-left: 52px; }
+    .lb-header__score { width: 80px; text-align: right; }
+
+    /* Skeleton */
+    .lb-skeleton {
+      background: linear-gradient(90deg, #EEECE8 25%, #F5F4F1 50%, #EEECE8 75%);
+      background-size: 200% 100%; animation: skShimmer 1.4s infinite;
+      border-radius: 16px; height: 64px; margin: 0 16px 8px;
+    }
+    @keyframes skShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* Rows classement v2 */
+    @keyframes rowIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .lb2 {
+      display: flex; align-items: center; padding: 12px 14px;
+      background: var(--pg-surface); border-radius: 16px; margin: 0 16px 8px;
+      min-height: 64px; box-shadow: var(--pg-shadow); cursor: pointer;
+      animation: rowIn 300ms ease-out both;
+    }
+    .lb2:active { opacity: 0.8; }
+    .lb2--me { background: var(--pg-green) !important; box-shadow: none; }
+
+    .lb2__rank { font: 900 1.1rem/1 'Geist', system-ui; color: var(--pg-text-2); width: 24px; flex-shrink: 0; text-align: center; }
+    .lb2__rank--1 { color: var(--pg-gold); font-size: 1.3rem; }
+    .lb2__rank--2 { color: var(--pg-silver); }
+    .lb2__rank--3 { color: var(--pg-bronze); }
+    .lb2--me .lb2__rank { color: rgba(255,255,255,0.8); }
+
+    .lb2__av {
+      border-radius: 50%; background: #E0DDD8; display: flex; align-items: center;
+      justify-content: center; font: 700 0.75rem/1 'Geist', system-ui;
+      color: var(--pg-text-1); overflow: hidden; flex-shrink: 0; margin: 0 12px;
+    }
+    .lb2__av--1 { width: 44px; height: 44px; font-size: 0.9rem; }
+    .lb2__av--2 { width: 40px; height: 40px; font-size: 0.85rem; }
+    .lb2__av--3 { width: 36px; height: 36px; }
+    .lb2__av--n { width: 32px; height: 32px; font-size: 0.7rem; }
+    .lb2--me .lb2__av { border: 2.5px solid white; background: rgba(0,0,0,0.15); color: white; }
+
+    .lb2__info { flex: 1; min-width: 0; }
+    .lb2__name { font: 700 0.95rem/1.2 'Geist', system-ui; color: var(--pg-text-1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lb2--me .lb2__name { font-weight: 900; color: white; }
+    .lb2__sub { font: 500 0.58rem/1 'Geist', system-ui; color: var(--pg-text-2); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; }
+    .lb2--me .lb2__sub { color: rgba(255,255,255,0.75); }
+
+    .lb2__score { font: 900 1.5rem/1 'Geist', system-ui; color: var(--pg-text-1); text-align: right; white-space: nowrap; flex-shrink: 0; }
+    .lb2__score--1 { font-size: 2.2rem; }
+    .lb2__score--2 { font-size: 2.0rem; }
+    .lb2__score--3 { font-size: 1.8rem; }
+    .lb2__score--zero { color: var(--pg-text-2); }
+    .lb2--me .lb2__score { color: white; }
+
+    .lb2__kick { background: none; border: 1px solid var(--pg-danger); color: var(--pg-danger); border-radius: 8px; padding: 4px 8px; font: 600 0.7rem/1 'Geist', system-ui; cursor: pointer; margin-right: 6px; flex-shrink: 0; }
+    .lb2__bm { background: var(--pg-surface); border: 1.5px solid var(--pg-border); border-radius: 8px; padding: 4px 10px; font-size: 14px; cursor: pointer; margin-right: 6px; flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -220,28 +364,31 @@
 
   <div class="page-content">
 
-    <!-- Nom du groupe -->
-    <div style="padding:12px 16px 10px">
-      <div style="font:500 11px/1 var(--font);text-transform:uppercase;letter-spacing:0.08em;color:#A09890;margin-bottom:4px">Groupe</div>
-      <h1 id="group-name" style="font:900 italic 30px/1.05 var(--font);text-transform:uppercase;letter-spacing:-0.02em;color:#0F0F0E">Chargement…</h1>
+    <!-- [B] Hero groupe — centré -->
+    <div class="grp-hero">
+      <div class="grp-hero__label">Groupe</div>
+      <h1 id="group-name">…</h1>
     </div>
 
-    <!-- Invite code + gage pill (une seule ligne) -->
-    <div style="display:flex;gap:8px;padding:0 16px 10px;align-items:stretch">
+    <!-- [C] Info grid 2 colonnes -->
+    <div class="grp-info">
       <!-- Invite code -->
-      <div style="flex:1;background:#FAFAF8;border:1px solid #E0DCD6;border-radius:10px;padding:8px 12px">
-        <div style="font:700 9px/1 'Geist',system-ui;color:#A09890;text-transform:uppercase;letter-spacing:0.10em;margin-bottom:5px">INVITE CODE</div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span id="group-code" style="font:700 15px/1 'Geist',system-ui;color:#0F0F0E;letter-spacing:0.05em">—</span>
-          <button id="share-btn" title="Partager" style="background:none;border:none;cursor:pointer;color:#6B6560;display:flex;align-items:center;padding:2px">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      <div class="grp-invite">
+        <div class="grp-invite__lbl">INVITE CODE</div>
+        <div class="grp-invite__row">
+          <span id="group-code">—</span>
+          <button id="share-btn" title="Partager">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
           </button>
         </div>
       </div>
-      <!-- Gage pill — affiché par JS quand jeu en cours -->
-      <div id="gage-pill-bar" style="display:none;background:#0F0F0E;border-radius:10px;padding:8px 12px;min-width:110px;max-width:150px;cursor:pointer">
-        <div style="font:700 9px/1 'Geist',system-ui;color:#00E05A;text-transform:uppercase;letter-spacing:0.10em;margin-bottom:5px">GAGE EN COURS</div>
-        <div id="gage-pill-text" style="font:600 12px/1.3 'Geist',system-ui;color:#FAFAF8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">—</div>
+      <!-- Gage card (sombre) -->
+      <div class="grp-gage" id="grp-gage-card">
+        <div class="grp-gage__top">
+          <div class="grp-gage__icon">🍽</div>
+          <div class="grp-gage__lbl" id="grp-gage-lbl">GAGE EN COURS</div>
+        </div>
+        <div class="grp-gage__txt" id="grp-gage-txt">Définir l'enjeu</div>
       </div>
     </div>
 
@@ -291,14 +438,18 @@
 
       </div>
 
-      <!-- Leaderboard header -->
+      <!-- Leaderboard header colonnes -->
       <div class="lb-header">
         <span class="lb-header__rank">#</span>
         <span class="lb-header__name">ATHLÈTE</span>
         <span class="lb-header__score">SCORE</span>
       </div>
+      <!-- Leaderboard (skeleton au chargement) -->
       <div id="groupe-leaderboard">
-        <div style="text-align:center;padding:32px;color:var(--text-tertiary)">Chargement...</div>
+        <div class="lb-skeleton"></div>
+        <div class="lb-skeleton" style="animation-delay:.15s"></div>
+        <div class="lb-skeleton" style="animation-delay:.3s"></div>
+        <div class="lb-skeleton" style="animation-delay:.45s"></div>
       </div>
     </div>
 
@@ -760,13 +911,20 @@
       }
       statusBadge.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;background:${statusBg};border:1px solid ${statusBorder};border-radius:50px;padding:5px 14px;font-size:12px;font-weight:700;color:${statusColor}">${statusLabel}</span>`;
 
-      // Gage display
+      // Gage display (section admin)
       gageDisplay.textContent = groupe.gage || 'Aucun gage défini…';
       gageDisplay.style.color = groupe.gage ? 'var(--text-primary)' : 'var(--text-tertiary)';
-      // Gage pill dans la barre d'invite
-      const gagePillBar = document.getElementById('gage-pill-bar');
-      const gagePillText = document.getElementById('gage-pill-text');
-      if (gagePillBar && groupe.gage && evtActive) { gagePillBar.style.display = ''; if (gagePillText) gagePillText.textContent = groupe.gage; }
+      // Gage card visuelle dans info grid
+      const gLbl = document.getElementById('grp-gage-lbl');
+      const gTxt = document.getElementById('grp-gage-txt');
+      if (gLbl && gTxt) {
+        gLbl.textContent = groupe.gage ? (evtActive ? 'GAGE EN COURS' : 'LE GAGE') : 'AJOUTER UN GAGE';
+        gTxt.textContent = groupe.gage || 'Définir l\'enjeu du groupe';
+        if (!groupe.gage) gTxt.style.color = '#A8A49F';
+      }
+      // Click gage card → scroll vers la section admin
+      const gCard = document.getElementById('grp-gage-card');
+      if (gCard) gCard.onclick = () => document.getElementById('gage-section').scrollIntoView({ behavior: 'smooth' });
 
       // Admin : édition gage (seulement si événement pas terminé)
       if (isAdmin && !evtEnded) {
@@ -859,37 +1017,32 @@
       currentActionsLeft = actionsLeft;
       currentSorted = sorted;
       lb.innerHTML = sorted.map((p, i) => {
-        const rank = i + 1;
-        const isMe = p.id === user.id;
-        const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+        const rank    = i + 1;
+        const isMe    = p.id === user.id;
         const canKick = isAdmin && !isMe && p.role !== 'admin';
         const canBM   = gameEnCours && !isMe;
         const total   = (p.points_totaux || 0) + (p.bm_pts || 0);
         const bmBadge = p.bm_pts !== 0
-          ? `<span style="font-size:10px;font-weight:700;color:${p.bm_pts > 0 ? '#00E05A' : '#FF4444'}">${p.bm_pts > 0 ? '+' : ''}${p.bm_pts}</span>`
+          ? `<span style="font:700 0.65rem/1 'Geist',system-ui;color:${p.bm_pts > 0 ? '#00E05A' : '#FF4444'};margin-left:4px">${p.bm_pts > 0 ? '+' : ''}${p.bm_pts}</span>`
           : '';
+        const rk = rank === 1 ? '1' : rank === 2 ? '2' : rank === 3 ? '3' : 'n';
         const avatarInner = p.avatar_url
           ? `<img src="${p.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
           : `<span>${(p.pseudo?.[0]||'?').toUpperCase()}</span>`;
-        const subtext = isMe
-          ? `<div class="lb-row__sub">EN PROGRESSION</div>`
-          : p.streak_quotidien > 0
-            ? `<div class="lb-row__sub">🔥 ${p.streak_quotidien} jours</div>`
-            : p.role === 'admin' ? `<div class="lb-row__sub">Admin</div>` : '';
+        const sub = isMe
+          ? (rank === 1 ? '🥇 EN TÊTE !' : 'EN PROGRESSION')
+          : p.streak_quotidien > 0 ? `🔥 ${p.streak_quotidien}j` : '';
 
-        return `<div class="lb-row${isMe ? ' lb-row--me' : ''}" data-memberid="${p.id}">
-          <div class="lb-row__rank ${rankClass}">${rank}</div>
-          <div class="lb-row__avatar">${avatarInner}</div>
-          <div class="lb-row__info">
-            <div class="lb-row__name leaderboard-pseudo">${isMe ? 'VOUS' : p.pseudo}</div>
-            ${subtext}
+        return `<div class="lb2${isMe ? ' lb2--me' : ''}" data-memberid="${p.id}" style="animation-delay:${i * 60}ms">
+          <div class="lb2__rank lb2__rank--${rk}">${rank}</div>
+          <div class="lb2__av lb2__av--${rk}">${avatarInner}</div>
+          <div class="lb2__info">
+            <div class="lb2__name leaderboard-pseudo">${isMe ? 'VOUS' : p.pseudo}</div>
+            ${sub ? `<div class="lb2__sub">${sub}</div>` : ''}
           </div>
-          ${canKick ? `<button class="kick-btn" data-uid="${p.id}" style="background:none;border:1px solid #FF4444;color:#FF4444;border-radius:8px;padding:4px 8px;font-size:11px;cursor:pointer">Exclure</button>` : ''}
-          ${canBM ? `<button class="bm-btn" data-uid="${p.id}" data-pseudo="${p.pseudo}" style="background:#FAFAF8;border:1px solid #E0DCD6;border-radius:8px;padding:4px 10px;font-size:14px;cursor:pointer" title="Bonus / Malus">⚡</button>` : ''}
-          <div class="lb-row__score">
-            <span class="lb-row__score-val">${total}</span>
-            ${bmBadge}
-          </div>
+          ${canKick ? `<button class="kick-btn lb2__kick" data-uid="${p.id}">Exclure</button>` : ''}
+          ${canBM   ? `<button class="bm-btn lb2__bm" data-uid="${p.id}" data-pseudo="${p.pseudo}" title="Bonus / Malus">⚡</button>` : ''}
+          <div class="lb2__score lb2__score--${rk}${total === 0 ? ' lb2__score--zero' : ''}">${total}${bmBadge}</div>
         </div>`;
       }).join('');
 

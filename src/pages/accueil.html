@@ -1873,11 +1873,8 @@
     // ─────────────────────────────────────────
     await Promise.all([loadLive(), loadUpcoming(), loadDefi(), loadActu()]);
 
-    // Polling live toutes les 60s + sync scores via API serveur
-    setInterval(async () => {
-      try { await fetch('/api/sync-live'); } catch {}
-      loadLive();
-    }, 60_000);
+    // Polling live toutes les 60s (scores mis à jour par l'agent IA)
+    setInterval(loadLive, 60_000);
 
     // ── Push Notifications (PWA) ──
     await registerPushNotifications();

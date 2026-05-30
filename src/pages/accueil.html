@@ -757,6 +757,59 @@
     .feed-action-btn:active { transform: scale(0.96); }
     .feed-action-btn--danger { color: var(--color-danger); border-color: rgba(232,69,60,0.25); }
 
+    /* ── Bottom sheet ── */
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+    .sheet-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,0.75);
+      display: flex; align-items: flex-end; justify-content: center;
+    }
+    .sheet {
+      background: var(--color-surface);
+      border-radius: 20px 20px 0 0;
+      width: 100%; max-width: 430px;
+      max-height: 75vh; overflow-y: auto;
+      padding-bottom: calc(20px + env(safe-area-inset-bottom));
+      animation: slideUp 280ms cubic-bezier(0.32,0.72,0,1);
+    }
+    .sheet-handle {
+      width: 36px; height: 4px; border-radius: 2px;
+      background: var(--color-border); margin: 12px auto 0;
+    }
+    .sheet-title {
+      font: 700 1rem/1 'Geist';
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid var(--color-border);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .sheet-close {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--color-bg); border: 1px solid var(--color-border);
+      color: var(--color-text-primary); font-size: 14px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    /* ── FAB ── */
+    .feed-fab {
+      position: fixed;
+      bottom: 96px; right: 20px;
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: var(--color-green);
+      color: var(--color-dark);
+      border: none;
+      display: flex; align-items: center; justify-content: center;
+      font: 700 1.8rem/1 'Geist';
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(0,224,90,0.45);
+      z-index: 90;
+      transition: transform 150ms ease, box-shadow 150ms ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .feed-fab:active { transform: scale(0.90); box-shadow: 0 2px 8px rgba(0,224,90,0.3); }
+
     /* ── Skeleton loader ── */
     @keyframes shimmer {
       0%   { background-position: -400px 0; }
@@ -879,6 +932,9 @@
 
     </div>
 
+    <!-- ── FAB Feed ── -->
+    <button class="feed-fab" id="feed-fab" style="display:none" aria-label="Pronostiquer">+</button>
+
     <!-- ── [G] Nav bottom ── -->
     <nav class="nav-bottom">
       <a href="/src/pages/accueil.html" class="nav-tab active" aria-current="page">
@@ -908,6 +964,7 @@
   <script type="module">
     import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
     import { formatTime, formatKickoff } from '/src/js/lib/utils.js';
+    import { createCheckout, PLANS } from '/src/js/lib/whop.js';
 
     const user    = await requireAuth();
     if (!user) throw new Error('not authed');
@@ -931,6 +988,8 @@
       }
       window.location.reload();
     }
+
+    const isPremium = profile?.plan === 'premium';
 
     // ── Header ──
     if (profile) {
@@ -1619,19 +1678,125 @@
       const feedEl = document.getElementById('feed-content');
       const btnH   = document.getElementById('tab-home');
       const btnF   = document.getElementById('tab-feed');
+      const fabEl  = document.getElementById('feed-fab');
       if (tab === 'feed') {
         homeEl.style.display = 'none';
         feedEl.style.display = '';
         btnH.classList.remove('active');
         btnF.classList.add('active');
+        if (fabEl) fabEl.style.display = 'flex';
         if (!feedLoaded) loadFeed();
       } else {
         feedEl.style.display = 'none';
         homeEl.style.display = '';
         btnF.classList.remove('active');
         btnH.classList.add('active');
+        if (fabEl) fabEl.style.display = 'none';
       }
     };
+
+    // ── Upsell Feed (Free users) ──
+    function showFeedUpsell() {
+      const ov = document.createElement('div');
+      ov.className = 'sheet-overlay';
+      ov.innerHTML = `
+        <div class="sheet">
+          <div class="sheet-handle"></div>
+          <div style="padding:28px 20px 8px;text-align:center">
+            <div style="font-size:2.8rem;margin-bottom:14px">⭐</div>
+            <div style="font:italic 900 1.6rem/1.1 'Geist';text-transform:uppercase;letter-spacing:-0.02em;color:#0F0F0E;margin-bottom:10px">Feed Communauté</div>
+            <div style="font:400 0.88rem/1.6 'Geist';color:#6B6966;margin-bottom:24px">
+              Partage tes pronostics avec toute la communauté,<br>montre ton niveau et récolte des réactions 🔥❤️
+            </div>
+            <button id="upsell-cta" style="width:100%;height:54px;background:#00E05A;color:#0F0F0E;border:none;border-radius:9999px;font:900 0.95rem/1 'Geist';text-transform:uppercase;letter-spacing:0.04em;cursor:pointer;margin-bottom:10px">
+              Passer Premium ✦
+            </button>
+            <button id="upsell-cancel" style="width:100%;height:40px;background:transparent;border:none;font:500 0.82rem/1 'Geist';color:#6B6966;cursor:pointer">
+              Pas maintenant
+            </button>
+          </div>
+        </div>`;
+      document.body.appendChild(ov);
+      ov.querySelector('#upsell-cta').addEventListener('click', () => {
+        createCheckout(PLANS.premium, user.id, user.email);
+        ov.remove();
+      });
+      ov.querySelector('#upsell-cancel').addEventListener('click', () => ov.remove());
+      ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+    }
+
+    // ── Picker de matchs (Premium) ──
+    async function openMatchPicker() {
+      const ov = document.createElement('div');
+      ov.className = 'sheet-overlay';
+      ov.innerHTML = `
+        <div class="sheet">
+          <div class="sheet-handle"></div>
+          <div class="sheet-title">
+            <span>Choisir un match</span>
+            <button class="sheet-close" id="picker-close">✕</button>
+          </div>
+          <div id="picker-list" style="padding:8px 0">
+            <div style="padding:24px;text-align:center;color:#A8A49F;font:400 0.85rem/1 'Geist'">Chargement…</div>
+          </div>
+        </div>`;
+      document.body.appendChild(ov);
+      ov.querySelector('#picker-close').addEventListener('click', () => ov.remove());
+      ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+
+      const { data: matches } = await supabase
+        .from('matchs')
+        .select('id, home_team, away_team, home_flag, away_flag, kickoff_at, phase, groupe')
+        .eq('status', 'scheduled')
+        .gt('kickoff_at', new Date().toISOString())
+        .order('kickoff_at')
+        .limit(20);
+
+      const pickerList = ov.querySelector('#picker-list');
+      if (!matches?.length) {
+        pickerList.innerHTML = `<div style="padding:32px;text-align:center;color:#A8A49F;font:400 0.85rem/1 'Geist'">Aucun match à venir</div>`;
+        return;
+      }
+
+      pickerList.innerHTML = matches.map(m => {
+        const d = new Date(m.kickoff_at);
+        const today = new Date();
+        const tom   = new Date(today); tom.setDate(today.getDate() + 1);
+        const isToday = d.toDateString() === today.toDateString();
+        const isTom   = d.toDateString() === tom.toDateString();
+        const dayLabel = isToday ? 'Auj.' : isTom ? 'Demain' : d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+        const hour  = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        return `
+          <div data-id="${m.id}" style="display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid #E8E6E2;cursor:pointer;transition:background 100ms ease">
+            <span style="font-size:1.5rem;flex-shrink:0">${m.home_flag || ''}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font:700 0.88rem/1 'Geist';text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#0F0F0E">
+                ${shortName(m.home_team)} — ${shortName(m.away_team)}
+              </div>
+              <div style="font:400 0.7rem/1 'Geist';color:#A8A49F;margin-top:4px">${dayLabel} · ${hour}</div>
+            </div>
+            <span style="font-size:1.5rem;flex-shrink:0">${m.away_flag || ''}</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#A8A49F" stroke-width="2.5" style="flex-shrink:0"><path d="M9 18l6-6-6-6"/></svg>
+          </div>`;
+      }).join('');
+
+      pickerList.querySelectorAll('[data-id]').forEach(item => {
+        item.addEventListener('click', () => {
+          window.location.href = '/src/pages/pronostic.html?id=' + item.dataset.id;
+        });
+        item.addEventListener('touchstart', () => item.style.background = '#F7F6F4', { passive: true });
+        item.addEventListener('touchend',   () => item.style.background = '');
+      });
+    }
+
+    // ── FAB listener ──
+    document.getElementById('feed-fab').addEventListener('click', () => {
+      if (isPremium) {
+        openMatchPicker();
+      } else {
+        showFeedUpsell();
+      }
+    });
 
     // ─────────────────────────────────────────
     // INIT — load all sections in parallel

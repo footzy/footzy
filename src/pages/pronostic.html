@@ -4,248 +4,995 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Footzy — Pronostic</title>
-  <link rel="stylesheet" href="/src/css/tokens.css" />
-  <link rel="stylesheet" href="/src/css/components.css" />
-  <link rel="stylesheet" href="/src/css/fz-components.css" />
-  <link rel="stylesheet" href="/src/css/pages.css" />
-</head>
-<body>
-  <div class="page-content">
-    <div class="page-header">
-      <button class="back-btn" onclick="history.back()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-      </button>
-      <h1>Mon pronostic</h1>
-    </div>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    <!-- Match mini header -->
-    <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:8px 20px 20px;font-size:20px">
-      <span id="home-flag">🏳</span>
-      <span style="font-size:14px;font-weight:700;text-transform:uppercase" id="home-name">—</span>
-      <span style="color:var(--text-tertiary)">vs</span>
-      <span style="font-size:14px;font-weight:700;text-transform:uppercase" id="away-name">—</span>
-      <span id="away-flag">🏳</span>
-    </div>
-
-    <!-- Groupe selector -->
-    <div class="prono-section">
-      <p class="prono-label">Pour le groupe</p>
-      <select class="input-field" id="groupe-select" style="appearance:none">
-        <option value="">Chargement...</option>
-      </select>
-    </div>
-
-    <!-- Score stepper -->
-    <div class="prono-section">
-      <p class="prono-label">Score final</p>
-      <div class="score-inputs">
-        <div class="score-input-wrap">
-          <span class="score-input-label" id="home-label">Équipe dom.</span>
-          <div class="score-stepper">
-            <button class="stepper-btn" id="home-plus">+</button>
-            <span class="stepper-value" id="home-score-val">0</span>
-            <button class="stepper-btn" id="home-minus">−</button>
-          </div>
-        </div>
-        <span class="score-dash">–</span>
-        <div class="score-input-wrap">
-          <span class="score-input-label" id="away-label">Équipe ext.</span>
-          <div class="score-stepper">
-            <button class="stepper-btn" id="away-plus">+</button>
-            <span class="stepper-value" id="away-score-val">0</span>
-            <button class="stepper-btn" id="away-minus">−</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Buteurs -->
-    <div class="prono-section">
-      <p class="prono-label">Buteurs (3 max)</p>
-      <div class="glass-card" style="padding:12px 16px">
-        <div class="buteur-slot" id="buteur-1">
-          <span class="buteur-number">1</span>
-          <div class="buteur-input" style="flex:1">
-            <input class="input-field" placeholder="Nom du buteur..." data-slot="0" autocomplete="off" style="border:none;background:none;padding:8px 0" />
-            <div class="player-suggestions" style="display:none"></div>
-          </div>
-        </div>
-        <div class="buteur-slot" id="buteur-2">
-          <span class="buteur-number">2</span>
-          <div class="buteur-input" style="flex:1">
-            <input class="input-field" placeholder="Nom du buteur..." data-slot="1" autocomplete="off" style="border:none;background:none;padding:8px 0" />
-            <div class="player-suggestions" style="display:none"></div>
-          </div>
-        </div>
-        <div class="buteur-slot" id="buteur-3">
-          <span class="buteur-number">3</span>
-          <div class="buteur-input" style="flex:1">
-            <input class="input-field" placeholder="Nom du buteur..." data-slot="2" autocomplete="off" style="border:none;background:none;padding:8px 0" />
-            <div class="player-suggestions" style="display:none"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Confirm -->
-    <div style="padding:0 16px 24px">
-      <div id="error-msg" style="color:var(--danger);font-size:13px;margin-bottom:10px;display:none"></div>
-      <button class="cta-primary" id="confirm-btn">Confirmer le pronostic</button>
-      <p style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:10px">Modifiable jusqu'au coup d'envoi</p>
-    </div>
-  </div>
-
-  <!-- Bottom Nav -->
-  <nav class="bottom-nav">
-    <a href="/src/pages/accueil.html"><span style="font-size:22px">🏠</span><span>Accueil</span></a>
-    <a href="/src/pages/home.html"><span style="font-size:22px">⚽</span><span>Matchs</span></a>
-    <a href="/src/pages/pronostic.html" class="active"><span style="font-size:22px">🎯</span><span>Pronos</span></a>
-    <a href="/src/pages/groupe.html"><span style="font-size:22px">🫂</span><span>Groupe</span></a>
-    <a href="/src/pages/profil.html"><span style="font-size:22px">🪪</span><span>Profil</span></a>
-  </nav>
-
-  <script type="module">
-    import { supabase, requireAuth } from '/src/js/lib/supabase.js';
-    import { searchPlayer } from '/src/js/lib/football-api.js';
-    import { isBeforeKickoff, toast } from '/src/js/lib/utils.js';
-
-    const user = await requireAuth();
-    if (!user) throw new Error('not authed');
-
-    const params = new URLSearchParams(location.search);
-    const matchId = params.get('id');
-    if (!matchId) { window.location.href = '/src/pages/home.html'; throw new Error(); }
-
-    const { data: match } = await supabase.from('matchs').select('*').eq('id', matchId).single();
-    if (!match || !isBeforeKickoff(match.kickoff_at)) {
-      window.location.href = '/src/pages/match.html?id=' + matchId;
-      throw new Error();
+    :root {
+      --color-bg:             #F2F2F0;
+      --color-surface:        #FFFFFF;
+      --color-surface-score:  #F0EFED;
+      --color-dark:           #0F0F0E;
+      --color-green:          #00E05A;
+      --color-green-dim:      #00C44F;
+      --color-text-primary:   #0F0F0E;
+      --color-text-secondary: #6B6966;
+      --color-text-tertiary:  #A8A49F;
+      --color-text-inverse:   #FFFFFF;
+      --color-border:         #E8E6E2;
+      --color-border-dashed:  #C8C5C0;
+      --color-gold:           #F5A623;
+      --color-danger:         #E8453C;
+      --radius-sm:   8px;
+      --radius-md:   12px;
+      --radius-lg:   16px;
+      --radius-xl:   20px;
+      --radius-full: 9999px;
+      --shadow-card: 0 1px 4px rgba(0,0,0,0.05), 0 0 0 1px var(--color-border);
     }
 
-    document.getElementById('home-flag').textContent = match.home_flag;
-    document.getElementById('home-name').textContent = match.home_team;
-    document.getElementById('away-flag').textContent = match.away_flag;
-    document.getElementById('away-name').textContent = match.away_team;
-    document.getElementById('home-label').textContent = match.home_team;
-    document.getElementById('away-label').textContent = match.away_team;
+    html, body {
+      height: 100%;
+      background: var(--color-bg);
+      font-family: 'Geist', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      color: var(--color-text-primary);
+    }
+
+    /* ── Dot pattern ── */
+    .page {
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      padding-bottom: 100px;
+      position: relative;
+    }
+    .page::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: radial-gradient(circle, #C8C5C0 1px, transparent 1px);
+      background-size: 22px 22px;
+      opacity: 0.35;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .content {
+      position: relative;
+      z-index: 1;
+      padding-top: 72px;
+    }
+
+    /* ── [A] Header ── */
+    .header {
+      position: fixed; top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 100%; max-width: 430px;
+      height: 56px;
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px;
+      z-index: 100;
+    }
+    .header-back {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      color: var(--color-text-primary);
+    }
+    .header-logo {
+      font: italic 900 1.45rem/1 'Geist';
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+    }
+    .header-logo span { color: var(--color-green); }
+    .header-pts {
+      background: var(--color-dark);
+      color: var(--color-text-inverse);
+      padding: 7px 13px;
+      border-radius: var(--radius-full);
+      font: 700 0.78rem/1 'Geist';
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+    .header-pts-val { color: var(--color-green); }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes scoreBump {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.18); }
+      100% { transform: scale(1); }
+    }
+    @keyframes chipIn {
+      from { opacity: 0; transform: scale(0.7); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    @keyframes toastPop {
+      0%   { opacity: 0; transform: translateX(-50%) translateY(10px); }
+      15%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+      75%  { opacity: 1; }
+      100% { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+    .anim { opacity: 0; animation: fadeUp 320ms ease-out forwards; }
+    .anim-1 { animation-delay: 40ms; }
+    .anim-2 { animation-delay: 100ms; }
+    .anim-3 { animation-delay: 160ms; }
+    .anim-4 { animation-delay: 220ms; }
+
+    /* ── [B] Card match ── */
+    .match-header-card {
+      background: var(--color-surface);
+      border-radius: var(--radius-xl);
+      padding: 16px;
+      margin: 16px 16px 12px;
+      box-shadow: var(--shadow-card);
+      text-align: center;
+    }
+    .match-header-phase {
+      font: 500 0.65rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-text-secondary);
+      margin-bottom: 16px;
+    }
+    .match-header-teams {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .match-header-team {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 10px; flex: 1;
+    }
+    .match-header-flag { font-size: 2.8rem; line-height: 1; }
+    .match-header-name {
+      font: 700 1rem/1.2 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      color: var(--color-text-primary);
+    }
+    .match-header-vs {
+      font: italic 900 1.2rem/1 'Geist';
+      color: var(--color-text-tertiary);
+      letter-spacing: -0.02em;
+      flex-shrink: 0;
+    }
+
+    /* Groupe selector */
+    .groupe-select-wrap {
+      border-top: 1px solid var(--color-border);
+      padding-top: 12px;
+    }
+    .groupe-select-label {
+      font: 700 0.58rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-text-tertiary);
+      margin-bottom: 6px;
+    }
+    .groupe-select {
+      width: 100%;
+      height: 40px;
+      background: var(--color-surface-score);
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 0 12px;
+      font: 600 0.88rem/1 'Geist';
+      color: var(--color-text-primary);
+      appearance: none;
+      cursor: pointer;
+      outline: none;
+    }
+    .groupe-select:focus { border-color: var(--color-green); }
+
+    /* ── [C] Saisie score ── */
+    .prono-section {
+      background: var(--color-surface);
+      border-radius: var(--radius-xl);
+      padding: 20px 16px;
+      margin: 0 16px 12px;
+      box-shadow: var(--shadow-card);
+    }
+    .prono-title {
+      font: italic 900 1.8rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+      color: var(--color-text-primary);
+      margin-bottom: 24px;
+    }
+    .score-grid {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+    .score-col {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 12px;
+    }
+    .score-btn {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: var(--color-surface);
+      border: 1.5px solid var(--color-border);
+      display: flex; align-items: center; justify-content: center;
+      font: 700 1.2rem/1 'Geist';
+      color: var(--color-text-primary);
+      cursor: pointer;
+      transition: background 120ms ease, transform 120ms ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .score-btn:active {
+      transform: scale(0.88);
+      background: var(--color-surface-score);
+    }
+    .score-btn--minus { color: var(--color-text-secondary); }
+    .score-btn--minus:disabled {
+      opacity: 0.3;
+      pointer-events: none;
+    }
+    .score-display {
+      width: 100px; height: 100px;
+      background: var(--color-surface-score);
+      border-radius: var(--radius-lg);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .score-value {
+      font: 900 4rem/1 'Geist';
+      letter-spacing: -0.04em;
+      color: var(--color-text-primary);
+      white-space: nowrap;
+    }
+    .score-value.bump { animation: scoreBump 150ms ease-out; }
+    .score-separator {
+      font: 900 2rem/1 'Geist';
+      color: var(--color-text-tertiary);
+      flex-shrink: 0;
+      align-self: center;
+      margin-top: 24px;
+    }
+
+    /* ── [D] Buteurs ── */
+    .buteurs-section {
+      background: var(--color-surface);
+      border-radius: var(--radius-xl);
+      padding: 16px;
+      margin: 0 16px 12px;
+      box-shadow: var(--shadow-card);
+    }
+    .buteurs-label {
+      font: 700 0.62rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-text-secondary);
+      margin-bottom: 12px;
+    }
+    .buteurs-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip-buteur {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--color-green);
+      color: var(--color-dark);
+      padding: 8px 12px;
+      border-radius: var(--radius-full);
+      font: 700 0.78rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      animation: chipIn 200ms ease-out;
+      cursor: default;
+    }
+    .chip-buteur-remove {
+      font-size: 0.7rem; cursor: pointer;
+      opacity: 0.7; transition: opacity 150ms ease;
+      padding: 2px; margin-left: 2px;
+    }
+    .chip-buteur-remove:hover { opacity: 1; }
+    .chip-buteur--inactive {
+      background: var(--color-surface-score);
+      color: var(--color-text-secondary);
+      border: 1px solid var(--color-border);
+      cursor: pointer;
+      animation: none;
+    }
+    .chip-buteur--inactive:active { transform: scale(0.95); }
+    .chip-add {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: transparent;
+      border: 1.5px dashed var(--color-border-dashed);
+      color: var(--color-text-secondary);
+      padding: 8px 12px;
+      border-radius: var(--radius-full);
+      font: 600 0.75rem/1 'Geist';
+      cursor: pointer;
+      transition: border-color 150ms ease, color 150ms ease;
+    }
+    .chip-add:hover { border-color: var(--color-green); color: var(--color-green); }
+    .chip-add:active { transform: scale(0.96); }
+
+    /* ── [E] Oracle IA ── */
+    .oracle-section {
+      background: var(--color-dark);
+      border-radius: var(--radius-xl);
+      padding: 20px 16px;
+      margin: 0 16px 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    .oracle-section::after {
+      content: '⚙';
+      position: absolute; right: -10px; bottom: -10px;
+      font-size: 6rem; opacity: 0.04;
+      color: var(--color-green);
+      pointer-events: none; line-height: 1;
+    }
+    .oracle-header {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 16px;
+    }
+    .oracle-header-left { display: flex; align-items: center; gap: 8px; }
+    .oracle-icon { color: var(--color-green); font-size: 1rem; }
+    .oracle-title {
+      font: 700 0.85rem/1 'Geist';
+      text-transform: uppercase; letter-spacing: 0.04em;
+      color: var(--color-text-inverse);
+    }
+    .oracle-premium-badge {
+      background: rgba(245,166,35,0.15);
+      border: 1px solid rgba(245,166,35,0.4);
+      color: var(--color-gold);
+      padding: 4px 9px;
+      border-radius: var(--radius-full);
+      font: 700 0.6rem/1 'Geist';
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .oracle-score-row {
+      display: flex; align-items: flex-end;
+      justify-content: space-between; margin-bottom: 16px;
+    }
+    .oracle-score-label {
+      font: 700 0.6rem/1 'Geist';
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.4); margin-bottom: 6px;
+    }
+    .oracle-score-value {
+      font: italic 900 2.6rem/1 'Geist';
+      letter-spacing: -0.03em;
+      color: var(--color-green);
+      white-space: nowrap;
+    }
+    .oracle-confidence-col { text-align: right; }
+    .oracle-confidence-label {
+      font: 700 0.6rem/1 'Geist';
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.4); margin-bottom: 6px;
+    }
+    .oracle-confidence-value {
+      font: 700 1.1rem/1 'Geist';
+      color: var(--color-green);
+    }
+    .oracle-analysis {
+      font: 400 0.82rem/1.5 'Geist';
+      color: rgba(255,255,255,0.7);
+      position: relative;
+    }
+    .oracle-analysis strong { font-weight: 700; color: var(--color-text-inverse); }
+    .oracle-analysis--blurred {
+      filter: blur(5px);
+      user-select: none; pointer-events: none;
+    }
+    .oracle-blur-overlay {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px;
+    }
+    .oracle-blur-cta {
+      background: var(--color-green); color: var(--color-dark);
+      padding: 10px 20px; border-radius: var(--radius-full);
+      font: 700 0.8rem/1 'Geist';
+      text-transform: uppercase; cursor: pointer; border: none;
+    }
+
+    /* Loading state oracle */
+    .oracle-loading-text {
+      font: 400 0.82rem/1.5 'Geist';
+      color: rgba(255,255,255,0.35);
+      font-style: italic;
+    }
+
+    /* ── [F] CTA bar fixe ── */
+    .cta-bar {
+      position: fixed; bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 100%; max-width: 430px;
+      background: var(--color-surface);
+      padding: 12px 16px calc(28px + env(safe-area-inset-bottom));
+      box-shadow: 0 -1px 0 var(--color-border);
+      z-index: 100;
+    }
+    .btn-valider {
+      width: 100%; height: 56px;
+      background: var(--color-green);
+      color: var(--color-dark);
+      border: none; border-radius: var(--radius-full);
+      font: 900 1rem/1 'Geist';
+      text-transform: uppercase; letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: background 150ms ease, transform 150ms ease;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .btn-valider:active {
+      transform: scale(0.97);
+      background: var(--color-green-dim);
+    }
+    .btn-valider:disabled {
+      background: var(--color-border);
+      color: var(--color-text-tertiary);
+      cursor: not-allowed; pointer-events: none;
+    }
+    .cta-deadline-msg {
+      text-align: center;
+      font: 500 0.75rem/1 'Geist';
+      color: var(--color-text-secondary);
+      margin-bottom: 8px;
+    }
+
+    /* ── Toast ── */
+    .toast-success {
+      position: fixed; bottom: 110px;
+      left: 50%; transform: translateX(-50%);
+      background: var(--color-dark); color: var(--color-green);
+      padding: 12px 20px; border-radius: var(--radius-full);
+      font: 700 0.82rem/1 'Geist';
+      white-space: nowrap;
+      animation: toastPop 2000ms ease forwards;
+      z-index: 200;
+    }
+
+    /* ── Error message ── */
+    .error-msg {
+      font: 500 0.82rem/1 'Geist';
+      color: var(--color-danger);
+      margin-bottom: 8px; text-align: center;
+    }
+
+    /* ── Bottom sheet joueur ── */
+    .sheet-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,0.75);
+      display: flex; align-items: flex-end; justify-content: center;
+    }
+    .sheet {
+      background: var(--color-surface);
+      border-radius: 20px 20px 0 0;
+      width: 100%; max-width: 430px;
+      max-height: 70vh;
+      overflow-y: auto;
+      padding: 0 0 calc(20px + env(safe-area-inset-bottom));
+      animation: slideUp 280ms cubic-bezier(0.32,0.72,0,1);
+    }
+    .sheet-handle {
+      width: 36px; height: 4px; border-radius: 2px;
+      background: var(--color-border); margin: 12px auto 0;
+    }
+    .sheet-title {
+      font: 700 1rem/1 'Geist';
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid var(--color-border);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .sheet-close {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--color-bg); border: 1px solid var(--color-border);
+      color: var(--color-text-primary);
+      font-size: 14px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .player-search-input {
+      width: calc(100% - 32px); margin: 12px 16px;
+      height: 48px;
+      background: var(--color-surface-score);
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 0 14px;
+      font: 500 0.92rem/1 'Geist';
+      color: var(--color-text-primary);
+      outline: none;
+    }
+    .player-search-input:focus { border-color: var(--color-green); }
+    .player-result {
+      padding: 14px 16px;
+      font: 600 0.9rem/1 'Geist';
+      cursor: pointer;
+      border-bottom: 1px solid var(--color-border);
+      transition: background 150ms;
+    }
+    .player-result:active { background: var(--color-bg); }
+    .player-results-empty {
+      padding: 24px 16px;
+      text-align: center;
+      font: 400 0.85rem/1 'Geist';
+      color: var(--color-text-tertiary);
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- ── [A] Header ── -->
+    <header class="header">
+      <button class="header-back" onclick="history.back()" aria-label="Retour">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M19 12H5M12 5l-7 7 7 7"/>
+        </svg>
+      </button>
+      <div class="header-logo">FOOTZY<span>.</span></div>
+      <div class="header-pts"><span class="header-pts-val" id="pts-val">0</span> PTS</div>
+    </header>
+
+    <div class="content">
+
+      <!-- ── [B] Card match ── -->
+      <div class="match-header-card anim anim-1">
+        <div class="match-header-phase" id="match-phase">CdM 2026 · Match</div>
+        <div class="match-header-teams">
+          <div class="match-header-team">
+            <span class="match-header-flag" id="home-flag">🏳</span>
+            <span class="match-header-name" id="home-name">—</span>
+          </div>
+          <span class="match-header-vs">vs</span>
+          <div class="match-header-team">
+            <span class="match-header-flag" id="away-flag">🏳</span>
+            <span class="match-header-name" id="away-name">—</span>
+          </div>
+        </div>
+        <!-- Groupe selector -->
+        <div class="groupe-select-wrap">
+          <div class="groupe-select-label">Pour le groupe</div>
+          <select class="groupe-select" id="groupe-select">
+            <option value="">Chargement…</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- ── [C] Saisie score ── -->
+      <div class="prono-section anim anim-2">
+        <div class="prono-title">Votre pronostic</div>
+        <div class="score-grid">
+          <!-- Home -->
+          <div class="score-col">
+            <button class="score-btn" id="home-plus"
+              aria-label="Augmenter score domicile">+</button>
+            <div class="score-display">
+              <span class="score-value" id="home-score-val"
+                aria-live="polite" aria-label="Score domicile : 0">0</span>
+            </div>
+            <button class="score-btn score-btn--minus" id="home-minus"
+              aria-label="Diminuer score domicile" disabled>−</button>
+          </div>
+
+          <span class="score-separator">:</span>
+
+          <!-- Away -->
+          <div class="score-col">
+            <button class="score-btn" id="away-plus"
+              aria-label="Augmenter score extérieur">+</button>
+            <div class="score-display">
+              <span class="score-value" id="away-score-val"
+                aria-live="polite" aria-label="Score extérieur : 0">0</span>
+            </div>
+            <button class="score-btn score-btn--minus" id="away-minus"
+              aria-label="Diminuer score extérieur" disabled>−</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── [D] Buteurs ── -->
+      <div class="buteurs-section anim anim-3">
+        <div class="buteurs-label">Buteurs</div>
+        <div class="buteurs-chips" id="buteurs-chips">
+          <button class="chip-add" id="chip-add-btn">+ Joueur</button>
+        </div>
+      </div>
+
+      <!-- ── [E] Oracle IA ── -->
+      <div class="oracle-section anim anim-4" id="oracle-section">
+        <div class="oracle-header">
+          <div class="oracle-header-left">
+            <span class="oracle-icon">✦</span>
+            <span class="oracle-title">Oracle IA</span>
+          </div>
+          <span class="oracle-premium-badge" id="oracle-badge">⭐ PREMIUM</span>
+        </div>
+        <div id="oracle-body">
+          <p class="oracle-loading-text">Chargement de l'analyse…</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── [F] CTA fixe ── -->
+    <div class="cta-bar">
+      <div class="error-msg" id="error-msg" style="display:none"></div>
+      <div class="cta-deadline-msg" id="deadline-msg" style="display:none">Délai de pronostic dépassé</div>
+      <button class="btn-valider" id="btn-valider">Valider mon prono</button>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
+    import { searchPlayer } from '/src/js/lib/football-api.js';
+    import { isBeforeKickoff } from '/src/js/lib/utils.js';
+    import { checkPremiumAccess, createCheckout, PLANS } from '/src/js/lib/whop.js';
+
+    (async () => {
+    const user    = await requireAuth();
+    if (!user) throw new Error('not authed');
+    const profile = await getCurrentProfile();
+    const isPremium = await checkPremiumAccess(profile);
+
+    // Header pts
+    if (profile) {
+      document.getElementById('pts-val').textContent = (profile.points_totaux || 0).toLocaleString('fr-FR');
+    }
+
+    // Match ID from URL
+    const params  = new URLSearchParams(location.search);
+    const matchId = params.get('id');
+    if (!matchId) { window.location.href = '/src/pages/home.html'; return; }
+
+    // Load match
+    const { data: match } = await supabase.from('matchs').select('*').eq('id', matchId).single();
+    if (!match) { window.location.href = '/src/pages/home.html'; return; }
+
+    const beforeKickoff = isBeforeKickoff(match.kickoff_at);
+
+    // Fill match info
+    document.getElementById('home-flag').textContent = match.home_flag || '🏳';
+    document.getElementById('home-name').textContent = match.home_team || '—';
+    document.getElementById('away-flag').textContent = match.away_flag || '🏳';
+    document.getElementById('away-name').textContent = match.away_team || '—';
+
+    // Phase label
+    const phaseMap = { groupes: 'Groupe', huitiemes: '1/8 de finale', quarts: 'Quart', demis: 'Demi-finale', finale: 'Finale' };
+    const phaseLabel = phaseMap[match.phase] || match.phase || 'Match';
+    const kickoffDate = new Date(match.kickoff_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    document.getElementById('match-phase').textContent = `CdM 2026 · ${phaseLabel} · ${kickoffDate}`;
+
+    // Deadline
+    if (!beforeKickoff) {
+      document.getElementById('deadline-msg').style.display = 'block';
+      document.getElementById('btn-valider').disabled = true;
+      document.getElementById('home-plus').disabled  = true;
+      document.getElementById('away-plus').disabled  = true;
+      document.getElementById('home-minus').disabled = true;
+      document.getElementById('away-minus').disabled = true;
+      document.getElementById('chip-add-btn').style.display = 'none';
+    }
 
     // Load groups
-    const { data: memberships } = await supabase.from('groupe_membres').select('groupe_id, groupes(id,nom)').eq('user_id', user.id);
+    const { data: memberships } = await supabase
+      .from('groupe_membres')
+      .select('groupe_id, groupes(id,nom)')
+      .eq('user_id', user.id);
+
     const groupeSelect = document.getElementById('groupe-select');
     if (!memberships?.length) {
       groupeSelect.innerHTML = '<option value="">Rejoins d\'abord un groupe</option>';
     } else {
-      groupeSelect.innerHTML = memberships.map(m => `<option value="${m.groupes.id}">${m.groupes.nom}</option>`).join('');
+      groupeSelect.innerHTML = memberships.map(m =>
+        `<option value="${m.groupes.id}">${m.groupes.nom}</option>`
+      ).join('');
     }
 
-    // Check existing prono
-    async function loadExistingProno() {
-      const groupeId = groupeSelect.value;
-      if (!groupeId) return;
-      const { data } = await supabase.from('pronostics').select('*')
-        .eq('user_id', user.id).eq('match_id', matchId).eq('groupe_id', groupeId).maybeSingle();
-      if (data) {
-        homeScore = data.home_score; awayScore = data.away_score;
-        document.getElementById('home-score-val').textContent = homeScore;
-        document.getElementById('away-score-val').textContent = awayScore;
-        buteurs = data.buteurs || [];
-        buteurs.forEach((b, i) => {
-          const inp = document.querySelector(`[data-slot="${i}"]`);
-          if (inp) inp.value = b;
-        });
-        document.getElementById('confirm-btn').textContent = 'Modifier le pronostic';
-        existingPronoId = data.id;
-      }
-    }
-    groupeSelect.addEventListener('change', loadExistingProno);
-
-    // Score steppers
+    // State
     let homeScore = 0, awayScore = 0;
     let existingPronoId = null;
-    let buteurs = ['', '', ''];
+    let buteurs = [];
+    const MAX_SCORE = 15;
 
-    document.getElementById('home-plus').addEventListener('click', () => {
-      homeScore = Math.min(20, homeScore + 1);
-      document.getElementById('home-score-val').textContent = homeScore;
-    });
-    document.getElementById('home-minus').addEventListener('click', () => {
-      homeScore = Math.max(0, homeScore - 1);
-      document.getElementById('home-score-val').textContent = homeScore;
-    });
-    document.getElementById('away-plus').addEventListener('click', () => {
-      awayScore = Math.min(20, awayScore + 1);
-      document.getElementById('away-score-val').textContent = awayScore;
-    });
-    document.getElementById('away-minus').addEventListener('click', () => {
-      awayScore = Math.max(0, awayScore - 1);
-      document.getElementById('away-score-val').textContent = awayScore;
-    });
+    // ── Score steppers ──
+    function updateScore(team, delta) {
+      if (team === 'home') {
+        homeScore = Math.max(0, Math.min(MAX_SCORE, homeScore + delta));
+      } else {
+        awayScore = Math.max(0, Math.min(MAX_SCORE, awayScore + delta));
+      }
+      animateScore(team);
+      updateMinusBtns();
+      if (navigator.vibrate) navigator.vibrate(8);
+    }
 
-    // Player search
-    document.querySelectorAll('[data-slot]').forEach(input => {
+    function animateScore(team) {
+      const el = document.getElementById(team === 'home' ? 'home-score-val' : 'away-score-val');
+      el.textContent = team === 'home' ? homeScore : awayScore;
+      el.setAttribute('aria-label', `Score ${team === 'home' ? 'domicile' : 'extérieur'} : ${el.textContent}`);
+      el.classList.remove('bump');
+      void el.offsetWidth;
+      el.classList.add('bump');
+    }
+
+    function updateMinusBtns() {
+      document.getElementById('home-minus').disabled = homeScore === 0;
+      document.getElementById('away-minus').disabled = awayScore === 0;
+    }
+
+    document.getElementById('home-plus').addEventListener('click',  () => updateScore('home', +1));
+    document.getElementById('home-minus').addEventListener('click', () => updateScore('home', -1));
+    document.getElementById('away-plus').addEventListener('click',  () => updateScore('away', +1));
+    document.getElementById('away-minus').addEventListener('click', () => updateScore('away', -1));
+
+    // ── Buteurs chips ──
+    function renderChips() {
+      const container = document.getElementById('buteurs-chips');
+      const addBtn    = document.getElementById('chip-add-btn');
+      // Remove existing chips (keep addBtn)
+      container.querySelectorAll('.chip-buteur').forEach(c => c.remove());
+
+      buteurs.forEach((nom, idx) => {
+        const chip = document.createElement('span');
+        chip.className = 'chip-buteur';
+        chip.innerHTML = `${nom} <span class="chip-buteur-remove" data-idx="${idx}" aria-label="Supprimer ${nom}">×</span>`;
+        container.insertBefore(chip, addBtn);
+      });
+
+      // Hide add btn if max reached
+      addBtn.style.display = buteurs.length >= 3 ? 'none' : 'inline-flex';
+
+      // Remove listeners
+      container.querySelectorAll('.chip-buteur-remove').forEach(btn => {
+        btn.addEventListener('click', () => {
+          buteurs.splice(parseInt(btn.dataset.idx), 1);
+          renderChips();
+        });
+      });
+    }
+
+    document.getElementById('chip-add-btn').addEventListener('click', openPlayerSheet);
+
+    function openPlayerSheet() {
+      const overlay = document.createElement('div');
+      overlay.className = 'sheet-overlay';
+      overlay.innerHTML = `
+        <div class="sheet">
+          <div class="sheet-handle"></div>
+          <div class="sheet-title">
+            <span>Choisir un buteur</span>
+            <button class="sheet-close" id="sheet-close">✕</button>
+          </div>
+          <input class="player-search-input" id="player-search"
+            placeholder="Rechercher un joueur…" autocomplete="off" />
+          <div id="player-results"></div>
+        </div>`;
+      document.body.appendChild(overlay);
+
+      const input   = overlay.querySelector('#player-search');
+      const results = overlay.querySelector('#player-results');
+
+      overlay.querySelector('#sheet-close').addEventListener('click', () => overlay.remove());
+      overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+      // Auto-focus after animation
+      setTimeout(() => input.focus(), 300);
+
       let searchTimeout;
-      const slot = parseInt(input.dataset.slot);
-      const suggestionsEl = input.nextElementSibling;
-
       input.addEventListener('input', () => {
         clearTimeout(searchTimeout);
         const q = input.value.trim();
-        if (q.length < 2) { suggestionsEl.style.display = 'none'; return; }
+        if (q.length < 2) { results.innerHTML = ''; return; }
         searchTimeout = setTimeout(async () => {
-          const results = await searchPlayer(q);
-          if (!results.length) { suggestionsEl.style.display = 'none'; return; }
-          suggestionsEl.style.display = 'block';
-          suggestionsEl.innerHTML = results.slice(0, 5).map(p => {
-            const name = p.name || p.player?.name || p.strPlayer || String(p);
-            return `<div class="player-suggestion-item" data-name="${name}">${name}</div>`;
-          }).join('');
-          suggestionsEl.querySelectorAll('.player-suggestion-item').forEach(item => {
-            item.addEventListener('click', () => {
-              input.value = item.dataset.name;
-              buteurs[slot] = item.dataset.name;
-              suggestionsEl.style.display = 'none';
+          try {
+            const res = await searchPlayer(q);
+            if (!res.length) {
+              results.innerHTML = '<div class="player-results-empty">Aucun joueur trouvé</div>';
+              return;
+            }
+            results.innerHTML = res.slice(0, 6).map(p => {
+              const name = p.name || p.player?.name || p.strPlayer || String(p);
+              return `<div class="player-result" data-name="${name}">${name}</div>`;
+            }).join('');
+            results.querySelectorAll('.player-result').forEach(item => {
+              item.addEventListener('click', () => {
+                const nom = item.dataset.name;
+                if (buteurs.length < 3 && !buteurs.includes(nom)) {
+                  buteurs.push(nom);
+                  renderChips();
+                }
+                overlay.remove();
+              });
             });
-          });
+          } catch(e) {
+            console.warn('Player search failed', e);
+          }
         }, 350);
       });
-      input.addEventListener('blur', () => {
-        setTimeout(() => { suggestionsEl.style.display = 'none'; }, 200);
-        buteurs[slot] = input.value.trim();
-      });
-    });
+    }
 
-    // Confirm
-    document.getElementById('confirm-btn').addEventListener('click', async () => {
+    // ── Load existing prono ──
+    async function loadExistingProno() {
       const groupeId = groupeSelect.value;
-      const errEl = document.getElementById('error-msg');
-      errEl.style.display = 'none';
-      if (!groupeId) { errEl.textContent = 'Sélectionne un groupe.'; errEl.style.display = 'block'; return; }
-
-      const buteursFiltered = buteurs.filter(Boolean);
-      const btn = document.getElementById('confirm-btn');
-      btn.disabled = true; btn.textContent = 'Enregistrement...';
-
-      const pronoData = { user_id: user.id, match_id: matchId, groupe_id: groupeId, home_score: homeScore, away_score: awayScore, buteurs: buteursFiltered };
-
-      let error;
-      if (existingPronoId) {
-        ({ error } = await supabase.from('pronostics').update(pronoData).eq('id', existingPronoId));
-      } else {
-        ({ error } = await supabase.from('pronostics').insert(pronoData));
+      if (!groupeId) return;
+      try {
+        const { data } = await supabase.from('pronostics').select('*')
+          .eq('user_id', user.id).eq('match_id', matchId).eq('groupe_id', groupeId).maybeSingle();
+        if (data) {
+          homeScore = data.home_score ?? 0;
+          awayScore = data.away_score ?? 0;
+          buteurs   = data.buteurs || [];
+          animateScore('home');
+          animateScore('away');
+          updateMinusBtns();
+          renderChips();
+          document.getElementById('btn-valider').textContent = 'Modifier mon prono';
+          existingPronoId = data.id;
+        } else {
+          homeScore = 0; awayScore = 0; buteurs = [];
+          animateScore('home'); animateScore('away');
+          updateMinusBtns(); renderChips();
+          document.getElementById('btn-valider').textContent = 'Valider mon prono';
+          existingPronoId = null;
+        }
+      } catch(e) {
+        console.warn('Load prono failed silently', e);
       }
+    }
 
-      if (error) {
-        errEl.textContent = 'Erreur: ' + error.message;
+    groupeSelect.addEventListener('change', loadExistingProno);
+    await loadExistingProno();
+
+    // ── Oracle IA ──
+    if (!isPremium) {
+      document.getElementById('oracle-badge').textContent = '🔒 PREMIUM';
+      document.getElementById('oracle-badge').style.cssText =
+        'background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.35)';
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const jwt = session?.access_token;
+
+      const res = await fetch('/api/oracle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwt}` },
+        body: JSON.stringify({
+          matchId: match.id, homeTeam: match.home_team, awayTeam: match.away_team,
+          homeFlag: match.home_flag, awayFlag: match.away_flag,
+          phase: match.phase, kickoffAt: match.kickoff_at,
+        })
+      });
+
+      const oracleData = res.ok ? await res.json() : null;
+
+      const oracleBody = document.getElementById('oracle-body');
+      if (oracleData) {
+        const scoreHtml = `
+          <div class="oracle-score-row">
+            <div>
+              <div class="oracle-score-label">Score prédit</div>
+              <div class="oracle-score-value">${oracleData.home_score ?? '?'}–${oracleData.away_score ?? '?'}</div>
+            </div>
+            <div class="oracle-confidence-col">
+              <div class="oracle-confidence-label">Confiance</div>
+              <div class="oracle-confidence-value">↗ ${oracleData.confidence ?? 0}%</div>
+            </div>
+          </div>`;
+
+        const analysisText = oracleData.analysis || '—';
+        const analysisHtml = isPremium
+          ? `<div class="oracle-analysis">${analysisText}</div>`
+          : `<div style="position:relative">
+               <div class="oracle-analysis oracle-analysis--blurred">${analysisText}</div>
+               <div class="oracle-blur-overlay">
+                 <button class="oracle-blur-cta" id="oracle-unlock-btn">Débloquer l'analyse — Premium</button>
+               </div>
+             </div>`;
+
+        oracleBody.innerHTML = scoreHtml + analysisHtml;
+
+        // Chips suggestions Oracle (buteurs probables)
+        if (oracleData.buteur && buteurs.length < 3) {
+          const container = document.getElementById('buteurs-chips');
+          const addBtn    = document.getElementById('chip-add-btn');
+          const suggested = [oracleData.buteur];
+          suggested.forEach(nom => {
+            if (buteurs.includes(nom)) return;
+            const chip = document.createElement('span');
+            chip.className = 'chip-buteur chip-buteur--inactive';
+            chip.textContent = nom;
+            chip.addEventListener('click', () => {
+              if (buteurs.length >= 3) return;
+              buteurs.push(nom);
+              chip.remove();
+              renderChips();
+            });
+            container.insertBefore(chip, addBtn);
+          });
+        }
+
+        document.getElementById('oracle-unlock-btn')?.addEventListener('click', () => {
+          createCheckout(PLANS.premium, user.id, user.email);
+        });
+      } else {
+        document.getElementById('oracle-body').innerHTML =
+          '<p class="oracle-loading-text">Analyse indisponible pour ce match.</p>';
+      }
+    } catch(e) {
+      console.warn('Oracle failed silently', e);
+      document.getElementById('oracle-body').innerHTML =
+        '<p class="oracle-loading-text">Analyse indisponible pour ce match.</p>';
+    }
+
+    // ── Valider ──
+    document.getElementById('btn-valider').addEventListener('click', async () => {
+      const groupeId = groupeSelect.value;
+      const errEl    = document.getElementById('error-msg');
+      errEl.style.display = 'none';
+
+      if (!groupeId) {
+        errEl.textContent = 'Sélectionne un groupe.';
         errEl.style.display = 'block';
-        btn.disabled = false; btn.textContent = 'Confirmer le pronostic';
         return;
       }
+      if (!beforeKickoff) return;
 
-      toast('Pronostic enregistré ! 🎯');
-      setTimeout(() => window.location.href = '/src/pages/match.html?id=' + matchId, 1000);
+      const btn = document.getElementById('btn-valider');
+      btn.disabled = true;
+      btn.textContent = 'Enregistrement…';
+
+      try {
+        const pronoData = {
+          user_id:    user.id,
+          match_id:   matchId,
+          groupe_id:  groupeId,
+          home_score: homeScore,
+          away_score: awayScore,
+          buteurs:    buteurs.filter(Boolean),
+        };
+
+        let error;
+        if (existingPronoId) {
+          ({ error } = await supabase.from('pronostics').update(pronoData).eq('id', existingPronoId));
+        } else {
+          ({ error } = await supabase.from('pronostics').insert(pronoData));
+        }
+
+        if (error) throw error;
+
+        if (navigator.vibrate) navigator.vibrate([20, 10, 40]);
+        showToast('Prono enregistré ! ✓');
+        setTimeout(() => window.location.href = '/src/pages/match.html?id=' + matchId, 1500);
+
+      } catch(e) {
+        errEl.textContent = 'Erreur : ' + (e.message || 'Réessaie');
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = existingPronoId ? 'Modifier mon prono' : 'Valider mon prono';
+      }
     });
 
-    await loadExistingProno();
+    function showToast(msg) {
+      const el = document.createElement('div');
+      el.className = 'toast-success';
+      el.textContent = msg;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 2100);
+    }
+    })();
   </script>
 </body>
 </html>

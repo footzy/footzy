@@ -1544,10 +1544,11 @@
       feedLoaded = true;
       const list = document.getElementById('feed-list');
       try {
-        // 3 requêtes séparées pour éviter les problèmes de FK join Supabase
+        // Feed public uniquement : groupe_id IS NULL (pronos de groupe = privés)
         const { data: posts } = await supabase
           .from('pronostics')
           .select('id, home_score, away_score, created_at, user_id, match_id')
+          .is('groupe_id', null)
           .order('created_at', { ascending: false })
           .limit(40);
 

@@ -894,19 +894,29 @@
       document.getElementById('pts-val').textContent = (profile.points_totaux || 0).toLocaleString('fr-FR');
     }
 
-    // Match ID from URL
-    const params  = new URLSearchParams(location.search);
-    const matchId = params.get('id');
+    // Match ID + groupe_id from URL
+    const params   = new URLSearchParams(location.search);
+    const matchId  = params.get('id');
+    const groupeId = params.get('groupe_id') || null; // null = prono public
     if (!matchId) { window.location.href = '/src/pages/home.html'; return; }
+
+    // Badge "Groupe privé" dans le header si prono de groupe
+    if (groupeId) {
+      document.querySelector('.header-pts').insertAdjacentHTML('beforebegin',
+        `<span style="background:#0F0F0E;color:#00E05A;border-radius:99px;padding:5px 11px;font:700 0.65rem/1 'Geist';letter-spacing:0.06em;text-transform:uppercase;white-space:nowrap">🔒 Groupe</span>`
+      );
+    }
 
     // Bouton retour — fiable même en PWA / deep link
     document.getElementById('btn-back').addEventListener('click', () => {
       if (history.length > 1) {
         history.back();
       } else {
-        window.location.href = matchId
-          ? '/src/pages/match.html?id=' + matchId
-          : '/src/pages/home.html';
+        window.location.href = groupeId
+          ? '/src/pages/groupe.html'
+          : matchId
+            ? '/src/pages/match.html?id=' + matchId
+            : '/src/pages/home.html';
       }
     });
 
@@ -1357,10 +1367,11 @@
     // ── Load existing prono ──
     async function loadExistingProno() {
       try {
-        const { data } = await supabase.from('pronostics').select('*')
-          .eq('user_id', user.id).eq('match_id', matchId)
-          .order('created_at', { ascending: false })
-          .limit(1).maybeSingle();
+        // Filtrer selon le contexte : groupe ou public
+        let q = supabase.from('pronostics').select('*')
+          .eq('user_id', user.id).eq('match_id', matchId);
+        q = groupeId ? q.eq('groupe_id', groupeId) : q.is('groupe_id', null);
+        const { data } = await q.order('created_at', { ascending: false }).limit(1).maybeSingle();
 
         if (data) {
           homeScore   = data.home_score   ?? 0;
@@ -1508,60 +1519,45 @@
         ht_away:      htAwayScore,
         yellow_cards: yellowCards,
       };
-      const selectedGroupeId = null; // groupe_id géré par la page groupe dédiée
+      // Helper : save avec fallback si colonnes bonus absentes en DB
+      async function saveFields(method, data) {
+        let res = await method(data);
+        if (res.error?.message?.includes('column')) {
+          const coreData = Object.fromEntries(
+            Object.entries(data).filter(([k]) => ['home_score','away_score','buteurs','user_id','match_id','groupe_id'].includes(k))
+          );
+          res = await method(coreData);
+        }
+        return res.error;
+      }
 
       try {
-        // Récupérer tous les pronos existants pour user+match
-        const { data: allPronos } = await supabase.from('pronostics')
-          .select('id, groupe_id')
-          .eq('user_id', user.id)
-          .eq('match_id', matchId);
-
-        // Helper : save avec fallback si colonnes bonus absentes
-        async function saveFields(method, data, filter) {
-          let res = await method(data);
-          if (filter) res = filter(res);
-          if (res.error?.message?.includes('column')) {
-            // Colonnes bonus manquantes : retry avec champs core seulement
-            const coreData = Object.fromEntries(
-              Object.entries(data).filter(([k]) => ['home_score','away_score','buteurs','user_id','match_id','groupe_id'].includes(k))
-            );
-            res = await method(coreData);
-            if (filter) res = filter(res);
-          }
-          return res.error;
-        }
-
-        if (allPronos?.length) {
-          // Mettre à jour le score sur TOUS les pronos existants (synchronisation)
+        if (groupeId) {
+          // ── Prono de GROUPE : upsert isolé (n'impacte pas le public) ──
           const error = await saveFields(
-            (d) => supabase.from('pronostics').update(d).eq('user_id', user.id).eq('match_id', matchId),
-            scoreFields
+            (d) => supabase.from('pronostics').upsert(d, { onConflict: 'user_id,match_id,groupe_id' }),
+            { user_id: user.id, match_id: matchId, groupe_id: groupeId, ...scoreFields }
           );
           if (error) throw error;
-
-          // Créer un prono pour le contexte sélectionné si absent
-          if (selectedGroupeId) {
-            if (!allPronos.some(p => p.groupe_id === selectedGroupeId)) {
-              await supabase.from('pronostics').insert({
-                user_id: user.id, match_id: matchId, groupe_id: selectedGroupeId, ...scoreFields
-              });
-            }
-          } else {
-            // Public : créer une row groupe_id = null si absente
-            if (!allPronos.some(p => p.groupe_id === null)) {
-              await supabase.from('pronostics').insert({
-                user_id: user.id, match_id: matchId, groupe_id: null, ...scoreFields
-              });
-            }
-          }
         } else {
-          // Premier prono : insérer pour le contexte sélectionné
-          const error = await saveFields(
-            (d) => supabase.from('pronostics').insert(d),
-            { user_id: user.id, match_id: matchId, groupe_id: selectedGroupeId, ...scoreFields }
-          );
-          if (error) throw error;
+          // ── Prono PUBLIC : upsert sur la row groupe_id = null ──
+          const { data: existing } = await supabase.from('pronostics')
+            .select('id').eq('user_id', user.id).eq('match_id', matchId)
+            .is('groupe_id', null).maybeSingle();
+
+          if (existing) {
+            const error = await saveFields(
+              (d) => supabase.from('pronostics').update(d).eq('id', existing.id),
+              scoreFields
+            );
+            if (error) throw error;
+          } else {
+            const error = await saveFields(
+              (d) => supabase.from('pronostics').insert(d),
+              { user_id: user.id, match_id: matchId, groupe_id: null, ...scoreFields }
+            );
+            if (error) throw error;
+          }
         }
 
         if (navigator.vibrate) navigator.vibrate([20, 10, 40]);

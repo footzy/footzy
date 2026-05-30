@@ -706,6 +706,7 @@
     import { createCheckout, checkPremiumAccess, PLANS } from '/src/js/lib/whop.js';
     import { formatKickoff } from '/src/js/lib/utils.js';
 
+    (async () => {
     const user    = await requireAuth();
     if (!user) throw new Error('not authed');
     const profile = await getCurrentProfile();
@@ -1041,6 +1042,7 @@
         });
       });
     }
+    })();
   </script>
 </body>
 </html>

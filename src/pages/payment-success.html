@@ -169,7 +169,7 @@
       setDone('🎯', 'Paiement accepté !', `${bm.label || 'Action'} attribué à ${bm.targetPseudo || ''}.`);
       showCTA('Retour au groupe', retour);
 
-      // Appliquer le BM en arrière-plan
+      // Appliquer le BM + notifier la cible en temps réel
       if (user && bm.groupeId && bm.targetId) {
         supabase.from('bonus_malus').insert({
           groupe_id:    bm.groupeId,
@@ -177,10 +177,23 @@
           to_user_id:   bm.targetId,
           points:       bm.pts,
           label:        bm.label,
-        }).then(({ error }) => {
-          // Stocker l'erreur pour debug si besoin
-          if (error) localStorage.setItem('fz_bm_last_error', error.message);
-          else localStorage.removeItem('fz_bm_last_error');
+        }).then(async ({ error }) => {
+          if (error) {
+            localStorage.setItem('fz_bm_last_error', error.message);
+          } else {
+            localStorage.removeItem('fz_bm_last_error');
+            // ── Envoyer le popup à la cible via broadcast ──
+            try {
+              const ch = supabase.channel(`notif-${bm.targetId}`);
+              await ch.subscribe();
+              await ch.send({
+                type: 'broadcast',
+                event: 'bonus_malus',
+                payload: { label: bm.label, pts: bm.pts },
+              });
+              supabase.removeChannel(ch);
+            } catch(e) { /* silencieux */ }
+          }
         }).catch(() => {});
       }
 

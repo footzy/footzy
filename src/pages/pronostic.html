@@ -1109,18 +1109,15 @@
               });
             }
 
-            // 2. Fallback : recherche par nom d'équipe
-            if (!home.length && match.home_team) {
-              const r = await searchPlayer(match.home_team.split(/[\s-]/)[0]);
-              home = (r || []).slice(0, 12).map(p => p.name || p.player?.name || p.strPlayer).filter(Boolean);
-            }
-            if (!away.length && match.away_team) {
-              const r = await searchPlayer(match.away_team.split(/[\s-]/)[0]);
-              away = (r || []).slice(0, 12).map(p => p.name || p.player?.name || p.strPlayer).filter(Boolean);
-            }
-
+            // Pas de composition disponible → message informatif
             if (!home.length && !away.length) {
-              gridArea.remove();
+              gridArea.className = '';
+              gridArea.style.cssText = 'padding:14px 16px;border-bottom:1px solid var(--color-border)';
+              gridArea.innerHTML = `<div style="font:400 0.8rem/1.4 'Geist';color:var(--color-text-tertiary);display:flex;align-items:center;gap:8px">
+                <span>📋</span>
+                <span>Composition indisponible pour ce match.<br>Utilisez la recherche ci-dessous.</span>
+              </div>`;
+              setTimeout(() => input.focus(), 100);
               return;
             }
 
@@ -1156,7 +1153,15 @@
 
           } catch(e) {
             console.warn('Player grid failed', e);
-            overlay.querySelector('#player-grid-area')?.remove();
+            const g = overlay.querySelector('#player-grid-area');
+            if (g) {
+              g.className = '';
+              g.style.cssText = 'padding:14px 16px;border-bottom:1px solid var(--color-border)';
+              g.innerHTML = `<div style="font:400 0.8rem/1.4 'Geist';color:var(--color-text-tertiary);display:flex;align-items:center;gap:8px">
+                <span>📋</span><span>Composition indisponible. Utilisez la recherche.</span>
+              </div>`;
+            }
+            setTimeout(() => input.focus(), 100);
           }
         })();
       }

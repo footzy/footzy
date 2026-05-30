@@ -905,21 +905,60 @@
       .select('groupe_id, groupes(id,nom,code)')
       .eq('user_id', user.id);
 
-    // Build visibility options : Public en premier, puis les groupes
+    // Build visibility options : Public (Premium only) en premier, puis les groupes
     const visibilityOptions = [
-      { id: 'public', label: 'Public', sub: 'Visible dans le feed communauté', icon: '🌍' },
+      {
+        id:     'public',
+        label:  'Public',
+        sub:    isPremium ? 'Visible dans le feed communauté' : 'Réservé aux membres Premium',
+        icon:   '🌍',
+        locked: !isPremium,
+      },
       ...(memberships || []).map(m => ({
-        id:    m.groupes.id,
-        label: m.groupes.nom,
-        sub:   `Groupe · ${m.groupes.code || ''}`,
-        icon:  '👥',
+        id:     m.groupes.id,
+        label:  m.groupes.nom,
+        sub:    `Groupe · ${m.groupes.code || ''}`,
+        icon:   '👥',
+        locked: false,
       }))
     ];
-    let selectedVis = visibilityOptions[0];
+    // Par défaut : première option non verrouillée
+    let selectedVis = visibilityOptions.find(o => !o.locked) || visibilityOptions[0];
 
     function updateVisibilityBtn() {
-      document.getElementById('visibility-icon').textContent = selectedVis.icon;
+      document.getElementById('visibility-icon').textContent = selectedVis.locked ? '🔒' : selectedVis.icon;
       document.getElementById('visibility-val').textContent  = selectedVis.label;
+    }
+    updateVisibilityBtn();
+
+    // Upsell Premium (feed public)
+    function showPublicUpsell() {
+      const ov = document.createElement('div');
+      ov.className = 'sheet-overlay';
+      ov.innerHTML = `
+        <div class="sheet">
+          <div class="sheet-handle"></div>
+          <div style="padding:28px 20px 8px;text-align:center">
+            <div style="font-size:2.8rem;margin-bottom:14px">⭐</div>
+            <div style="font:italic 900 1.6rem/1.1 'Geist';text-transform:uppercase;letter-spacing:-0.02em;margin-bottom:10px">Feed Communauté</div>
+            <div style="font:400 0.88rem/1.6 'Geist';color:var(--color-text-secondary);margin-bottom:24px">
+              Partage tes pronostics publiquement,<br>montre ton niveau à toute la communauté<br>et récolte des réactions 🔥❤️
+            </div>
+            <button id="upsell-cta" style="width:100%;height:54px;background:var(--color-green);color:var(--color-dark);border:none;border-radius:9999px;font:900 0.95rem/1 'Geist';text-transform:uppercase;letter-spacing:0.04em;cursor:pointer;margin-bottom:10px">
+              Passer Premium ✦
+            </button>
+            <button id="upsell-cancel" style="width:100%;height:40px;background:transparent;border:none;font:500 0.82rem/1 'Geist';color:var(--color-text-secondary);cursor:pointer">
+              Pas maintenant
+            </button>
+          </div>
+        </div>`;
+      document.body.appendChild(ov);
+      ov.querySelector('#upsell-cta').addEventListener('click', () => {
+        createCheckout(PLANS.premium, user.id, user.email);
+        ov.remove();
+      });
+      ov.querySelector('#upsell-cancel').addEventListener('click', () => ov.remove());
+      ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
     }
 
     document.getElementById('visibility-btn').addEventListener('click', () => {
@@ -933,13 +972,15 @@
             <button class="sheet-close" id="vis-close">✕</button>
           </div>
           ${visibilityOptions.map(opt => `
-            <div class="visibility-option" data-id="${opt.id}">
-              <span class="visibility-opt-icon">${opt.icon}</span>
+            <div class="visibility-option${opt.locked ? ' visibility-option--locked' : ''}" data-id="${opt.id}" data-locked="${opt.locked}">
+              <span class="visibility-opt-icon" style="${opt.locked ? 'opacity:.45' : ''}">${opt.icon}</span>
               <div class="visibility-opt-info">
-                <div class="visibility-opt-name">${opt.label}</div>
+                <div class="visibility-opt-name" style="${opt.locked ? 'color:var(--color-text-tertiary)' : ''}">${opt.label}</div>
                 <div class="visibility-opt-sub">${opt.sub}</div>
               </div>
-              ${opt.id === selectedVis.id ? '<span class="visibility-opt-check">✓</span>' : ''}
+              ${opt.locked
+                ? '<span style="background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.4);color:#F5A623;padding:3px 8px;border-radius:999px;font:700 0.6rem/1 Geist;text-transform:uppercase;letter-spacing:.06em;flex-shrink:0">⭐ PREMIUM</span>'
+                : (opt.id === selectedVis.id ? '<span class="visibility-opt-check">✓</span>' : '')}
             </div>`).join('')}
         </div>`;
       document.body.appendChild(overlay);
@@ -948,6 +989,11 @@
       overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
       overlay.querySelectorAll('.visibility-option').forEach(item => {
         item.addEventListener('click', () => {
+          if (item.dataset.locked === 'true') {
+            overlay.remove();
+            showPublicUpsell();
+            return;
+          }
           selectedVis = visibilityOptions.find(o => o.id === item.dataset.id);
           updateVisibilityBtn();
           overlay.remove();
@@ -1311,6 +1357,12 @@
       const errEl = document.getElementById('error-msg');
       errEl.style.display = 'none';
       if (!beforeKickoff) return;
+
+      // Sécurité : le feed public est réservé aux Premium
+      if (selectedVis.id === 'public' && !isPremium) {
+        showPublicUpsell();
+        return;
+      }
 
       const btn = document.getElementById('btn-valider');
       btn.disabled = true;

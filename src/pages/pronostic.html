@@ -1228,21 +1228,26 @@
             const fixtureId = match.fixture_id || match.api_id || match.external_id;
             if (fixtureId) {
               const data = await getLineups(fixtureId);
-              const lineups = data?.response || [];
-              lineups.forEach(t => {
-                const players = [
-                  ...(t.startXI || []),
-                  ...(t.substitutes || [])
-                ].map(p => p?.player?.name).filter(Boolean);
-                // Associer à home ou away par nom d'équipe
-                const tname = (t.team?.name || '').toLowerCase();
-                const hname = (match.home_team || '').toLowerCase().slice(0, 5);
-                if (tname.includes(hname) || hname.includes(tname.slice(0, 5))) {
-                  home = players;
-                } else {
-                  away = players;
-                }
-              });
+              // Nouveau format : { home: [{name, pos}], away: [{name, pos}] }
+              if (data?.home?.length || data?.away?.length) {
+                home = (data.home || []).map(p => p.name).filter(Boolean);
+                away = (data.away || []).map(p => p.name).filter(Boolean);
+              } else if (data?.response) {
+                // Ancien format (fallback)
+                (data.response || []).forEach(t => {
+                  const players = [
+                    ...(t.startXI || []),
+                    ...(t.substitutes || [])
+                  ].map(p => p?.player?.name).filter(Boolean);
+                  const tname = (t.team?.name || '').toLowerCase();
+                  const hname = (match.home_team || '').toLowerCase().slice(0, 5);
+                  if (tname.includes(hname) || hname.includes(tname.slice(0, 5))) {
+                    home = players;
+                  } else {
+                    away = players;
+                  }
+                });
+              }
             }
 
             // Pas de composition disponible → message informatif

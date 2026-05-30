@@ -84,14 +84,35 @@ export async function getHeadToHead(team1Id, team2Id) {
   }
 }
 
-export async function getLineups(fixtureId) {
+export async function getLineups(matchId) {
   try {
-    const r = await fetch(
-      `https://${API_HOST}/football-get-linups?fixture_id=${fixtureId}`,
-      { headers }
-    );
-    return await r.json();
-  } catch {
+    // Deux endpoints séparés : domicile + extérieur
+    const [homeRes, awayRes] = await Promise.all([
+      fetch(`https://${API_HOST}/football-get-hometeam-lineup?match_id=${matchId}`, { headers }),
+      fetch(`https://${API_HOST}/football-get-awayteam-lineup?match_id=${matchId}`, { headers }),
+    ]);
+    const homeData = await homeRes.json();
+    const awayData = await awayRes.json();
+
+    function extractPlayers(data) {
+      const resp = data?.response || data;
+      const raw =
+        resp?.lineup?.players || resp?.players ||
+        resp?.lineup || (Array.isArray(resp) ? resp : []);
+      return (Array.isArray(raw) ? raw : [])
+        .map(p => ({
+          name: p.name || p.player?.name || p.shortName || p.playerName || null,
+          pos:  p.position || p.pos || null,
+        }))
+        .filter(p => p.name);
+    }
+
+    const home = extractPlayers(homeData);
+    const away = extractPlayers(awayData);
+    if (!home.length && !away.length) return null;
+    return { home, away };
+  } catch(e) {
+    console.warn('getLineups failed:', e);
     return null;
   }
 }

@@ -4,516 +4,664 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Footzy — Accueil</title>
-  <link rel="stylesheet" href="/src/css/tokens.css" />
-  <link rel="stylesheet" href="/src/css/components.css" />
-  <link rel="stylesheet" href="/src/css/fz-components.css" />
-  <link rel="stylesheet" href="/src/css/pages.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
   <style>
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to   { transform: translateY(0); }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --color-bg:             #F2F2F0;
+      --color-surface:        #FFFFFF;
+      --color-dark:           #0F0F0E;
+      --color-green:          #00E05A;
+      --color-green-dim:      #00C44F;
+      --color-green-bg:       #E8FFF1;
+      --color-text-primary:   #0F0F0E;
+      --color-text-secondary: #6B6966;
+      --color-text-tertiary:  #A8A49F;
+      --color-text-inverse:   #FFFFFF;
+      --color-border:         #E8E6E2;
+      --color-danger:         #E8453C;
+      --color-danger-bg:      #FEF2F2;
+      --radius-sm:   8px;
+      --radius-md:   12px;
+      --radius-lg:   16px;
+      --radius-xl:   20px;
+      --radius-full: 9999px;
+      --shadow-card: 0 1px 4px rgba(0,0,0,0.05), 0 0 0 1px var(--color-border);
+      --shadow-live: 0 0 0 2px var(--color-green);
     }
 
-    /* ── FAB (+) ── */
-    #fab-post {
+    html, body {
+      height: 100%;
+      background: var(--color-bg);
+      font-family: 'Geist', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      color: var(--color-text-primary);
+    }
+
+    /* ── Dot pattern background ── */
+    .page {
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      padding-bottom: 90px;
+      position: relative;
+    }
+    .page::before {
+      content: '';
       position: fixed;
-      /* Sit above nav + iPhone home indicator */
-      bottom: calc(72px + env(safe-area-inset-bottom));
-      right: max(20px, env(safe-area-inset-right));
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      background: var(--green-accent);
-      color: #080808;
-      font-size: 28px;
-      font-weight: 300;
-      line-height: 1;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 24px rgba(0,224,90,0.40), 0 2px 8px rgba(0,0,0,0.15);
-      cursor: pointer;
-      z-index: 99;
-      transition: transform 0.15s, box-shadow 0.15s;
-      border: none;
-      /* Prevent text selection on tap */
-      user-select: none;
-      -webkit-user-select: none;
+      inset: 0;
+      background-image: radial-gradient(circle, #C8C5C0 1px, transparent 1px);
+      background-size: 22px 22px;
+      opacity: 0.35;
+      pointer-events: none;
+      z-index: 0;
     }
-    #fab-post:active { transform: scale(0.90); box-shadow: 0 2px 10px rgba(0,224,90,0.2); }
+    .content {
+      position: relative;
+      z-index: 1;
+      padding-top: 72px;
+    }
 
-    /* ── Feed card ── */
-    .feed-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
-      box-shadow: var(--shadow-xs);
-      overflow: hidden;
-    }
-    .feed-card-header {
+    /* ── Header ── */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 430px;
+      height: 56px;
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 14px 16px 10px;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 100;
     }
-    .feed-avatar {
-      width: 38px;
-      height: 38px;
+    .header-avatar {
+      width: 36px; height: 36px;
       border-radius: 50%;
-      background: var(--bg-dark);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--fg-on-dark);
+      background: var(--color-green);
+      display: flex; align-items: center; justify-content: center;
+      font: 700 0.9rem/1 'Geist';
+      color: var(--color-dark);
+      cursor: pointer;
+      overflow: hidden;
       flex-shrink: 0;
     }
-    .feed-user-info { flex: 1; min-width: 0; }
-    .feed-pseudo {
-      font-size: 14px;
-      font-weight: 700;
-      line-height: 1.2;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      color: var(--fg);
+    .header-logo {
+      font: italic 900 1.45rem/1 'Geist';
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+      color: var(--color-text-primary);
     }
-    .feed-plan-badge {
+    .header-logo span { color: var(--color-green); }
+    .header-pts {
+      background: var(--color-dark);
+      color: var(--color-text-inverse);
+      padding: 7px 13px;
+      border-radius: var(--radius-full);
+      font: 700 0.78rem/1 'Geist';
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+    .header-pts-val { color: var(--color-green); }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.85); }
+    }
+    .anim { opacity: 0; animation: fadeUp 320ms ease-out forwards; }
+    .anim-1 { animation-delay: 40ms; }
+    .anim-2 { animation-delay: 100ms; }
+    .anim-3 { animation-delay: 160ms; }
+    .anim-4 { animation-delay: 220ms; }
+    .anim-5 { animation-delay: 280ms; }
+
+    /* ── Hero titre ── */
+    .hero-title {
+      padding: 24px 16px 20px;
+    }
+    .hero-title h1 {
+      font: italic 900 3rem/0.95 'Geist';
+      text-transform: uppercase;
+      letter-spacing: -0.03em;
+      color: var(--color-text-primary);
+      margin-bottom: 8px;
+    }
+    .hero-live-badge {
       display: inline-flex;
       align-items: center;
-      gap: 3px;
-      font-size: 10px;
-      font-weight: 800;
-      color: var(--accent-strong);
-      background: var(--accent-soft);
-      border-radius: var(--r-pill);
-      padding: 2px 8px;
-      margin-top: 3px;
-      letter-spacing: 0.04em;
+      gap: 6px;
+      background: var(--color-green);
+      color: var(--color-dark);
+      padding: 5px 10px 5px 8px;
+      border-radius: var(--radius-full);
+      font: 700 0.72rem/1 'Geist';
+      letter-spacing: 0.06em;
       text-transform: uppercase;
     }
-    .feed-status-badge {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 50px;
-      flex-shrink: 0;
+    .live-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--color-dark);
+      animation: livePulse 1.4s ease-in-out infinite;
     }
-    .feed-status-badge.won   { background: var(--green-dim); color: var(--green-accent); border: 1px solid var(--green-border); }
-    .feed-status-badge.exact { background: rgba(255,215,0,0.1); color: var(--gold); border: 1px solid rgba(255,215,0,0.25); }
-    .feed-status-badge.lost  { background: rgba(255,68,68,0.08); color: var(--danger); border: 1px solid rgba(255,68,68,0.18); }
 
-    .feed-match-info {
-      padding: 0 16px 10px;
+    /* ── Section label ── */
+    .section-label {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 7px;
+      font: 700 0.62rem/1 'Geist';
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+      padding: 0 16px;
+      margin-bottom: 12px;
     }
-    .feed-match-flags { font-size: 20px; flex-shrink: 0; }
-    .feed-match-name  { font-size: 13px; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
-    .feed-match-date  { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
+    .section-label::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--color-green);
+      flex-shrink: 0;
+    }
 
-    .feed-prono-display {
-      margin: 0 16px 12px;
-      background: var(--bg-muted);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px 16px;
+    /* ── Section spacing ── */
+    .matches-live-section  { margin-bottom: 28px; }
+    .upcoming-section      { margin-bottom: 28px; }
+    .defi-section          { margin-bottom: 28px; }
+    .actu-section          { margin-bottom: 28px; }
+
+    /* ── Carousel live ── */
+    .matches-live-scroll {
+      display: flex;
+      gap: 10px;
+      padding: 0 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x mandatory;
+    }
+    .matches-live-scroll::-webkit-scrollbar { display: none; }
+
+    .match-live-card {
+      flex-shrink: 0;
+      width: calc(100vw - 48px);
+      max-width: 382px;
+      background: var(--color-surface);
+      border-radius: var(--radius-xl);
+      padding: 16px;
+      box-shadow: var(--shadow-live);
+      scroll-snap-align: start;
+      cursor: pointer;
+      transition: transform 150ms ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .match-live-card:active { transform: scale(0.98); }
+    .match-live-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--color-green);
+      border-radius: 20px 20px 0 0;
+    }
+    .match-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .match-phase {
+      font: 500 0.6rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-text-secondary);
+    }
+    .match-minute-badge {
+      background: var(--color-green);
+      color: var(--color-dark);
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      font: 700 0.72rem/1 'Geist';
+    }
+    .match-score-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
+      margin-bottom: 14px;
     }
-    .feed-prono-team {
+    .match-team {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      flex: 1;
-    }
-    .feed-prono-team .flag { font-size: 24px; }
-    .feed-prono-team .name { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); }
-    .feed-prono-score {
-      font-size: 36px;
-      font-weight: 900;
-      font-style: italic;
-      letter-spacing: -0.03em;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      flex-shrink: 0;
-    }
-    .feed-prono-score .sep { font-size: 22px; opacity: 0.25; font-style: normal; font-weight: 400; }
-
-    .feed-reactions {
-      padding: 0 16px 14px;
-      display: flex;
       align-items: center;
       gap: 6px;
-      flex-wrap: wrap;
+      flex: 1;
     }
-    .reaction-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 7px 11px;
-      background: var(--bg-card-2);
-      border: 1px solid var(--border);
-      border-radius: var(--r-pill);
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--fg);
-      cursor: pointer;
-      transition: transform .15s, background .15s;
-      user-select: none;
+    .match-team-flag  { font-size: 2rem; line-height: 1; }
+    .match-team-code  {
+      font: 700 0.78rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-text-secondary);
     }
-    .reaction-btn .count { font-size: 12px; opacity: 0.8; font-weight: 600; }
-    .reaction-btn.active { background: var(--accent-soft); border-color: var(--accent); }
-    .reaction-btn.active .count { color: var(--accent-strong); }
-    .reaction-btn:active { transform: scale(0.92); }
-
-    /* ── Delete button on own cards ── */
-    .feed-delete-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: rgba(255,68,68,0.08);
-      border: 1px solid rgba(255,68,68,0.18);
-      color: var(--danger);
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
+    .match-score {
+      font: italic 900 3rem/1 'Geist';
+      letter-spacing: -0.04em;
+      color: var(--color-text-primary);
+      white-space: nowrap;
       flex-shrink: 0;
-      transition: background 0.15s, transform 0.1s;
     }
-    .feed-delete-btn:active { background: rgba(255,68,68,0.18); transform: scale(0.9); }
 
-    /* ── War button ── */
-    .war-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: rgba(255,140,0,0.08);
-      border: 1px solid rgba(255,140,0,0.22);
-      color: #FF8C00;
-      font-size: 15px;
+    /* Prono banner */
+    .prono-banner {
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      margin-top: 4px;
+    }
+    .prono-banner--live   { background: var(--color-green-bg); border: 1.5px solid var(--color-green); }
+    .prono-banner--danger { background: var(--color-danger-bg); border: 1.5px solid var(--color-danger); }
+    .prono-banner--none   { background: #F7F6F4; border: 1.5px solid var(--color-border); }
+    .prono-banner-left    { display: flex; align-items: center; gap: 7px; }
+    .prono-banner-dot     { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .prono-banner--live   .prono-banner-dot    { background: var(--color-green); }
+    .prono-banner--danger .prono-banner-dot    { background: var(--color-danger); }
+    .prono-banner--none   .prono-banner-dot    { background: var(--color-text-tertiary); }
+    .prono-banner-status  { font: 700 0.68rem/1 'Geist'; text-transform: uppercase; letter-spacing: 0.06em; }
+    .prono-banner--live   .prono-banner-status { color: var(--color-green-dim); }
+    .prono-banner--danger .prono-banner-status { color: var(--color-danger); }
+    .prono-banner--none   .prono-banner-status { color: var(--color-text-secondary); }
+    .prono-banner-score   { font: 700 0.78rem/1 'Geist'; color: var(--color-text-secondary); }
+    .prono-banner-pts     { font: 700 0.72rem/1 'Geist'; color: var(--color-green-dim); }
+    .prono-banner-cta     {
+      font: 600 0.72rem/1 'Geist';
+      color: var(--color-text-secondary);
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      padding: 5px 10px;
+      border-radius: var(--radius-full);
+      text-decoration: none;
       cursor: pointer;
-      flex-shrink: 0;
-      transition: background 0.15s, transform 0.1s;
     }
-    .war-btn:active { background: rgba(255,140,0,0.18); transform: scale(0.9); }
 
-    /* ── War popup ── */
-    @keyframes warSlideUp {
-      from { transform: translateY(24px); opacity: 0; }
-      to   { transform: translateY(0);    opacity: 1; }
+    /* ── Empty state ── */
+    .empty-live {
+      text-align: center;
+      padding: 40px 16px;
+      color: var(--color-text-tertiary);
     }
-    .war-opt-btn:active { transform: scale(0.95) !important; }
+    .empty-live-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .empty-live p    { font: 400 0.88rem/1 'Geist'; }
 
-    /* ── Post overlay sheet ── */
-    .post-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      background: rgba(0,0,0,0.85);
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      /* Prevent scroll-through on iOS */
-      overscroll-behavior: none;
-    }
-    .post-sheet {
-      background: var(--bg);
-      border-radius: 28px 28px 0 0;
-      width: 100%;
-      max-width: 480px;
-      max-height: calc(88vh - env(safe-area-inset-top));
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding: 0 0 calc(24px + env(safe-area-inset-bottom));
-      animation: slideUp .32s cubic-bezier(.32,.72,0,1);
-      -webkit-overflow-scrolling: touch;
-      box-shadow: 0 -10px 40px rgba(0,0,0,0.18);
-    }
-    .post-sheet-handle {
-      width: 36px;
-      height: 4px;
-      background: var(--border-strong);
-      border-radius: 2px;
-      margin: 12px auto 0;
-    }
-    .post-sheet-title {
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      padding: 16px 20px 14px;
+    /* ── Prochains matchs ── */
+    .match-upcoming-card {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      margin: 0 16px 8px;
+      box-shadow: var(--shadow-card);
       display: flex;
       align-items: center;
       gap: 10px;
-      position: sticky;
-      top: 0;
-      background: var(--bg-surface);
-      color: var(--text-primary);
-      z-index: 1;
-      border-bottom: 1px solid var(--border);
-    }
-    .post-sheet-back {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      background: var(--bg-muted);
-      border: 1px solid var(--border);
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
       cursor: pointer;
-      flex-shrink: 0;
-      font-size: 16px;
+      transition: transform 150ms ease;
     }
-
-    /* ── Match picker rows ── */
-    .picker-match-row {
+    .match-upcoming-card:active { transform: scale(0.98); }
+    .match-upcoming-team {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 16px 20px;
-      cursor: pointer;
-      border-bottom: 1px solid var(--border);
-      transition: background 0.15s;
-      /* Minimum touch target */
-      min-height: 64px;
+      gap: 7px;
+      flex: 1;
     }
-    .picker-match-row:last-child { border-bottom: none; }
-    .picker-match-row:active { background: var(--bg-muted); }
-    .picker-flags      { font-size: 24px; flex-shrink: 0; letter-spacing: -2px; }
-    .picker-teams      { flex: 1; min-width: 0; }
-    .picker-teams-name { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary); }
-    .picker-teams-date { font-size: 12px; color: var(--text-tertiary); margin-top: 3px; }
-    .picker-arrow      { color: var(--text-tertiary); font-size: 18px; flex-shrink: 0; }
-
-    /* ── Score stepper (in sheet) ── */
-    .sheet-stepper-wrap {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 28px 16px 20px;
+    .match-upcoming-team.right { justify-content: flex-end; }
+    .match-upcoming-team-flag  { font-size: 1.3rem; line-height: 1; }
+    .match-upcoming-team-name  {
+      font: 700 0.88rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--color-text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: calc(50vw - 80px);
     }
-    .sheet-stepper-team {
+    .match-upcoming-time-block {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
-      flex: 1;
-      min-width: 0;
+      gap: 2px;
+      flex-shrink: 0;
+      min-width: 68px;
     }
-    .sheet-stepper-flag { font-size: 40px; }
-    .sheet-stepper-name { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); text-align: center; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .sheet-stepper-ctrl { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-    .sheet-stepper-btn {
-      /* Large tap target for mobile */
-      width: 48px;
-      height: 48px;
+    .match-upcoming-date {
+      font: 500 0.58rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-text-secondary);
+    }
+    .match-upcoming-hour {
+      font: 900 1.05rem/1 'Geist';
+      color: var(--color-text-primary);
+      letter-spacing: -0.02em;
+    }
+    .match-upcoming-prono-done {
+      width: 8px; height: 8px;
       border-radius: 50%;
-      background: var(--bg-muted);
-      border: 1px solid var(--border);
-      color: var(--text-primary);
-      font-size: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 0.12s, border-color 0.12s, transform 0.1s;
-      user-select: none;
-      -webkit-user-select: none;
+      background: var(--color-green);
+      flex-shrink: 0;
     }
-    .sheet-stepper-btn:active { background: var(--green-dim); border-color: var(--green-border); transform: scale(0.92); }
-    .sheet-stepper-val  { font-size: 56px; font-weight: 900; font-style: italic; letter-spacing: -0.03em; min-width: 52px; text-align: center; line-height: 1; color: var(--text-primary); }
-    .sheet-score-sep    { font-size: 28px; font-weight: 400; opacity: 0.4; padding-top: 32px; flex-shrink: 0; color: var(--text-secondary); }
 
-    /* ── Empty / placeholder states ── */
-    .empty-state       { text-align: center; padding: 60px 24px 40px; color: var(--text-tertiary); }
-    .empty-state .icon { font-size: 52px; margin-bottom: 14px; }
-    .empty-state h3    { font-size: 16px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; }
-    .empty-state p     { font-size: 13px; line-height: 1.7; }
-
-    /* ── Actualité cards ── */
-    .actu-card {
-      border-radius: var(--r);
+    /* ── Défi quotidien ── */
+    .defi-card {
+      background: var(--color-dark);
+      border-radius: var(--radius-xl);
+      padding: 20px 16px;
+      margin: 0 16px;
+      position: relative;
       overflow: hidden;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow-xs);
-      padding: 16px 16px 14px 20px;
+      cursor: pointer;
+    }
+    .defi-card::after {
+      content: '⚡';
+      position: absolute;
+      right: -8px; top: -8px;
+      font-size: 5rem;
+      opacity: 0.06;
+      line-height: 1;
+      pointer-events: none;
+    }
+    .defi-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+    .defi-label {
+      font: 700 0.6rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-green);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .defi-label::before {
+      content: ''; width: 6px; height: 6px;
+      border-radius: 50%; background: var(--color-green);
+    }
+    .defi-pts-badge {
+      background: var(--color-green);
+      color: var(--color-dark);
+      padding: 5px 10px;
+      border-radius: var(--radius-full);
+      font: 700 0.72rem/1 'Geist';
+    }
+    .defi-question {
+      font: 700 1.05rem/1.35 'Geist';
+      color: var(--color-text-inverse);
+      margin-bottom: 12px;
+    }
+    .defi-timer {
+      display: flex; align-items: center; gap: 6px;
+      font: 500 0.7rem/1 'Geist';
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 16px;
+    }
+    .defi-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .defi-option {
+      background: rgba(255,255,255,0.08);
+      border: 1.5px solid rgba(255,255,255,0.12);
+      border-radius: var(--radius-md);
+      padding: 12px 10px;
+      font: 600 0.82rem/1.2 'Geist';
+      color: var(--color-text-inverse);
+      text-align: center;
+      cursor: pointer;
+      transition: background 150ms ease, border-color 150ms ease;
+    }
+    .defi-option:hover  { background: rgba(0,224,90,0.12); border-color: var(--color-green); }
+    .defi-option:active { transform: scale(0.97); }
+    .defi-option.correct { background: var(--color-green); border-color: var(--color-green); color: var(--color-dark); }
+    .defi-option.wrong   { background: rgba(232,69,60,0.15); border-color: var(--color-danger); color: var(--color-danger); }
+    .defi-option:disabled { pointer-events: none; }
+    .defi-streak {
+      display: flex; align-items: center; gap: 10px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .defi-streak-label {
+      font: 500 0.62rem/1 'Geist';
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.4);
+    }
+    .defi-streak-dots  { display: flex; gap: 5px; }
+    .defi-streak-dot   { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.15); }
+    .defi-streak-dot.active { background: var(--color-green); }
+
+    /* Défi non dispo */
+    .defi-unavailable {
+      text-align: center;
+      padding: 28px 0 8px;
+      color: rgba(255,255,255,0.35);
+      font: 500 0.82rem/1 'Geist';
+    }
+
+    /* ── Actu Flash ── */
+    .actu-card {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      margin: 0 16px 8px;
+      box-shadow: var(--shadow-card);
+      border-left: 3px solid var(--color-danger);
       position: relative;
     }
-    .actu-card::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 4px;
-    }
-    /* Type colours */
-    .actu-flash::before   { background: var(--live); }
-    .actu-stats::before   { background: #00B4FF; }
-    .actu-prono::before   { background: var(--accent); }
-    .actu-debrief::before { background: #B66DFF; }
-    .actu-question::before{ background: #FFB800; }
-
-    .actu-type-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 10px;
-      font-weight: 700;
+    .actu-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--color-danger);
+      color: white;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      font: 700 0.62rem/1 'Geist';
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      letter-spacing: 0.10em;
-      border-radius: var(--r-pill);
-      padding: 4px 9px;
+      margin-bottom: 10px;
+    }
+    .actu-card--stats  { border-left-color: #00B4FF; }
+    .actu-card--stats  .actu-badge { background: #00B4FF; }
+    .actu-card--debrief { border-left-color: #B66DFF; }
+    .actu-card--debrief .actu-badge { background: #B66DFF; }
+    .actu-title {
+      font: 700 0.92rem/1.3 'Geist';
+      color: var(--color-text-primary);
+      margin-bottom: 4px;
+    }
+    .actu-desc {
+      font: 400 0.82rem/1.4 'Geist';
+      color: var(--color-text-secondary);
       margin-bottom: 8px;
-      color: var(--bg-dark);
     }
-    .actu-flash    .actu-type-badge { background: var(--live); }
-    .actu-stats    .actu-type-badge { background: #00B4FF; color: #fff; }
-    .actu-prono    .actu-type-badge { background: var(--accent); }
-    .actu-debrief  .actu-type-badge { background: #B66DFF; color: #fff; }
-    .actu-question .actu-type-badge { background: #FFB800; }
+    .actu-desc strong { font: 700 0.82rem/1.4 'Geist'; color: var(--color-text-primary); }
+    .actu-time {
+      font: 400 0.68rem/1 'Geist';
+      color: var(--color-text-tertiary);
+    }
 
-    .actu-title  { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 6px; line-height: 1.35; color: var(--fg); }
-    .actu-body   { font-size: 13px; color: var(--fg-muted); line-height: 1.65; }
-    .actu-time   { font-size: 11px; color: var(--fg-faint); margin-top: 10px; }
-
-    /* Prono oracle score */
-    .actu-prono-score {
+    /* ── Nav bottom ── */
+    .nav-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 430px;
+      height: 80px;
+      background: var(--color-surface);
+      border-top: 1px solid var(--color-border);
       display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      background: var(--accent-bg);
-      border: 1px solid rgba(0,224,90,0.15);
-      border-radius: 14px;
-      padding: 10px 16px;
-      margin: 10px 0;
+      align-items: flex-start;
+      padding: 10px 0 0;
+      z-index: 100;
     }
-    .actu-prono-score .score { font-size: 28px; font-weight: 900; font-style: italic; color: var(--green-accent); letter-spacing: -0.02em; }
-    .actu-prono-score .sep   { font-size: 18px; opacity: 0.3; }
-    .actu-prono-score .team  { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-tertiary); }
-
-    /* Question reactions */
-    .actu-reactions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 14px;
-      flex-wrap: wrap;
-    }
-    .actu-vote-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      border-radius: 50px;
-      padding: 7px 14px;
-      font-size: 13px;
-      font-weight: 700;
+    .nav-tab {
+      flex: 1;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 4px;
       cursor: pointer;
-      transition: all 0.18s;
-      border: 1px solid;
-      user-select: none;
+      text-decoration: none;
+      padding: 2px 0;
+      -webkit-tap-highlight-color: transparent;
     }
-    .actu-vote-btn.agree  { background: var(--accent-bg); border-color: rgba(0,224,90,0.2); color: var(--green-accent); }
-    .actu-vote-btn.agree.voted  { background: var(--green-dim); border-color: var(--green-border); }
-    .actu-vote-btn.disagree     { background: rgba(255,68,68,0.06); border-color: rgba(255,68,68,0.2); color: #FF6B6B; }
-    .actu-vote-btn.disagree.voted { background: rgba(255,68,68,0.14); border-color: rgba(255,68,68,0.35); }
-    .actu-vote-btn:active { transform: scale(0.94); }
-    .actu-comments-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 12px;
-      color: var(--text-tertiary);
-      font-weight: 600;
-      margin-left: auto;
+    .nav-tab-icon  { font-size: 1.35rem; line-height: 1; transition: transform 150ms ease; }
+    .nav-tab:active .nav-tab-icon { transform: scale(0.88); }
+    .nav-tab-label {
+      font: 500 0.58rem/1 'Geist';
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+    }
+    .nav-tab.active .nav-tab-label { color: var(--color-green); font-weight: 700; }
+
+    /* ── Skeleton loader ── */
+    @keyframes shimmer {
+      0%   { background-position: -400px 0; }
+      100% { background-position: 400px 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg, #E8E6E2 25%, #F2F0EC 50%, #E8E6E2 75%);
+      background-size: 800px 100%;
+      animation: shimmer 1.4s infinite linear;
+      border-radius: 8px;
     }
   </style>
 </head>
 <body>
-  <!-- Header -->
-  <header class="fz-main-header">
-    <div id="user-avatar" class="fz-main-header__avatar" onclick="window.location.href='/src/pages/profil.html'">?</div>
-    <div class="fz-main-header__logo">FOOTZY<span>.</span></div>
-    <div id="score-pill" class="fz-main-header__pts">0 PTS</div>
-  </header>
+  <div class="page">
 
-  <div class="page-content">
+    <!-- ── [A] Header ── -->
+    <header class="header">
+      <div class="header-avatar" id="user-avatar" onclick="window.location.href='/src/pages/profil.html'">?</div>
+      <div class="header-logo">FOOTZY<span>.</span></div>
+      <div class="header-pts" id="score-pill"><span class="header-pts-val" id="pts-val">0</span> PTS</div>
+    </header>
 
-    <!-- Tabs -->
-    <div class="tabs">
-      <button class="tab-btn active" id="tab-actu" onclick="switchTab('actu')">Actualité</button>
-      <button class="tab-btn"        id="tab-feed" onclick="switchTab('feed')">Feed ⭐</button>
+    <div class="content">
+
+      <!-- ── [B] Hero titre ── -->
+      <section class="hero-title anim anim-1">
+        <h1>Aujourd'hui</h1>
+        <div class="hero-live-badge" id="hero-live-badge" style="display:none">
+          <span class="live-dot"></span>
+          <span id="hero-live-count">0 match en direct</span>
+        </div>
+      </section>
+
+      <!-- ── [C] Matchs en direct ── -->
+      <section class="matches-live-section anim anim-2" id="live-section">
+        <div class="section-label">Matchs en direct</div>
+        <div class="matches-live-scroll" id="live-scroll">
+          <div class="match-live-card" style="display:flex;align-items:center;justify-content:center;min-height:160px">
+            <div style="text-align:center">
+              <div class="skeleton" style="width:48px;height:48px;border-radius:50%;margin:0 auto 12px"></div>
+              <div class="skeleton" style="width:120px;height:12px;margin:0 auto"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── [D] Prochains matchs ── -->
+      <section class="upcoming-section anim anim-3" id="upcoming-section">
+        <div class="section-label">Prochains matchs</div>
+        <div id="upcoming-list">
+          <div class="match-upcoming-card"><div class="skeleton" style="width:100%;height:20px"></div></div>
+          <div class="match-upcoming-card"><div class="skeleton" style="width:100%;height:20px"></div></div>
+        </div>
+      </section>
+
+      <!-- ── [E] Défi quotidien ── -->
+      <section class="defi-section anim anim-4">
+        <div class="section-label">Défi quotidien</div>
+        <div class="defi-card" id="defi-card">
+          <div class="defi-card-top">
+            <span class="defi-label">Question du jour</span>
+            <span class="defi-pts-badge">+50 PTS</span>
+          </div>
+          <div class="defi-question" id="defi-question">Chargement…</div>
+          <div class="defi-timer" id="defi-timer">⏱ 30 secondes pour répondre</div>
+          <div class="defi-options" id="defi-options"></div>
+          <div class="defi-streak" id="defi-streak" style="display:none">
+            <span class="defi-streak-label">Streak</span>
+            <div class="defi-streak-dots" id="defi-streak-dots"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── [F] Actu Flash ── -->
+      <section class="actu-section anim anim-5">
+        <div class="section-label">Actu Flash</div>
+        <div id="actu-list">
+          <div style="margin:0 16px"><div class="skeleton" style="height:80px;border-radius:16px;margin-bottom:8px"></div></div>
+          <div style="margin:0 16px"><div class="skeleton" style="height:80px;border-radius:16px"></div></div>
+        </div>
+      </section>
+
     </div>
 
-    <!-- ── Actualité tab ── -->
-    <div id="panel-actu">
-      <div id="actu-list" style="display:flex;flex-direction:column;gap:10px;padding:12px 16px 16px">
-        <div style="text-align:center;padding:48px 20px;color:var(--text-tertiary)">Chargement…</div>
-      </div>
-    </div>
-
-    <!-- ── Feed tab ── -->
-    <div id="panel-feed" style="display:none">
-      <div id="feed-list" style="display:flex;flex-direction:column;gap:10px;padding:0 16px 16px">
-        <div style="text-align:center;padding:48px 20px;color:var(--text-tertiary)">Chargement…</div>
-      </div>
-    </div>
+    <!-- ── [G] Nav bottom ── -->
+    <nav class="nav-bottom">
+      <a href="/src/pages/accueil.html" class="nav-tab active" aria-current="page">
+        <span class="nav-tab-icon">🏠</span>
+        <span class="nav-tab-label">Accueil</span>
+      </a>
+      <a href="/src/pages/home.html" class="nav-tab">
+        <span class="nav-tab-icon">⚽</span>
+        <span class="nav-tab-label">Matchs</span>
+      </a>
+      <a href="/src/pages/oracle.html" class="nav-tab">
+        <span class="nav-tab-icon">🔮</span>
+        <span class="nav-tab-label">Oracle</span>
+      </a>
+      <a href="/src/pages/groupe.html" class="nav-tab">
+        <span class="nav-tab-icon">👥</span>
+        <span class="nav-tab-label">Groupe</span>
+      </a>
+      <a href="/src/pages/profil.html" class="nav-tab">
+        <span class="nav-tab-icon">🪪</span>
+        <span class="nav-tab-label">Profil</span>
+      </a>
+    </nav>
 
   </div>
 
-  <!-- FAB (+) — visible only for premium users in Feed tab -->
-  <button id="fab-post" title="Poster un pronostic">+</button>
-
-  <!-- Bottom Nav -->
-  <nav class="bottom-nav">
-    <a href="/src/pages/accueil.html" class="active">
-      <span style="font-size:22px">🏠</span>
-      <span>Accueil</span>
-    </a>
-    <a href="/src/pages/home.html">
-      <span style="font-size:22px">⚽</span>
-      <span>Matchs</span>
-    </a>
-    <a href="/src/pages/oracle.html">
-      <span style="font-size:22px">🔮</span>
-      <span>Oracle</span>
-    </a>
-    <a href="/src/pages/groupe.html">
-      <span style="font-size:22px">🫂</span>
-      <span>Groupe</span>
-    </a>
-    <a href="/src/pages/profil.html">
-      <span style="font-size:22px">🪪</span>
-      <span>Profil</span>
-    </a>
-  </nav>
-
   <script type="module">
     import { supabase, requireAuth, getCurrentProfile } from '/src/js/lib/supabase.js';
-    import { formatDate, formatKickoff, formatTime, toast } from '/src/js/lib/utils.js';
-    import { createCheckout, PLANS } from '/src/js/lib/whop.js';
+    import { formatTime, formatKickoff } from '/src/js/lib/utils.js';
 
     const user    = await requireAuth();
     if (!user) throw new Error('not authed');
     const profile = await getCurrentProfile();
 
-    // Profil incomplet (Google sans pseudo) → auto-assigner un pseudo
+    // ── Profil incomplet → auto-pseudo ──
     if (!profile?.pseudo) {
-      const rawName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User';
+      const rawName  = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User';
       const basePseudo = rawName.replace(/\s+/g, '').replace(/[^a-zA-Z0-9_\-\.]/g, '').slice(0, 18) || 'User';
       let pseudo = basePseudo.length >= 3 ? basePseudo : 'User' + basePseudo;
       let counter = 1;
@@ -523,17 +671,12 @@
         pseudo = basePseudo.slice(0, 15) + counter++;
       }
       if (profile) {
-        // Profil existe mais sans pseudo → update uniquement le pseudo
         await supabase.from('profiles').update({ pseudo }).eq('id', user.id);
       } else {
-        // Pas de profil du tout → insert complet
         await supabase.from('profiles').insert({ id: user.id, pseudo, points_totaux: 0, plan: 'free' });
       }
       window.location.reload();
     }
-
-    const isPremium = profile?.plan === 'premium';
-    const fab = document.getElementById('fab-post');
 
     // ── Header ──
     if (profile) {
@@ -543,335 +686,18 @@
       } else {
         av.textContent = (profile.pseudo?.[0] || '?').toUpperCase();
       }
-      document.getElementById('score-pill').textContent = `${(profile.points_totaux || 0).toLocaleString('fr-FR')} PTS`;
-      if (profile.streak_quotidien > 0) {
-        const streakEl = document.getElementById('user-streak');
-        if (streakEl) streakEl.textContent = `🔥 ${profile.streak_quotidien}`;
-      }
+      document.getElementById('pts-val').textContent = (profile.points_totaux || 0).toLocaleString('fr-FR');
     }
 
-    // ── Tab switching ──
-    let feedLoaded = false;
-    let actuLoaded = false;
-    window.switchTab = (tab) => {
-      document.getElementById('tab-actu').classList.toggle('active', tab === 'actu');
-      document.getElementById('tab-feed').classList.toggle('active', tab === 'feed');
-      document.getElementById('panel-actu').style.display = tab === 'actu' ? '' : 'none';
-      document.getElementById('panel-feed').style.display = tab === 'feed' ? '' : 'none';
-      fab.style.display = (tab === 'feed' && isPremium) ? 'flex' : 'none';
-      if (tab === 'feed' && !feedLoaded) loadFeed();
-      if (tab === 'actu' && !actuLoaded) loadActu();
-    };
-
-    // Trigger first load since actu is the default tab
-    loadActu();
-
-    // ── FAB click → match picker ──
-    fab.addEventListener('click', openMatchPicker);
-
-    // ─────────────────────────────────────────
-    // ACTUALITÉ — auto-générée depuis les matchs réels
-    // ─────────────────────────────────────────
-    let myVotes = {};
-    let actuLiveInterval = null;
-
+    // ── Phase label ──
     function phaseLabel(m) {
       if (m.phase === 'groupes') return `Groupe ${m.groupe || ''}`;
       if (m.groupe === 'UCL')    return 'Finale UCL';
-      const L = { huitiemes:'1/8 de finale', quarts:'Quart de finale', demis:'Demi-finale', finale:'Finale' };
-      return L[m.phase] || m.phase;
+      const L = { huitiemes: '1/8', quarts: 'Quart', demis: 'Demi', finale: 'Finale' };
+      return L[m.phase] || m.phase || '';
     }
 
-    // ── Classement d'un groupe calculé depuis Supabase ──
-    function buildGroupStandingsCard(group, allGroupMatches) {
-      const groupMatches = allGroupMatches.filter(m => m.groupe === group);
-      const finished = groupMatches.filter(m => m.status === 'finished');
-      if (!finished.length) return null;
-
-      const teams = {};
-      const init = (name, flag) => { if (!teams[name]) teams[name] = { name, flag, p:0, w:0, d:0, l:0, gf:0, ga:0 }; };
-      for (const m of groupMatches) {
-        init(m.home_team, m.home_flag);
-        init(m.away_team, m.away_flag);
-        if (m.status !== 'finished') continue;
-        const h = m.home_score || 0, a = m.away_score || 0;
-        teams[m.home_team].p++; teams[m.away_team].p++;
-        teams[m.home_team].gf += h; teams[m.home_team].ga += a;
-        teams[m.away_team].gf += a; teams[m.away_team].ga += h;
-        if (h > a) { teams[m.home_team].w++; teams[m.away_team].l++; }
-        else if (a > h) { teams[m.away_team].w++; teams[m.home_team].l++; }
-        else { teams[m.home_team].d++; teams[m.away_team].d++; }
-      }
-
-      const standings = Object.values(teams)
-        .map(t => ({ ...t, pts: t.w * 3 + t.d, gd: t.gf - t.ga }))
-        .sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf);
-
-      const rows = standings.map((t, i) => `
-        <div style="display:flex;align-items:center;gap:6px;padding:5px 2px;${i < standings.length - 1 ? 'border-bottom:1px solid rgba(255,255,255,0.05)' : ''}">
-          <span style="font-size:10px;font-weight:700;color:${i < 2 && finished.length >= 3 ? 'var(--green-accent)' : 'var(--text-tertiary)'};width:14px;text-align:center">${i + 1}</span>
-          <span style="font-size:16px;line-height:1">${t.flag}</span>
-          <span style="flex:1;font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name}</span>
-          <span style="font-size:11px;color:var(--text-tertiary);width:16px;text-align:center">${t.p}</span>
-          <span style="font-size:11px;color:var(--text-tertiary);width:16px;text-align:center">${t.w}</span>
-          <span style="font-size:11px;color:var(--text-tertiary);width:16px;text-align:center">${t.d}</span>
-          <span style="font-size:11px;color:var(--text-tertiary);width:16px;text-align:center">${t.l}</span>
-          <span style="font-size:11px;font-weight:600;color:${t.gd > 0 ? 'var(--green-accent)' : t.gd < 0 ? 'var(--danger)' : 'var(--text-tertiary)'};width:22px;text-align:right">${t.gd > 0 ? '+' : ''}${t.gd}</span>
-          <span style="font-size:13px;font-weight:800;width:20px;text-align:center">${t.pts}</span>
-        </div>`).join('');
-
-      return {
-        id: `auto-standing-${group}`, type: 'stats', is_pinned: false,
-        emoji: '📋',
-        titre: `Classement Groupe ${group}`,
-        contenu: `<div style="margin-top:4px">
-          <div style="display:flex;gap:6px;padding:0 2px 5px;border-bottom:1px solid var(--border)">
-            <span style="width:14px"></span><span style="width:16px"></span>
-            <span style="flex:1;font-size:9px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.06em">Équipe</span>
-            <span style="font-size:9px;font-weight:700;color:var(--text-tertiary);width:16px;text-align:center" title="Joués">J</span>
-            <span style="font-size:9px;font-weight:700;color:var(--text-tertiary);width:16px;text-align:center" title="Gagnés">G</span>
-            <span style="font-size:9px;font-weight:700;color:var(--text-tertiary);width:16px;text-align:center" title="Nuls">N</span>
-            <span style="font-size:9px;font-weight:700;color:var(--text-tertiary);width:16px;text-align:center" title="Perdus">P</span>
-            <span style="font-size:9px;font-weight:700;color:var(--text-tertiary);width:22px;text-align:right" title="Différence">+/-</span>
-            <span style="font-size:9px;font-weight:700;color:var(--text-tertiary);width:20px;text-align:center" title="Points">Pts</span>
-          </div>
-          ${rows}
-          ${finished.length >= 3 ? '<div style="font-size:10px;color:var(--text-tertiary);margin-top:7px"><span style="color:var(--green-accent)">●</span> Top 2 qualifiés</div>' : ''}
-        </div>`,
-        created_at: new Date().toISOString(),
-        _auto: true,
-      };
-    }
-
-    // ── Auto-posts depuis les données réelles (enrichis) ──
-    function buildAutoPostsFromMatches(matches, allGroupMatches) {
-      const now = new Date();
-      const auto = [];
-
-      const live     = matches.filter(m => m.status === 'live' || m.status === 'halftime');
-      const finished = matches.filter(m => m.status === 'finished');
-      const today    = matches.filter(m => {
-        if (m.status !== 'scheduled') return false;
-        const k = new Date(m.kickoff_at);
-        return k.toDateString() === now.toDateString();
-      });
-      const soon = matches.filter(m => {
-        if (m.status !== 'scheduled') return false;
-        const k = new Date(m.kickoff_at);
-        const diff = k - now;
-        return diff > 0 && diff < 3 * 3600 * 1000;
-      });
-      const tomorrow = matches.filter(m => {
-        if (m.status !== 'scheduled') return false;
-        const k = new Date(m.kickoff_at);
-        const tom = new Date(now); tom.setDate(tom.getDate() + 1);
-        return k.toDateString() === tom.toDateString();
-      });
-
-      // 1. LIVE — épinglé en tête
-      for (const m of live) {
-        auto.push({
-          id: `auto-live-${m.id}`, type: 'flash', is_pinned: true,
-          emoji: '🔴',
-          titre: `${m.home_flag} ${m.home_team} ${m.home_score}–${m.away_score} ${m.away_team} ${m.away_flag}`,
-          contenu: `<strong>EN DIRECT</strong> · ${m.minute ? m.minute + "' · " : ''}${phaseLabel(m)}. <a href="/src/pages/match.html?id=${m.id}" style="color:var(--green-accent);font-weight:700;text-decoration:none">Voir le match →</a>`,
-          created_at: new Date().toISOString(),
-          _auto: true,
-        });
-      }
-
-      // 2. Coup d'envoi imminent (< 3h)
-      for (const m of soon) {
-        const mins = Math.round((new Date(m.kickoff_at) - now) / 60000);
-        const delay = mins < 60 ? `dans ${mins} min` : `dans ${Math.round(mins / 60)}h`;
-        const isKO = ['huitiemes','quarts','demis','finale'].includes(m.phase);
-        auto.push({
-          id: `auto-soon-${m.id}`, type: 'flash', is_pinned: false,
-          emoji: isKO ? '🏆' : '⏰',
-          titre: `${m.home_flag} ${m.home_team} vs ${m.away_team} ${m.away_flag} — ${delay}`,
-          contenu: `Coup d'envoi ${delay} · ${phaseLabel(m)}${isKO ? ' · <strong>Élimination directe !</strong>' : ''}. Lance ton pronostic avant le début !`,
-          created_at: new Date().toISOString(),
-          _auto: true,
-        });
-      }
-
-      // 3. Programme du jour (> 3h)
-      const todayOther = today.filter(m => new Date(m.kickoff_at) - now >= 3 * 3600 * 1000);
-      if (todayOther.length) {
-        const lines = todayOther.map(m =>
-          `${m.home_flag} <strong>${m.home_team}</strong> vs <strong>${m.away_team}</strong> ${m.away_flag} · ${formatTime(m.kickoff_at)} · ${phaseLabel(m)}`
-        ).join('<br>');
-        auto.push({
-          id: 'auto-today', type: 'flash', is_pinned: false,
-          emoji: '📅',
-          titre: `${todayOther.length} match${todayOther.length > 1 ? 's' : ''} aujourd'hui`,
-          contenu: lines,
-          created_at: new Date().toISOString(),
-          _auto: true,
-        });
-      }
-
-      // 4. Résultats récents (< 24h) — enrichis avec contexte
-      const recent = finished.filter(m => now - new Date(m.kickoff_at) < 24 * 3600 * 1000);
-      for (const m of recent.slice(-5).reverse()) {
-        const winner = m.home_score > m.away_score ? m.home_team
-                     : m.away_score > m.home_score ? m.away_team : null;
-        const isKO = ['huitiemes','quarts','demis','finale'].includes(m.phase);
-        let ctx;
-        if (isKO && winner)  ctx = `🎉 <strong>${winner}</strong> se qualifie pour le prochain tour !`;
-        else if (isKO)       ctx = `Tirs au but nécessaires — match nul au temps réglementaire.`;
-        else if (winner)     ctx = `<strong>${winner}</strong> s'impose !`;
-        else                 ctx = `Match nul — un point chacun.`;
-        auto.push({
-          id: `auto-result-${m.id}`, type: 'debrief', is_pinned: false,
-          emoji: '📊',
-          titre: `${m.home_flag} ${m.home_team} ${m.home_score}–${m.away_score} ${m.away_team} ${m.away_flag}`,
-          contenu: `Résultat final · ${phaseLabel(m)}. ${ctx}`,
-          created_at: m.updated_at || m.kickoff_at,
-          _auto: true,
-        });
-      }
-
-      // 5. Programme de demain
-      if (tomorrow.length) {
-        const lines = tomorrow.map(m =>
-          `${m.home_flag} <strong>${m.home_team}</strong> vs <strong>${m.away_team}</strong> ${m.away_flag} · ${formatTime(m.kickoff_at)} · ${phaseLabel(m)}`
-        ).join('<br>');
-        auto.push({
-          id: 'auto-tomorrow', type: 'stats', is_pinned: false,
-          emoji: '⏭️',
-          titre: `Programme demain — ${tomorrow.length} match${tomorrow.length > 1 ? 's' : ''}`,
-          contenu: lines,
-          created_at: new Date().toISOString(),
-          _auto: true,
-        });
-      }
-
-      // 6. Classements de groupe (groupes actifs dans la fenêtre courante)
-      const activeGroups = new Set(matches.filter(m => m.groupe).map(m => m.groupe));
-      const groupsToShow = [...new Set(
-        allGroupMatches
-          .filter(m => m.status === 'finished' && m.groupe && activeGroups.has(m.groupe))
-          .map(m => m.groupe)
-      )].sort();
-      for (const g of groupsToShow) {
-        const card = buildGroupStandingsCard(g, allGroupMatches);
-        if (card) auto.push(card);
-      }
-
-      // 7. Matchs à élimination directe dans les 7 prochains jours
-      const nextWeek = new Date(now); nextWeek.setDate(nextWeek.getDate() + 7);
-      const KNOCKOUT_EMOJI = { huitiemes: '⚔️', quarts: '🏹', demis: '🎯', finale: '🏆' };
-      const knockouts = matches.filter(m =>
-        m.status === 'scheduled' &&
-        ['huitiemes','quarts','demis','finale'].includes(m.phase) &&
-        new Date(m.kickoff_at) > now &&
-        new Date(m.kickoff_at) < nextWeek
-      );
-      for (const m of knockouts) {
-        auto.push({
-          id: `auto-knockout-${m.id}`, type: 'flash', is_pinned: false,
-          emoji: KNOCKOUT_EMOJI[m.phase] || '⚽',
-          titre: `${m.home_flag} ${m.home_team} vs ${m.away_team} ${m.away_flag}`,
-          contenu: `${phaseLabel(m)} · ${formatKickoff(m.kickoff_at)} · <strong>Élimination directe</strong> — le perdant rentre à la maison !`,
-          created_at: new Date().toISOString(),
-          _auto: true,
-        });
-      }
-
-      // 8. Bilan phase de groupes
-      const allPlayed = allGroupMatches.filter(m => m.status === 'finished');
-      if (allPlayed.length) {
-        const goals = allPlayed.reduce((s, m) => s + (m.home_score || 0) + (m.away_score || 0), 0);
-        const avg   = (goals / allPlayed.length).toFixed(1);
-        auto.push({
-          id: 'auto-bilan', type: 'stats', is_pinned: false,
-          emoji: '🌍',
-          titre: `CdM 2026 — Bilan phase de groupes`,
-          contenu: `<strong>${allPlayed.length}</strong> match${allPlayed.length > 1 ? 's' : ''} joué${allPlayed.length > 1 ? 's' : ''} · <strong>${goals}</strong> buts au total · Moyenne <strong>${avg}</strong> buts/match`,
-          created_at: new Date().toISOString(),
-          _auto: true,
-        });
-      }
-
-      return auto;
-    }
-
-    async function loadActu() {
-      actuLoaded = true;
-      const list = document.getElementById('actu-list');
-
-      // Fenêtre : hier → après-demain pour capter live, résultats récents et programme
-      const from = new Date(); from.setDate(from.getDate() - 1);
-      const to   = new Date(); to.setDate(to.getDate() + 2);
-
-      const [matchesRes, allGroupRes, postsRes] = await Promise.all([
-        supabase.from('matchs').select('*')
-          .gte('kickoff_at', from.toISOString())
-          .lte('kickoff_at', to.toISOString())
-          .order('kickoff_at'),
-        supabase.from('matchs')
-          .select('id,home_team,away_team,home_flag,away_flag,home_score,away_score,status,groupe,phase,kickoff_at,updated_at')
-          .eq('phase', 'groupes')
-          .order('kickoff_at'),
-        supabase.from('actualite_posts').select('*')
-          .order('is_pinned', { ascending: false })
-          .order('created_at',  { ascending: false })
-          .limit(10),
-      ]);
-
-      const autoPosts   = buildAutoPostsFromMatches(matchesRes.data || [], allGroupRes.data || []);
-      const manualPosts = (postsRes.data || []).filter(p => !p._auto);
-
-      const allPosts = [...autoPosts, ...manualPosts];
-
-      if (!allPosts.length) {
-        list.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--text-tertiary)">
-          <div style="font-size:48px;margin-bottom:12px">📰</div>
-          <div style="font-weight:700;color:var(--text-secondary)">Aucune actualité pour l'instant</div>
-        </div>`;
-        return;
-      }
-
-      // Réactions pour les posts manuels de type question
-      const questionIds = manualPosts.filter(p => p.type === 'question').map(p => p.id);
-      let rxCounts = {}, commentCounts = {};
-
-      if (questionIds.length) {
-        const { data: rxData } = await supabase
-          .from('actualite_reactions').select('post_id, type').in('post_id', questionIds);
-        rxData?.forEach(r => {
-          if (!rxCounts[r.post_id]) rxCounts[r.post_id] = { agree: 0, disagree: 0 };
-          rxCounts[r.post_id][r.type]++;
-        });
-        const { data: myRxData } = await supabase
-          .from('actualite_reactions').select('post_id, type')
-          .eq('user_id', user.id).in('post_id', questionIds);
-        myRxData?.forEach(r => { myVotes[r.post_id] = r.type; });
-        const { data: cmtData } = await supabase
-          .from('actualite_comments').select('post_id').in('post_id', questionIds);
-        cmtData?.forEach(c => { commentCounts[c.post_id] = (commentCounts[c.post_id] || 0) + 1; });
-      }
-
-      list.innerHTML = allPosts.map(p =>
-        renderActuCard(p, rxCounts[p.id] || { agree:0, disagree:0 }, commentCounts[p.id] || 0)
-      ).join('');
-
-      list.querySelectorAll('.actu-vote-btn').forEach(btn => btn.addEventListener('click', handleVote));
-
-      // Polling auto si des matchs sont en direct
-      const hasLive = (matchesRes.data || []).some(m => m.status === 'live' || m.status === 'halftime');
-      if (hasLive && !actuLiveInterval) {
-        actuLiveInterval = setInterval(() => {
-          actuLoaded = false;
-          loadActu();
-        }, 60_000);
-      } else if (!hasLive && actuLiveInterval) {
-        clearInterval(actuLiveInterval);
-        actuLiveInterval = null;
-      }
-    }
-
+    // ── Time ago ──
     function timeAgo(dateStr) {
       const diff = Date.now() - new Date(dateStr).getTime();
       const m = Math.floor(diff / 60000);
@@ -882,700 +708,378 @@
       return `il y a ${Math.floor(h / 24)}j`;
     }
 
-    const TYPE_META = {
-      flash:    { label: '⚡ Actu Flash',        cls: 'actu-flash'    },
-      stats:    { label: '📊 Stats du jour',      cls: 'actu-stats'    },
-      prono:    { label: '🔮 Pronostic Oracle',   cls: 'actu-prono'    },
-      debrief:  { label: '🎙️ Débrief',            cls: 'actu-debrief'  },
-      question: { label: '💬 Question du jour',   cls: 'actu-question' },
-    };
+    // ─────────────────────────────────────────
+    // [C] MATCHS EN DIRECT
+    // ─────────────────────────────────────────
+    async function loadLive() {
+      const { data: matches } = await supabase
+        .from('matchs')
+        .select('*')
+        .in('status', ['live', 'halftime'])
+        .order('kickoff_at');
 
-    function renderActuCard(p, rx, cmtCount) {
-      const meta  = TYPE_META[p.type] || TYPE_META.flash;
-      const pinHTML = p.is_pinned ? `<span style="font-size:10px;font-weight:700;color:var(--gold);background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.2);border-radius:50px;padding:2px 8px;margin-left:6px">📌 À la une</span>` : '';
+      const scroll     = document.getElementById('live-scroll');
+      const heroBadge  = document.getElementById('hero-live-badge');
+      const heroCount  = document.getElementById('hero-live-count');
+      const liveSection = document.getElementById('live-section');
 
-      // Extra block for prono type (score display)
-      let extraHTML = '';
-      if (p.type === 'prono') {
-        const scoreMatch = p.contenu.match(/(\d+)-(\d+)/);
-        if (scoreMatch) {
-          const [, h, a] = scoreMatch;
-          const teams = p.titre?.split(' vs ') || ['', ''];
-          extraHTML = `
-            <div class="actu-prono-score">
-              <span class="team">${teams[0] || ''}</span>
-              <span class="score">${h}</span>
-              <span class="sep">–</span>
-              <span class="score">${a}</span>
-              <span class="team">${teams[1] || ''}</span>
+      if (!matches?.length) {
+        liveSection.style.display = 'none';
+        heroBadge.style.display   = 'none';
+        return;
+      }
+
+      liveSection.style.display = '';
+      heroBadge.style.display   = 'inline-flex';
+      heroCount.textContent     = `${matches.length} match${matches.length > 1 ? 's' : ''} en direct`;
+
+      // Fetch my pronos for these live matches
+      const matchIds = matches.map(m => m.id);
+      const { data: myPronos } = await supabase
+        .from('pronostics')
+        .select('match_id, home_score, away_score, status, points')
+        .eq('user_id', user.id)
+        .in('match_id', matchIds);
+      const pronosMap = {};
+      myPronos?.forEach(p => { pronosMap[p.match_id] = p; });
+
+      scroll.innerHTML = matches.map(m => {
+        const phase = phaseLabel(m);
+        const prono = pronosMap[m.id];
+
+        let bannerHTML = '';
+        if (prono) {
+          const hs = m.home_score ?? 0, as = m.away_score ?? 0;
+          const ph = prono.home_score, pa = prono.away_score;
+          const exact    = ph === hs && pa === as;
+          const liveWin  = (hs > as && ph > pa) || (as > hs && pa > ph) || (hs === as && ph === pa);
+          const cls      = exact || liveWin ? 'prono-banner--live' : 'prono-banner--danger';
+          const label    = exact ? 'Score exact en cours' : liveWin ? 'En vie' : 'Compromis';
+          bannerHTML = `
+            <div class="prono-banner ${cls}">
+              <div class="prono-banner-left">
+                <span class="prono-banner-dot"></span>
+                <span class="prono-banner-status">${label}</span>
+              </div>
+              <span class="prono-banner-score">${ph}–${pa}</span>
+            </div>`;
+        } else {
+          bannerHTML = `
+            <div class="prono-banner prono-banner--none">
+              <div class="prono-banner-left">
+                <span class="prono-banner-dot"></span>
+                <span class="prono-banner-status">Pas de pronostic</span>
+              </div>
+              <a class="prono-banner-cta" href="/src/pages/match.html?id=${m.id}">Pronostiquer →</a>
             </div>`;
         }
-      }
 
-      // Reactions for question type
-      let reactHTML = '';
-      if (p.type === 'question') {
-        const myVote      = myVotes[p.id];
-        const agreeActive = myVote === 'agree'    ? ' voted' : '';
-        const disActive   = myVote === 'disagree' ? ' voted' : '';
-        reactHTML = `
-          <div class="actu-reactions">
-            <button class="actu-vote-btn agree${agreeActive}" data-post="${p.id}" data-vote="agree">🔥 D'accord <strong>${rx.agree}</strong></button>
-            <button class="actu-vote-btn disagree${disActive}" data-post="${p.id}" data-vote="disagree">❌ Pas d'accord <strong>${rx.disagree}</strong></button>
-            <span class="actu-comments-chip">💬 ${cmtCount}</span>
-          </div>`;
-      }
-
-      return `
-        <div class="actu-card ${meta.cls}" data-post-id="${p.id}">
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-            <span class="actu-type-badge">${meta.label}</span>${pinHTML}
-          </div>
-          ${p.titre ? `<div class="actu-title">${p.emoji ? p.emoji + ' ' : ''}${p.titre}</div>` : ''}
-          ${extraHTML}
-          <div class="actu-body">${p.contenu}</div>
-          ${reactHTML}
-          <div class="actu-time">${timeAgo(p.created_at)}</div>
-        </div>`;
-    }
-
-    async function handleVote(e) {
-      const btn    = e.currentTarget;
-      const postId = btn.dataset.post;
-      const vote   = btn.dataset.vote;
-      const card   = btn.closest('.actu-card');
-
-      if (myVotes[postId] === vote) {
-        // Toggle off
-        await supabase.from('actualite_reactions').delete().eq('post_id', postId).eq('user_id', user.id);
-        delete myVotes[postId];
-      } else {
-        await supabase.from('actualite_reactions').upsert(
-          { post_id: postId, user_id: user.id, type: vote },
-          { onConflict: 'post_id,user_id' }
-        );
-        myVotes[postId] = vote;
-      }
-
-      // Refresh counts
-      const { data: fresh } = await supabase.from('actualite_reactions').select('type').eq('post_id', postId);
-      const newRx = { agree: 0, disagree: 0 };
-      fresh?.forEach(r => newRx[r.type]++);
-
-      const agreBtn = card.querySelector('[data-vote="agree"]');
-      const disBtn  = card.querySelector('[data-vote="disagree"]');
-      if (agreBtn) {
-        agreBtn.className = `actu-vote-btn agree${myVotes[postId] === 'agree' ? ' voted' : ''}`;
-        agreBtn.innerHTML = `🔥 D'accord <strong>${newRx.agree}</strong>`;
-        agreBtn.addEventListener('click', handleVote);
-      }
-      if (disBtn) {
-        disBtn.className = `actu-vote-btn disagree${myVotes[postId] === 'disagree' ? ' voted' : ''}`;
-        disBtn.innerHTML = `❌ Pas d'accord <strong>${newRx.disagree}</strong>`;
-        disBtn.addEventListener('click', handleVote);
-      }
-    }
-
-    // ─────────────────────────────────────────
-    // FEED LOADING
-    // ─────────────────────────────────────────
-    let myReactions = {};
-
-    async function loadFeed() {
-      feedLoaded = true;
-      const feedList = document.getElementById('feed-list');
-
-      const { data: premiumProfiles } = await supabase
-        .from('profiles').select('id').eq('plan', 'premium');
-
-      if (!premiumProfiles?.length) {
-        feedList.innerHTML = emptyState('⭐', 'Aucun membre Premium', 'Sois le premier à passer Premium pour que tes pronos apparaissent ici !');
-        return;
-      }
-
-      const premiumIds = premiumProfiles.map(p => p.id);
-
-      // 2a. Load pronos — feed only (groupe_id IS NULL = posté publiquement via +)
-      const { data: pronos, error } = await supabase
-        .from('pronostics')
-        .select(`
-          id, user_id, home_score, away_score, status, points, created_at,
-          matchs ( id, home_team, away_team, home_flag, away_flag, kickoff_at, status, home_score, away_score )
-        `)
-        .in('user_id', premiumIds)
-        .is('groupe_id', null)
-        .order('created_at', { ascending: false })
-        .limit(30);
-
-      if (error || !pronos?.length) {
-        feedList.innerHTML = emptyState('📭', 'Feed vide', 'Aucun pronostic premium publié pour l\'instant. Appuie sur + pour poster le tien !');
-        return;
-      }
-
-      // 2b. Load profiles separately and merge
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('id, pseudo, plan, points_totaux, global_bm_pts, avatar_url')
-        .in('id', premiumIds);
-      const profilesMap = {};
-      profilesData?.forEach(p => { profilesMap[p.id] = p; });
-      pronos.forEach(p => { p.profiles = profilesMap[p.user_id] || null; });
-
-      const pronoIds = pronos.map(p => p.id);
-
-      const { data: myRxData } = await supabase
-        .from('feed_reactions').select('prono_id, emoji')
-        .eq('user_id', user.id).in('prono_id', pronoIds);
-      myReactions = {};
-      myRxData?.forEach(r => { myReactions[r.prono_id] = r.emoji; });
-
-      const { data: allRxData } = await supabase
-        .from('feed_reactions').select('prono_id, emoji').in('prono_id', pronoIds);
-      const rxCounts = {};
-      allRxData?.forEach(r => {
-        if (!rxCounts[r.prono_id]) rxCounts[r.prono_id] = {};
-        rxCounts[r.prono_id][r.emoji] = (rxCounts[r.prono_id][r.emoji] || 0) + 1;
-      });
-
-      feedList.innerHTML = pronos.map(p => renderCard(p, rxCounts[p.id] || {})).join('');
-      feedList.querySelectorAll('.reaction-btn').forEach(btn => btn.addEventListener('click', handleReaction));
-      feedList.querySelectorAll('.feed-delete-btn').forEach(btn => btn.addEventListener('click', handleDelete));
-      feedList.querySelectorAll('.war-btn').forEach(btn => btn.addEventListener('click', e => {
-        const card = e.currentTarget.closest('.feed-card');
-        openWarPopup(card.dataset.targetId, card.dataset.targetPseudo, parseInt(card.dataset.targetPts || '0'));
-      }));
-      feedList.querySelectorAll('.feed-user-click').forEach(el => el.addEventListener('click', e => {
-        const card = e.currentTarget.closest('.feed-card');
-        openProfilePopup(card.dataset.targetId);
-      }));
-    }
-
-    function renderCard(p, counts) {
-      const m    = p.matchs;
-      const prof = p.profiles;
-      const init = (prof?.pseudo?.[0] || '?').toUpperCase();
-
-      // Avatar (photo ou initiale)
-      const avatarInner = prof?.avatar_url
-        ? `<img src="${prof.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${init}',style:'font-size:16px;font-weight:700'}))">`
-        : init;
-
-      // Points globaux (base + guerre globale)
-      const globalPts = (prof?.points_totaux || 0) + (prof?.global_bm_pts || 0);
-      const bmDelta   = prof?.global_bm_pts || 0;
-      const bmHint    = bmDelta !== 0
-        ? `<span style="font-size:10px;font-weight:700;color:${bmDelta > 0 ? 'var(--green-accent)' : 'var(--danger)'}">${bmDelta > 0 ? '+' : ''}${bmDelta}</span>`
-        : '';
-
-      let statusBadge = '';
-      if (p.status === 'won')               statusBadge = `<span class="feed-status-badge won">+${p.points} pts</span>`;
-      else if (p.status === 'en-vie-exact') statusBadge = `<span class="feed-status-badge exact">⭐ Exact</span>`;
-      else if (p.status === 'lost')         statusBadge = `<span class="feed-status-badge lost">0 pt</span>`;
-
-      const dateLabel = m ? formatDate(m.kickoff_at) : '';
-      const isOwner   = p.user_id === user.id;
-
-      const EMOJIS = ['🔥', '👏', '😱', '🎯'];
-      const rxHTML = EMOJIS.map(emoji => {
-        const cnt    = counts[emoji] || 0;
-        const active = myReactions[p.id] === emoji;
-        return `<button class="reaction-btn${active ? ' active' : ''}" data-prono="${p.id}" data-emoji="${emoji}">${emoji}${cnt > 0 ? ` <span class="count">${cnt}</span>` : ''}</button>`;
-      }).join('');
-
-      return `
-        <div class="feed-card" data-id="${p.id}" data-target-id="${p.user_id}" data-target-pseudo="${prof?.pseudo || ''}" data-target-pts="${globalPts}">
-          <div class="feed-card-header">
-            <div class="feed-user-click" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer">
-              <div class="feed-avatar">${avatarInner}</div>
-              <div class="feed-user-info">
-                <div class="feed-pseudo">${prof?.pseudo || '???'}</div>
-                <div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap">
-                  <span class="feed-plan-badge">⭐ Premium</span>
-                  <span style="font-size:11px;color:var(--text-tertiary);font-weight:600">${globalPts} pts ${bmHint}</span>
-                </div>
+        return `
+          <div class="match-live-card" onclick="window.location.href='/src/pages/match.html?id=${m.id}'">
+            <div class="match-card-top">
+              <span class="match-phase">${phase}</span>
+              <span class="match-minute-badge">${m.minute ? m.minute + "'" : 'LIVE'}</span>
+            </div>
+            <div class="match-score-row">
+              <div class="match-team">
+                <span class="match-team-flag">${m.home_flag || ''}</span>
+                <span class="match-team-code">${m.home_team?.slice(0, 3).toUpperCase() || ''}</span>
+              </div>
+              <span class="match-score" aria-live="polite">${m.home_score ?? 0}–${m.away_score ?? 0}</span>
+              <div class="match-team">
+                <span class="match-team-flag">${m.away_flag || ''}</span>
+                <span class="match-team-code">${m.away_team?.slice(0, 3).toUpperCase() || ''}</span>
               </div>
             </div>
-            ${statusBadge}
-            ${!isOwner ? `<button class="war-btn" title="⚔️ Guerre Globale">⚔️</button>` : ''}
-            ${isOwner  ? `<button class="feed-delete-btn" data-prono="${p.id}" title="Supprimer">🗑</button>` : ''}
-          </div>
-          <div class="feed-match-info">
-            <span class="feed-match-flags">${m?.home_flag || ''}${m?.away_flag || ''}</span>
-            <div>
-              <div class="feed-match-name">${m?.home_team || '?'} vs ${m?.away_team || '?'}</div>
-              <div class="feed-match-date">${dateLabel}</div>
-            </div>
-          </div>
-          <div class="feed-prono-display">
-            <div class="feed-prono-team">
-              <span class="flag">${m?.home_flag || ''}</span>
-              <span class="name">${m?.home_team || '?'}</span>
-            </div>
-            <div class="feed-prono-score">
-              <span>${p.home_score}</span><span class="sep">–</span><span>${p.away_score}</span>
-            </div>
-            <div class="feed-prono-team">
-              <span class="flag">${m?.away_flag || ''}</span>
-              <span class="name">${m?.away_team || '?'}</span>
-            </div>
-          </div>
-          <div class="feed-reactions">${rxHTML}</div>
-        </div>`;
-    }
-
-    async function handleReaction(e) {
-      const btn     = e.currentTarget;
-      const pronoId = btn.dataset.prono;
-      const emoji   = btn.dataset.emoji;
-      const card    = btn.closest('.feed-card');
-
-      if (myReactions[pronoId] === emoji) {
-        await supabase.from('feed_reactions').delete().eq('prono_id', pronoId).eq('user_id', user.id);
-        delete myReactions[pronoId];
-      } else {
-        await supabase.from('feed_reactions').upsert(
-          { prono_id: pronoId, user_id: user.id, emoji },
-          { onConflict: 'prono_id,user_id' }
-        );
-        myReactions[pronoId] = emoji;
-      }
-
-      const { data: fresh } = await supabase.from('feed_reactions').select('emoji').eq('prono_id', pronoId);
-      const freshCounts = {};
-      fresh?.forEach(r => { freshCounts[r.emoji] = (freshCounts[r.emoji] || 0) + 1; });
-
-      const EMOJIS = ['🔥', '👏', '😱', '🎯'];
-      [...card.querySelectorAll('.reaction-btn')].forEach((b, i) => {
-        const em     = EMOJIS[i];
-        const cnt    = freshCounts[em] || 0;
-        const active = myReactions[pronoId] === em;
-        const nb = b.cloneNode(false);
-        nb.className = 'reaction-btn' + (active ? ' active' : '');
-        nb.dataset.prono = pronoId;
-        nb.dataset.emoji = em;
-        nb.innerHTML = `${em}${cnt > 0 ? ` <span class="count">${cnt}</span>` : ''}`;
-        nb.addEventListener('click', handleReaction);
-        b.replaceWith(nb);
-      });
+            ${bannerHTML}
+          </div>`;
+      }).join('');
     }
 
     // ─────────────────────────────────────────
-    // MATCH PICKER
+    // [D] PROCHAINS MATCHS
     // ─────────────────────────────────────────
-    let upcomingMatchesCache = [];
-
-    async function openMatchPicker() {
-      // Create overlay
-      const overlay = document.createElement('div');
-      overlay.className = 'post-overlay';
-
-      overlay.innerHTML = `
-        <div class="post-sheet">
-          <div class="post-sheet-handle"></div>
-          <div class="post-sheet-title">
-            <span style="flex:1">Choisir un match</span>
-            <button class="post-sheet-back" id="picker-close" style="font-size:18px">✕</button>
-          </div>
-          <div id="picker-body">
-            <div style="text-align:center;padding:40px;color:var(--text-tertiary)">Chargement…</div>
-          </div>
-        </div>`;
-
-      document.body.appendChild(overlay);
-      overlay.querySelector('#picker-close').addEventListener('click', () => overlay.remove());
-      // Close on backdrop click
-      overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
-
-      // Load upcoming matches
+    async function loadUpcoming() {
       const now = new Date().toISOString();
       const { data: matches } = await supabase
         .from('matchs')
         .select('id, home_team, away_team, home_flag, away_flag, kickoff_at, phase, groupe')
+        .eq('status', 'scheduled')
         .gt('kickoff_at', now)
         .order('kickoff_at')
-        .limit(20);
+        .limit(5);
 
-      upcomingMatchesCache = matches || [];
-      const body = overlay.querySelector('#picker-body');
+      const list    = document.getElementById('upcoming-list');
+      const section = document.getElementById('upcoming-section');
 
-      if (!upcomingMatchesCache.length) {
-        body.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-tertiary)">Aucun match à venir 😔</div>`;
+      if (!matches?.length) {
+        section.style.display = 'none';
         return;
       }
 
-      body.innerHTML = upcomingMatchesCache.map((m, i) => `
-        <div class="picker-match-row" data-idx="${i}">
-          <span class="picker-flags">${m.home_flag}${m.away_flag}</span>
-          <div class="picker-teams">
-            <div class="picker-teams-name">${m.home_team} vs ${m.away_team}</div>
-            <div class="picker-teams-date">${formatKickoff(m.kickoff_at)}</div>
-          </div>
-          <span class="picker-arrow">›</span>
-        </div>`).join('');
+      // Fetch done pronos
+      const matchIds = matches.map(m => m.id);
+      const { data: donePronos } = await supabase
+        .from('pronostics')
+        .select('match_id')
+        .eq('user_id', user.id)
+        .in('match_id', matchIds);
+      const doneSet = new Set(donePronos?.map(p => p.match_id) || []);
 
-      body.querySelectorAll('.picker-match-row').forEach(row => {
-        row.addEventListener('click', () => {
-          const match = upcomingMatchesCache[parseInt(row.dataset.idx)];
-          showPronoForm(match, overlay);
-        });
-      });
+      list.innerHTML = matches.map(m => {
+        const d     = new Date(m.kickoff_at);
+        const today = new Date();
+        const isToday = d.toDateString() === today.toDateString();
+        const tom     = new Date(today); tom.setDate(today.getDate() + 1);
+        const isTom   = d.toDateString() === tom.toDateString();
+        const dayLabel = isToday ? 'Aujourd\'hui' : isTom ? 'Demain' : d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+        const hour  = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        const done  = doneSet.has(m.id);
+
+        return `
+          <div class="match-upcoming-card" onclick="window.location.href='/src/pages/match.html?id=${m.id}'">
+            <div class="match-upcoming-team">
+              <span class="match-upcoming-team-flag">${m.home_flag || ''}</span>
+              <span class="match-upcoming-team-name">${m.home_team || ''}</span>
+            </div>
+            <div class="match-upcoming-time-block">
+              <span class="match-upcoming-date">${dayLabel}</span>
+              <span class="match-upcoming-hour">${hour}</span>
+            </div>
+            <div class="match-upcoming-team right">
+              <span class="match-upcoming-team-name">${m.away_team || ''}</span>
+              <span class="match-upcoming-team-flag">${m.away_flag || ''}</span>
+            </div>
+            ${done ? '<span class="match-upcoming-prono-done" title="Pronostic déjà fait"></span>' : ''}
+          </div>`;
+      }).join('');
     }
 
     // ─────────────────────────────────────────
-    // PRONO FORM (inside the same overlay)
+    // [E] DÉFI QUOTIDIEN
     // ─────────────────────────────────────────
-    function showPronoForm(match, overlay) {
-      let homeScore = 1;
-      let awayScore = 1;
+    let defiAnswered  = false;
+    let defiSeconds   = 30;
+    let defiInterval  = null;
 
-      const sheet = overlay.querySelector('.post-sheet');
-      sheet.innerHTML = `
-        <div class="post-sheet-handle"></div>
-        <div class="post-sheet-title">
-          <button class="post-sheet-back" id="form-back">←</button>
-          <span style="flex:1">${match.home_flag} ${match.home_team} vs ${match.away_team} ${match.away_flag}</span>
-        </div>
+    function startDefiTimer() {
+      const timerEl = document.getElementById('defi-timer');
+      defiInterval = setInterval(() => {
+        defiSeconds--;
+        if (timerEl) timerEl.textContent = `⏱ ${defiSeconds} secondes pour répondre`;
+        if (defiSeconds <= 0) {
+          clearInterval(defiInterval);
+          if (!defiAnswered) {
+            if (timerEl) timerEl.textContent = 'Temps écoulé !';
+            document.querySelectorAll('.defi-option').forEach(o => o.setAttribute('disabled', ''));
+          }
+        }
+      }, 1000);
+    }
 
-        <p style="text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--text-tertiary);margin:0 0 4px">Ton pronostic</p>
+    window.selectDefi = function(el, isCorrect, defiId) {
+      if (defiAnswered) return;
+      defiAnswered = true;
+      clearInterval(defiInterval);
 
-        <div class="sheet-stepper-wrap">
-          <div class="sheet-stepper-team">
-            <span class="sheet-stepper-flag">${match.home_flag}</span>
-            <span class="sheet-stepper-name">${match.home_team}</span>
-            <div class="sheet-stepper-ctrl">
-              <button class="sheet-stepper-btn" id="h-plus">+</button>
-              <span class="sheet-stepper-val" id="h-val">1</span>
-              <button class="sheet-stepper-btn" id="h-minus">−</button>
-            </div>
-          </div>
+      document.querySelectorAll('.defi-option').forEach(o => o.setAttribute('disabled', ''));
 
-          <span class="sheet-score-sep">–</span>
+      const timerEl = document.getElementById('defi-timer');
+      if (isCorrect) {
+        el.classList.add('correct');
+        if (timerEl) timerEl.textContent = '✅ Bonne réponse ! +50 pts';
+        if (navigator.vibrate) navigator.vibrate([30, 20, 60]);
+        // Save to supabase
+        supabase.from('defi_responses').upsert(
+          { user_id: user.id, defi_id: defiId, correct: true },
+          { onConflict: 'user_id,defi_id' }
+        ).then(() => {
+          supabase.from('profiles').update({ points_totaux: (profile?.points_totaux || 0) + 50 }).eq('id', user.id);
+        });
+      } else {
+        el.classList.add('wrong');
+        document.querySelectorAll('.defi-option').forEach(o => {
+          if (o.dataset.correct === 'true') o.classList.add('correct');
+        });
+        if (timerEl) timerEl.textContent = '❌ Raté — bonne chance demain !';
+        if (navigator.vibrate) navigator.vibrate(60);
+        supabase.from('defi_responses').upsert(
+          { user_id: user.id, defi_id: defiId, correct: false },
+          { onConflict: 'user_id,defi_id' }
+        );
+      }
+    };
 
-          <div class="sheet-stepper-team">
-            <span class="sheet-stepper-flag">${match.away_flag}</span>
-            <span class="sheet-stepper-name">${match.away_team}</span>
-            <div class="sheet-stepper-ctrl">
-              <button class="sheet-stepper-btn" id="a-plus">+</button>
-              <span class="sheet-stepper-val" id="a-val">1</span>
-              <button class="sheet-stepper-btn" id="a-minus">−</button>
-            </div>
-          </div>
-        </div>
+    async function loadDefi() {
+      const today = new Date().toISOString().slice(0, 10);
+      const { data: defi } = await supabase
+        .from('defis_quotidiens')
+        .select('*')
+        .eq('date', today)
+        .maybeSingle();
 
-        <div style="padding:0 20px 8px">
-          <button id="submit-prono" style="background:var(--green-accent);color:#080808;border:none;border-radius:50px;height:52px;width:100%;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:-.01em">
-            Publier sur le Feed 🚀
-          </button>
-        </div>
-        <p style="text-align:center;font-size:11px;color:var(--text-tertiary);padding:8px 20px 0">Visible par tous les membres Footzy</p>`;
+      const card    = document.getElementById('defi-card');
+      const qEl     = document.getElementById('defi-question');
+      const optsEl  = document.getElementById('defi-options');
+      const timerEl = document.getElementById('defi-timer');
+      const strEl   = document.getElementById('defi-streak');
 
-      // Back to match picker
-      sheet.querySelector('#form-back').addEventListener('click', () => {
-        overlay.remove();
-        openMatchPicker();
+      // Streak dots
+      const streak = profile?.streak_quotidien || 0;
+      if (streak > 0) {
+        strEl.style.display = 'flex';
+        const dotsEl = document.getElementById('defi-streak-dots');
+        dotsEl.innerHTML = Array.from({ length: 7 }, (_, i) =>
+          `<span class="defi-streak-dot${i < streak ? ' active' : ''}"></span>`
+        ).join('');
+      }
+
+      const now = new Date();
+      const noonToday = new Date(now.toDateString() + ' 12:00');
+
+      if (!defi) {
+        if (now < noonToday) {
+          qEl.textContent = 'Disponible à 12:00';
+          timerEl.style.display = 'none';
+          optsEl.innerHTML = '<div class="defi-unavailable">La question du jour arrive à midi !</div>';
+        } else {
+          qEl.textContent = 'Aucun défi aujourd\'hui.';
+          timerEl.style.display = 'none';
+          optsEl.innerHTML = '';
+        }
+        return;
+      }
+
+      // Check if already answered
+      const { data: myResponse } = await supabase
+        .from('defi_responses')
+        .select('correct')
+        .eq('user_id', user.id)
+        .eq('defi_id', defi.id)
+        .maybeSingle();
+
+      qEl.textContent = defi.question || 'Question du jour';
+
+      const options = defi.options || [];
+      optsEl.innerHTML = options.map(opt => {
+        const isCorrect = opt === defi.correct_answer;
+        return `<button class="defi-option${myResponse ? (isCorrect ? ' correct' : ' wrong') : ''}"
+          data-correct="${isCorrect}"
+          onclick="selectDefi(this, ${isCorrect}, '${defi.id}')"
+          ${myResponse ? 'disabled' : ''}
+        >${opt}</button>`;
+      }).join('');
+
+      if (myResponse) {
+        defiAnswered = true;
+        timerEl.textContent = myResponse.correct ? '✅ Tu as déjà répondu aujourd\'hui' : '❌ Tu as déjà répondu aujourd\'hui';
+      } else if (now >= noonToday) {
+        startDefiTimer();
+      } else {
+        timerEl.textContent = 'Disponible à 12:00';
+        optsEl.querySelectorAll('.defi-option').forEach(o => o.setAttribute('disabled', ''));
+      }
+    }
+
+    // ─────────────────────────────────────────
+    // [F] ACTU FLASH
+    // ─────────────────────────────────────────
+    function buildAutoActu(matches, allGroupMatches) {
+      const now      = new Date();
+      const auto     = [];
+      const live     = matches.filter(m => m.status === 'live' || m.status === 'halftime');
+      const finished = matches.filter(m => m.status === 'finished');
+      const today    = matches.filter(m => {
+        if (m.status !== 'scheduled') return false;
+        return new Date(m.kickoff_at).toDateString() === now.toDateString();
+      });
+      const soon = matches.filter(m => {
+        if (m.status !== 'scheduled') return false;
+        const diff = new Date(m.kickoff_at) - now;
+        return diff > 0 && diff < 3 * 3600 * 1000;
       });
 
-      // Score controls
-      sheet.querySelector('#h-plus').addEventListener('click',  () => { homeScore = Math.min(20, homeScore + 1); sheet.querySelector('#h-val').textContent = homeScore; });
-      sheet.querySelector('#h-minus').addEventListener('click', () => { homeScore = Math.max(0, homeScore - 1); sheet.querySelector('#h-val').textContent = homeScore; });
-      sheet.querySelector('#a-plus').addEventListener('click',  () => { awayScore = Math.min(20, awayScore + 1); sheet.querySelector('#a-val').textContent = awayScore; });
-      sheet.querySelector('#a-minus').addEventListener('click', () => { awayScore = Math.max(0, awayScore - 1); sheet.querySelector('#a-val').textContent = awayScore; });
+      // Imminents
+      for (const m of soon) {
+        const mins  = Math.round((new Date(m.kickoff_at) - now) / 60000);
+        const delay = mins < 60 ? `dans ${mins} min` : `dans ${Math.round(mins / 60)}h`;
+        auto.push({ type: 'flash', emoji: '⏰', titre: `${m.home_flag} ${m.home_team} vs ${m.away_team} ${m.away_flag} — ${delay}`, contenu: `Coup d'envoi ${delay} · ${phaseLabel(m)}`, created_at: now.toISOString() });
+      }
 
-      // Submit
-      sheet.querySelector('#submit-prono').addEventListener('click', async () => {
-        const btn = sheet.querySelector('#submit-prono');
-        btn.disabled = true;
-        btn.textContent = 'Publication…';
+      // Programme du jour (> 3h)
+      const todayOther = today.filter(m => new Date(m.kickoff_at) - now >= 3 * 3600 * 1000);
+      if (todayOther.length) {
+        const lines = todayOther.map(m =>
+          `${m.home_flag} <strong>${m.home_team}</strong> vs <strong>${m.away_team}</strong> ${m.away_flag} · ${new Date(m.kickoff_at).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })} · ${phaseLabel(m)}`
+        ).join('<br>');
+        auto.push({ type: 'flash', emoji: '📅', titre: `${todayOther.length} match${todayOther.length > 1 ? 's' : ''} aujourd'hui`, contenu: lines, created_at: now.toISOString() });
+      }
 
-        // Check if prono already exists for this match (feed prono = groupe_id IS NULL)
-        const { data: existing } = await supabase
-          .from('pronostics')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('match_id', match.id)
-          .is('groupe_id', null)
-          .maybeSingle();
+      // Résultats récents
+      const recent = finished.filter(m => now - new Date(m.kickoff_at) < 24 * 3600 * 1000);
+      for (const m of recent.slice(-4).reverse()) {
+        const winner = m.home_score > m.away_score ? m.home_team : m.away_score > m.home_score ? m.away_team : null;
+        const ctx    = winner ? `<strong>${winner}</strong> s'impose !` : `Match nul.`;
+        auto.push({ type: 'debrief', emoji: '📊', titre: `${m.home_flag} ${m.home_team} ${m.home_score}–${m.away_score} ${m.away_team} ${m.away_flag}`, contenu: `Résultat final · ${phaseLabel(m)}. ${ctx}`, created_at: m.updated_at || m.kickoff_at });
+      }
 
-        let err, saved;
-        if (existing) {
-          ({ data: saved, error: err } = await supabase.from('pronostics')
-            .update({ home_score: homeScore, away_score: awayScore })
-            .eq('id', existing.id)
-            .select('id').single());
-        } else {
-          ({ data: saved, error: err } = await supabase.from('pronostics')
-            .insert({ user_id: user.id, match_id: match.id, groupe_id: null, home_score: homeScore, away_score: awayScore })
-            .select('id').single());
-        }
+      return auto;
+    }
 
-        // Detect both explicit errors and silent RLS blocks (err=null but no row)
-        if (err || !saved) {
-          const msg = err?.message || 'Insert bloqué (RLS). Vérifie les policies Supabase.';
-          toast('Erreur : ' + msg);
-          btn.disabled = false;
-          btn.textContent = 'Publier sur le Feed 🚀';
+    async function loadActu() {
+      const list = document.getElementById('actu-list');
+      const from = new Date(); from.setDate(from.getDate() - 1);
+      const to   = new Date(); to.setDate(to.getDate() + 2);
+
+      try {
+        const [matchesRes, postsRes] = await Promise.all([
+          supabase.from('matchs').select('*')
+            .gte('kickoff_at', from.toISOString())
+            .lte('kickoff_at', to.toISOString())
+            .order('kickoff_at'),
+          supabase.from('actualite_posts').select('*')
+            .order('is_pinned', { ascending: false })
+            .order('created_at', { ascending: false })
+            .limit(8),
+        ]);
+
+        const auto   = buildAutoActu(matchesRes.data || [], []);
+        const manual = (postsRes.data || []);
+        const all    = [...auto, ...manual];
+
+        if (!all.length) {
+          list.innerHTML = `<div style="text-align:center;padding:40px 16px;color:var(--color-text-tertiary)"><div style="font-size:2rem;margin-bottom:12px">📰</div><div>Aucune actu pour l'instant</div></div>`;
           return;
         }
 
-        overlay.remove();
-        toast('Pronostic publié sur le Feed ! 🚀');
-        // Reload feed
-        feedLoaded = false;
-        document.getElementById('feed-list').innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--text-tertiary)">Chargement…</div>';
-        loadFeed();
-      });
-    }
+        const TYPE_META = {
+          flash:   { label: '⚡ Actu Flash', cls: '' },
+          stats:   { label: '📊 Stats',      cls: 'actu-card--stats' },
+          debrief: { label: '🎙️ Débrief',    cls: 'actu-card--debrief' },
+        };
 
-    // ─────────────────────────────────────────
-    // POPUP PROFIL UTILISATEUR
-    // ─────────────────────────────────────────
-    async function openProfilePopup(userId) {
-      // Overlay
-      const el = document.createElement('div');
-      el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center';
-
-      // Skeleton loading
-      el.innerHTML = `
-        <div style="background:var(--bg-surface);border-radius:28px 28px 0 0;width:100%;max-width:480px;padding:0 0 calc(28px + env(safe-area-inset-bottom));animation:warSlideUp .28s cubic-bezier(.32,.72,0,1);position:relative">
-          <div style="text-align:center;padding:12px 0 0">
-            <div style="width:36px;height:4px;border-radius:2px;background:var(--border);margin:0 auto"></div>
-          </div>
-          <button id="pp-close" style="position:absolute;top:10px;right:14px;background:var(--bg-muted);border:1px solid var(--border);color:var(--text-primary);width:28px;height:28px;border-radius:50%;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2">✕</button>
-          <div id="pp-content" style="padding:20px 20px 8px">
-            <div style="text-align:center;padding:28px 0;color:var(--text-tertiary)">Chargement…</div>
-          </div>
-        </div>`;
-
-      document.body.appendChild(el);
-      el.querySelector('#pp-close').addEventListener('click', () => el.remove());
-      el.addEventListener('click', e => { if (e.target === el) el.remove(); });
-
-      // Fetch profil complet
-      const { data: p } = await supabase
-        .from('profiles')
-        .select('id,pseudo,avatar_url,bio,plan,points_totaux,global_bm_pts,streak_quotidien,instagram,snapchat,twitter,show_bio')
-        .eq('id', userId)
-        .single();
-
-      if (!p) {
-        el.querySelector('#pp-content').innerHTML = `<div style="text-align:center;padding:28px 0;color:var(--danger)">Profil introuvable</div>`;
-        return;
+        list.innerHTML = all.slice(0, 8).map(p => {
+          const meta = TYPE_META[p.type] || TYPE_META.flash;
+          return `
+            <div class="actu-card ${meta.cls}">
+              <div class="actu-badge">${meta.label}</div>
+              <div class="actu-title">${p.emoji ? p.emoji + ' ' : ''}${p.titre || ''}</div>
+              <div class="actu-desc">${p.contenu || ''}</div>
+              <div class="actu-time">${timeAgo(p.created_at)}</div>
+            </div>`;
+        }).join('');
+      } catch(e) {
+        console.warn('Actu load failed silently', e);
       }
-
-      const isMe      = p.id === user.id;
-      const globalPts = (p.points_totaux || 0) + (p.global_bm_pts || 0);
-      const bmDelta   = p.global_bm_pts || 0;
-      const init      = (p.pseudo || '?')[0].toUpperCase();
-
-      // Avatar
-      const avatarHtml = p.avatar_url
-        ? `<img src="${p.avatar_url}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:2.5px solid var(--border)">`
-        : `<div style="width:72px;height:72px;border-radius:50%;background:var(--bg-dark);border:2.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:var(--text-secondary)">${init}</div>`;
-
-      // Plan badge
-      const planBadge = p.plan === 'premium'
-        ? `<span style="font-size:10px;font-weight:700;background:linear-gradient(90deg,#B8860B,#FFD700);color:#000;padding:2px 8px;border-radius:20px">⭐ Premium</span>`
-        : `<span style="font-size:10px;color:var(--text-tertiary);font-weight:600">Free</span>`;
-
-      // BM delta
-      const bmHint = bmDelta !== 0
-        ? `<span style="font-size:11px;font-weight:700;color:${bmDelta > 0 ? 'var(--green-accent)' : 'var(--danger)'}">${bmDelta > 0 ? '+' : ''}${bmDelta} BM</span>`
-        : '';
-
-      // Badges
-      const badges = [];
-      if ((p.streak_quotidien || 0) >= 7) badges.push({ icon: '🔥', label: 'En feu' });
-      else if ((p.streak_quotidien || 0) >= 3) badges.push({ icon: '⚡', label: 'Assidu' });
-      if (p.plan === 'premium') badges.push({ icon: '💎', label: 'Premium' });
-      if (bmDelta >= 5) badges.push({ icon: '🚀', label: 'Boosté' });
-      if (bmDelta <= -5) badges.push({ icon: '💀', label: 'Malus cible' });
-
-      // Réseaux sociaux
-      const SOCIALS = [
-        { key: 'snapchat',  base: 'https://snapchat.com/add/', bg: '#FFFC00', color: '#000', letter: 'SC' },
-        { key: 'instagram', base: 'https://instagram.com/',    bg: 'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)', color: '#fff', letter: 'IG' },
-        { key: 'twitter',   base: 'https://x.com/',            bg: '#000',    color: '#fff', letter: 'X'  },
-      ].filter(s => p[s.key]);
-
-      el.querySelector('#pp-content').innerHTML = `
-        <!-- Header -->
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
-          ${avatarHtml}
-          <div style="flex:1;min-width:0">
-            <div style="font-size:19px;font-weight:800;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-              ${p.pseudo} ${isMe ? '<span style="font-size:10px;color:var(--green-accent);font-weight:600;background:var(--accent-bg);padding:2px 6px;border-radius:6px">vous</span>' : ''}
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap">${planBadge}</div>
-          </div>
-        </div>
-
-        ${p.bio && p.show_bio !== false ? `
-        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:16px">
-          <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;font-style:italic">"${p.bio}"</div>
-        </div>` : ''}
-
-        <!-- Stats -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:${badges.length || SOCIALS.length ? '12px' : '0'}">
-          <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center">
-            <div style="font-size:22px;font-weight:800;color:var(--green-accent)">${globalPts}</div>
-            ${bmHint ? `<div style="margin-top:2px">${bmHint}</div>` : ''}
-            <div style="font-size:10px;color:var(--text-tertiary);margin-top:3px;font-weight:600">pts globaux</div>
-          </div>
-          <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center">
-            <div style="font-size:22px;font-weight:800">${p.streak_quotidien || 0}</div>
-            <div style="font-size:10px;color:var(--text-tertiary);margin-top:3px;font-weight:600">🔥 streak</div>
-          </div>
-        </div>
-
-        ${badges.length > 0 ? `
-        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px">
-          ${badges.map(b => `<div style="display:inline-flex;align-items:center;gap:5px;background:var(--bg-surface);border:1px solid var(--border);border-radius:20px;padding:5px 10px;font-size:12px;font-weight:600;color:var(--text-secondary)">${b.icon} ${b.label}</div>`).join('')}
-        </div>` : ''}
-
-        ${SOCIALS.length > 0 ? `
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-          ${SOCIALS.map(s => `
-            <a href="${s.base}${p[s.key]}" target="_blank" rel="noopener"
-              style="display:inline-flex;align-items:center;gap:7px;background:var(--bg-surface);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--text-secondary);text-decoration:none">
-              <span style="width:18px;height:18px;border-radius:4px;background:${s.bg};color:${s.color};font-size:9px;font-weight:800;display:inline-flex;align-items:center;justify-content:center">${s.letter}</span>
-              @${p[s.key]}
-            </a>`).join('')}
-        </div>` : ''}
-
-        ${!isMe ? `
-        <div style="padding-top:12px;border-top:1px solid var(--border);margin-top:4px">
-          <button id="pp-war-btn" style="width:100%;height:46px;border-radius:14px;border:1px solid rgba(255,140,0,0.3);background:rgba(255,140,0,0.07);color:#FF8C00;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
-            ⚔️ Guerre Globale — 1,99€ par action
-          </button>
-        </div>` : ''}
-      `;
-
-      // Bouton guerre depuis le profil
-      el.querySelector('#pp-war-btn')?.addEventListener('click', () => {
-        el.remove();
-        openWarPopup(p.id, p.pseudo, globalPts);
-      });
     }
 
     // ─────────────────────────────────────────
-    // GUERRE GLOBALE
+    // INIT — load all sections in parallel
     // ─────────────────────────────────────────
-    const WAR_OPTIONS = [
-      { label: '🚀 Boost',       pts: +3, color: 'var(--green-accent)', bg: 'rgba(0,224,90,0.08)',  border: 'var(--green-border)',  desc: '+3 pts' },
-      { label: '⚡ Élan',        pts: +2, color: 'var(--green-accent)', bg: 'rgba(0,224,90,0.06)',  border: 'var(--green-border)',  desc: '+2 pts' },
-      { label: '💣 Sabotage',    pts: -2, color: 'var(--danger)',       bg: 'rgba(255,68,68,0.08)', border: 'rgba(255,68,68,0.3)',  desc: '−2 pts' },
-      { label: '💀 Destruction', pts: -3, color: 'var(--danger)',       bg: 'rgba(255,68,68,0.1)',  border: 'rgba(255,68,68,0.35)', desc: '−3 pts' },
-    ];
+    await Promise.all([loadLive(), loadUpcoming(), loadDefi(), loadActu()]);
 
-    function openWarPopup(targetId, targetPseudo, targetPts) {
-      const init = (targetPseudo[0] || '?').toUpperCase();
-
-      const el = document.createElement('div');
-      el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.88);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;padding:0';
-
-      el.innerHTML = `
-        <div style="background:var(--bg-surface);border-radius:28px 28px 0 0;width:100%;max-width:480px;padding:0 0 calc(28px + env(safe-area-inset-bottom));animation:warSlideUp .28s cubic-bezier(.32,.72,0,1)">
-          <!-- Handle -->
-          <div style="text-align:center;padding:12px 0 0">
-            <div style="width:36px;height:4px;border-radius:2px;background:var(--border);margin:0 auto"></div>
-          </div>
-          <!-- Titre -->
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px">
-            <div style="font-size:17px;font-weight:800;letter-spacing:-.01em">⚔️ Guerre Globale</div>
-            <button id="war-close" style="background:var(--bg-muted);border:1px solid var(--border);color:var(--text-primary);width:28px;height:28px;border-radius:50%;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
-          </div>
-          <!-- Cible -->
-          <div style="display:flex;align-items:center;gap:12px;padding:12px 20px 14px;border-bottom:1px solid var(--border);border-top:1px solid var(--border)">
-            <div style="width:44px;height:44px;border-radius:50%;background:var(--bg-dark);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:var(--text-secondary);flex-shrink:0">${init}</div>
-            <div>
-              <div style="font-size:15px;font-weight:700">${targetPseudo}</div>
-              <div style="font-size:12px;color:var(--text-tertiary);margin-top:2px">${targetPts} pts globaux</div>
-            </div>
-          </div>
-          <!-- Options -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px 20px 8px">
-            ${WAR_OPTIONS.map((o, idx) => `
-              <button class="war-opt-btn" data-idx="${idx}"
-                style="padding:16px 10px;border-radius:16px;border:1px solid ${o.border};background:${o.bg};
-                  cursor:pointer;text-align:center;transition:transform .12s,opacity .12s">
-                <div style="font-size:28px;margin-bottom:4px">${o.label.split(' ')[0]}</div>
-                <div style="font-size:12px;font-weight:700;color:${o.color}">${o.label.substring(o.label.indexOf(' ')+1)}</div>
-                <div style="font-size:15px;font-weight:900;color:${o.color};margin-top:4px">${o.desc}</div>
-                <div style="font-size:11px;color:var(--text-tertiary);margin-top:5px;font-weight:600">1,99€</div>
-              </button>
-            `).join('')}
-          </div>
-          <div style="text-align:center;font-size:11px;color:var(--text-tertiary);padding:4px 20px 0">
-            Affecte le classement global · Paiement sécurisé
-          </div>
-        </div>
-      `;
-
-      document.body.appendChild(el);
-      el.querySelector('#war-close').addEventListener('click', () => el.remove());
-      el.addEventListener('click', e => { if (e.target === el) el.remove(); });
-
-      el.querySelectorAll('.war-opt-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const o = WAR_OPTIONS[+btn.dataset.idx];
-          el.remove();
-          // Stocker l'action en attente puis rediriger vers le paiement
-          localStorage.setItem('footzy_pending_war', JSON.stringify({
-            targetId,
-            targetPseudo,
-            label:     o.label,
-            pts:       o.pts,
-            timestamp: Date.now(),
-          }));
-          createCheckout(PLANS.groupe_action, user.id, user.email);
-        });
-      });
-    }
-
-    // ─────────────────────────────────────────
-    // HELPERS
-    // ─────────────────────────────────────────
-    // ── Delete a feed prono ──
-    async function handleDelete(e) {
-      const pronoId = e.currentTarget.dataset.prono;
-
-      // Confirm via custom overlay
-      const confirmed = await new Promise(resolve => {
-        const el = document.createElement('div');
-        el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);display:flex;align-items:flex-end;justify-content:center';
-        el.innerHTML = `
-          <div style="background:#FAFAF8;border:1px solid #E0DCD6;border-radius:28px 28px 0 0;width:100%;max-width:480px;padding:28px 20px calc(28px + env(safe-area-inset-bottom));text-align:center">
-            <div style="font-size:40px;margin-bottom:12px">🗑</div>
-            <div style="font-size:17px;font-weight:700;margin-bottom:6px;color:#0F0F0E">Supprimer ce pronostic ?</div>
-            <div style="font-size:13px;color:#6B6560;margin-bottom:24px">Il disparaîtra du Feed et de ton profil.</div>
-            <button id="del-confirm" style="background:#E63946;color:#FAFAF8;border:none;border-radius:50px;height:50px;width:100%;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px">Supprimer</button>
-            <button id="del-cancel" style="background:#E8E4DE;color:#0F0F0E;border:1px solid #E0DCD6;border-radius:50px;height:50px;width:100%;font-size:15px;font-weight:600;cursor:pointer">Annuler</button>
-          </div>`;
-        document.body.appendChild(el);
-        el.querySelector('#del-confirm').onclick = () => { el.remove(); resolve(true);  };
-        el.querySelector('#del-cancel').onclick  = () => { el.remove(); resolve(false); };
-        el.addEventListener('click', ev => { if (ev.target === el) { el.remove(); resolve(false); } });
-      });
-
-      if (!confirmed) return;
-
-      const { error } = await supabase.from('pronostics').delete().eq('id', pronoId).eq('user_id', user.id);
-      if (error) { toast('Erreur : ' + error.message); return; }
-
-      // Animate card out then remove
-      const card = document.querySelector(`.feed-card[data-id="${pronoId}"]`);
-      if (card) {
-        card.style.transition = 'opacity 0.25s, transform 0.25s';
-        card.style.opacity    = '0';
-        card.style.transform  = 'scale(0.95)';
-        setTimeout(() => card.remove(), 260);
-      }
-      toast('Pronostic supprimé 🗑');
-    }
-
-    function emptyState(icon, title, text) {
-      return `<div class="empty-state"><div class="icon">${icon}</div><h3>${title}</h3><p>${text}</p></div>`;
-    }
+    // Polling live toutes les 60s
+    setInterval(loadLive, 60_000);
   </script>
 </body>
 </html>

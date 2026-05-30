@@ -595,12 +595,14 @@
     .pts-chip--total {
       background: var(--color-dark);
       border-color: var(--color-dark);
-      color: rgba(255,255,255,0.7);
-      font-size: 0.7rem;
+      color: rgba(255,255,255,0.65);
+      font-size: 0.68rem;
+      padding: 5px 13px;
     }
     .pts-chip--total .pts-chip-val {
       color: var(--color-green);
-      font-size: 0.9rem;
+      font-size: 1rem;
+      letter-spacing: -0.02em;
     }
     @keyframes chipBump {
       0%   { transform: scale(1); }
@@ -863,11 +865,11 @@
 
       <!-- Points preview -->
       <div class="pts-preview" id="pts-preview">
-        <span class="pts-chip pts-chip--on" id="chip-score">⚽ Score <strong id="chip-score-val">max 5 pts</strong></span>
-        <span class="pts-chip" id="chip-buteurs" style="display:none">👤 <strong id="chip-buteurs-val">+2 pts</strong></span>
-        <span class="pts-chip" id="chip-ht" style="display:none">🕐 <strong>+2 pts</strong></span>
-        <span class="pts-chip" id="chip-yc" style="display:none">🟨 <strong>+1 pt</strong></span>
-        <span class="pts-chip pts-chip--total">Max <span class="pts-chip-val" id="chip-total">5</span> pts</span>
+        <span class="pts-chip pts-chip--on" id="chip-score">🎯 Score exact · <strong>5 pts</strong></span>
+        <span class="pts-chip" id="chip-buteurs" style="display:none">⚽ Buteurs · <strong id="chip-buteurs-val">+2 pts</strong></span>
+        <span class="pts-chip" id="chip-ht" style="display:none">🕐 Mi-temps · <strong>+2 pts</strong></span>
+        <span class="pts-chip" id="chip-yc" style="display:none">🟨 Cartons · <strong>+1 pt</strong></span>
+        <span class="pts-chip pts-chip--total">✨ MAX <span class="pts-chip-val" id="chip-total">5</span> PTS</span>
       </div>
 
       <button class="btn-valider" id="btn-valider">Valider mon prono</button>

@@ -17,7 +17,8 @@ const supabase = createClient(
 );
 
 const API_HOST = 'free-api-live-football-data.p.rapidapi.com';
-const API_KEY  = process.env.VITE_RAPIDAPI_KEY;
+// Cherche la clé avec ou sans préfixe VITE_
+const API_KEY  = process.env.RAPIDAPI_KEY || process.env.VITE_RAPIDAPI_KEY;
 
 // webpush initialisé à la demande (pas au démarrage — évite crash si clés absentes)
 let _webpush = null;
@@ -35,6 +36,14 @@ async function getWebPush() {
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
 
+  // Debug : vérifier que les env vars sont bien là
+  if (!API_KEY) {
+    return res.status(500).json({
+      error: 'RAPIDAPI_KEY manquante',
+      hint: 'Ajoute RAPIDAPI_KEY dans les env vars Vercel (Settings → Environment Variables)',
+    });
+  }
+
   try {
     // ── 1. Récupérer les matchs live depuis l'API football ──
     const apiRes = await fetch(`https://${API_HOST}/football-current-live`, {
@@ -42,6 +51,8 @@ export default async function handler(req, res) {
     });
     const apiData = await apiRes.json();
     const liveFromApi = apiData?.response?.live || apiData?.response || [];
+    // Debug si l'API renvoie une erreur
+    if (apiData?.message) return res.status(500).json({ error: 'API football', detail: apiData.message });
 
     if (!liveFromApi.length) {
       await checkScheduledToLive();

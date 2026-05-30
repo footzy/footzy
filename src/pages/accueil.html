@@ -1273,7 +1273,7 @@
         .eq('status', 'scheduled')
         .gt('kickoff_at', now)
         .order('kickoff_at')
-        .limit(5);
+        .limit(1);
 
       const list    = document.getElementById('upcoming-list');
       const section = document.getElementById('upcoming-section');

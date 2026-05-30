@@ -700,16 +700,20 @@
       gap: 8px;
     }
     .feed-reaction-btn {
+      flex: 1;
       display: flex;
       align-items: center;
-      gap: 5px;
+      justify-content: center;
+      gap: 4px;
       background: var(--color-bg);
       border: 1.5px solid var(--color-border);
       border-radius: var(--radius-full);
-      padding: 6px 13px;
-      font: 600 0.75rem/1 'Geist';
+      padding: 7px 4px;
+      font: 600 0.7rem/1 'Geist';
       color: var(--color-text-secondary);
       cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
       transition: all 150ms ease;
       -webkit-tap-highlight-color: transparent;
     }
@@ -1539,11 +1543,23 @@
           .select('prono_id, type, user_id')
           .in('prono_id', ids);
 
+        const REACTIONS = [
+          { type: 'daccord', emoji: '👍', label: 'D\'accord' },
+          { type: 'mouais',  emoji: '😐', label: 'Mouais'   },
+          { type: 'footix',  emoji: '🤡', label: 'Footix'   },
+        ];
+
         const rMap = {};
         reactions?.forEach(r => {
-          if (!rMap[r.prono_id]) rMap[r.prono_id] = { fire: 0, heart: 0, myFire: false, myHeart: false };
-          if (r.type === 'fire')  { rMap[r.prono_id].fire++;  if (r.user_id === user.id) rMap[r.prono_id].myFire = true; }
-          if (r.type === 'heart') { rMap[r.prono_id].heart++; if (r.user_id === user.id) rMap[r.prono_id].myHeart = true; }
+          if (!rMap[r.prono_id]) rMap[r.prono_id] = {};
+          REACTIONS.forEach(({ type }) => {
+            if (!rMap[r.prono_id][type]) rMap[r.prono_id][type] = { count: 0, mine: false };
+          });
+          const rx = REACTIONS.find(rx => rx.type === r.type);
+          if (rx) {
+            rMap[r.prono_id][rx.type].count++;
+            if (r.user_id === user.id) rMap[r.prono_id][rx.type].mine = true;
+          }
         });
 
         list.innerHTML = deduped.map(p => {
@@ -1556,9 +1572,14 @@
             ? `<img src="${prof.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
             : (pseudo[0] || '?').toUpperCase();
 
-          const r = rMap[p.id] || { fire: 0, heart: 0, myFire: false, myHeart: false };
-          const fireLabel  = r.fire  ? ` ${r.fire}`  : '';
-          const heartLabel = r.heart ? ` ${r.heart}` : '';
+          const r = rMap[p.id] || {};
+          const reactionsHtml = REACTIONS.map(({ type, emoji, label }) => {
+            const rx    = r[type] || { count: 0, mine: false };
+            const count = rx.count ? ` ${rx.count}` : '';
+            return `<button class="feed-reaction-btn${rx.mine ? ' active' : ''}" onclick="window.reactFeed('${p.id}','${type}',this)">
+              ${emoji} ${label}<span>${count}</span>
+            </button>`;
+          }).join('');
 
           // Boutons action : seulement pour ses propres pronos + avant coup d'envoi
           const isOwn         = p.user_id === user.id;
@@ -1594,14 +1615,7 @@
                   <span class="feed-team-flag">${match.away_flag || ''}</span>
                 </div>
               </div>
-              <div class="feed-reactions">
-                <button class="feed-reaction-btn${r.myFire ? ' active' : ''}" onclick="window.reactFeed('${p.id}','fire',this)">
-                  🔥<span>${fireLabel}</span>
-                </button>
-                <button class="feed-reaction-btn${r.myHeart ? ' active' : ''}" onclick="window.reactFeed('${p.id}','heart',this)">
-                  ❤️<span>${heartLabel}</span>
-                </button>
-              </div>
+              <div class="feed-reactions">${reactionsHtml}</div>
               ${actionsHtml}
             </div>`;
         }).filter(Boolean).join('');

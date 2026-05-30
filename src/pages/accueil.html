@@ -39,6 +39,7 @@
       font-family: 'Geist', -apple-system, sans-serif;
       -webkit-font-smoothing: antialiased;
       color: var(--color-text-primary);
+      overflow-x: hidden; /* ← empêche le scroll horizontal sur iPhone */
     }
 
     /* ── Dot pattern background ── */
@@ -48,6 +49,7 @@
       min-height: 100dvh;
       padding-bottom: 90px;
       position: relative;
+      overflow-x: hidden; /* ← bloque tout débordement interne */
     }
     .page::before {
       content: '';
@@ -135,14 +137,18 @@
       padding: 0 16px;
       margin-bottom: 14px;
       gap: 10px;
+      overflow: hidden; /* évite le débordement du titre sur petits écrans */
     }
     .section-big-title {
       font: italic 900 2.2rem/0.95 'Geist';
-      font-size: clamp(1.45rem, 7.8vw, 2.2rem);
+      font-size: clamp(1.3rem, 7vw, 2.2rem); /* légèrement réduit pour petits écrans */
       text-transform: uppercase;
       letter-spacing: -0.03em;
       color: var(--color-text-primary);
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: clip;
+      min-width: 0;
       flex: 1;
     }
     .hero-live-badge {
@@ -195,8 +201,7 @@
     /* ── Carte countdown (prochain match) ── */
     .match-countdown-card {
       flex-shrink: 0;
-      width: calc(100vw - 48px);
-      max-width: 382px;
+      width: min(calc(100vw - 48px), 382px);
       background:
         radial-gradient(ellipse at 50% 85%, rgba(0,224,90,0.12) 0%, transparent 60%),
         #0F0F0E;
@@ -268,8 +273,7 @@
 
     .match-live-card {
       flex-shrink: 0;
-      width: calc(100vw - 48px);
-      max-width: 382px;
+      width: min(calc(100vw - 48px), 382px);
       background:
         radial-gradient(ellipse at 50% 85%, rgba(0,224,90,0.09) 0%, transparent 58%),
         #0F0F0E;

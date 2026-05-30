@@ -174,7 +174,7 @@
       flex-shrink: 0;
     }
 
-    /* Groupe selector */
+    /* Visibility selector */
     .groupe-select-wrap {
       border-top: 1px solid var(--color-border);
       padding-top: 12px;
@@ -186,20 +186,56 @@
       color: var(--color-text-tertiary);
       margin-bottom: 6px;
     }
-    .groupe-select {
+    .visibility-btn {
       width: 100%;
-      height: 40px;
+      height: 44px;
       background: var(--color-surface-score);
       border: 1.5px solid var(--color-border);
       border-radius: var(--radius-lg);
-      padding: 0 12px;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: border-color 150ms ease;
+    }
+    .visibility-btn:active { border-color: var(--color-green); }
+    .visibility-btn-left { display: flex; align-items: center; gap: 8px; }
+    .visibility-icon { font-size: 1.05rem; line-height: 1; }
+    .visibility-val {
       font: 600 0.88rem/1 'Geist';
       color: var(--color-text-primary);
-      appearance: none;
-      cursor: pointer;
-      outline: none;
     }
-    .groupe-select:focus { border-color: var(--color-green); }
+    .visibility-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      border-bottom: 1px solid var(--color-border);
+      cursor: pointer;
+      transition: background 120ms ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .visibility-option:last-child { border-bottom: none; }
+    .visibility-option:active { background: var(--color-bg); }
+    .visibility-opt-icon { font-size: 1.4rem; line-height: 1; flex-shrink: 0; }
+    .visibility-opt-info { flex: 1; min-width: 0; }
+    .visibility-opt-name {
+      font: 700 0.9rem/1 'Geist';
+      color: var(--color-text-primary);
+      margin-bottom: 3px;
+    }
+    .visibility-opt-sub {
+      font: 400 0.7rem/1 'Geist';
+      color: var(--color-text-tertiary);
+    }
+    .visibility-opt-check {
+      color: var(--color-green);
+      font-size: 1rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
 
     /* ── [C] Saisie score ── */
     .prono-section {
@@ -560,12 +596,16 @@
             <span class="match-header-name" id="away-name">—</span>
           </div>
         </div>
-        <!-- Groupe selector -->
+        <!-- Visibility selector -->
         <div class="groupe-select-wrap">
-          <div class="groupe-select-label">Pour le groupe</div>
-          <select class="groupe-select" id="groupe-select">
-            <option value="">Chargement…</option>
-          </select>
+          <div class="groupe-select-label">Pronostiquer pour</div>
+          <button class="visibility-btn" id="visibility-btn">
+            <div class="visibility-btn-left">
+              <span class="visibility-icon" id="visibility-icon">🌍</span>
+              <span class="visibility-val" id="visibility-val">Public</span>
+            </div>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--color-text-tertiary)"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
         </div>
       </div>
 
@@ -688,17 +728,59 @@
     // Load groups
     const { data: memberships } = await supabase
       .from('groupe_membres')
-      .select('groupe_id, groupes(id,nom)')
+      .select('groupe_id, groupes(id,nom,code)')
       .eq('user_id', user.id);
 
-    const groupeSelect = document.getElementById('groupe-select');
-    if (!memberships?.length) {
-      groupeSelect.innerHTML = '<option value="">Rejoins d\'abord un groupe</option>';
-    } else {
-      groupeSelect.innerHTML = memberships.map(m =>
-        `<option value="${m.groupes.id}">${m.groupes.nom}</option>`
-      ).join('');
+    // Build visibility options : Public en premier, puis les groupes
+    const visibilityOptions = [
+      { id: 'public', label: 'Public', sub: 'Visible dans le feed communauté', icon: '🌍' },
+      ...(memberships || []).map(m => ({
+        id:    m.groupes.id,
+        label: m.groupes.nom,
+        sub:   `Groupe · ${m.groupes.code || ''}`,
+        icon:  '👥',
+      }))
+    ];
+    let selectedVis = visibilityOptions[0];
+
+    function updateVisibilityBtn() {
+      document.getElementById('visibility-icon').textContent = selectedVis.icon;
+      document.getElementById('visibility-val').textContent  = selectedVis.label;
     }
+
+    document.getElementById('visibility-btn').addEventListener('click', () => {
+      const overlay = document.createElement('div');
+      overlay.className = 'sheet-overlay';
+      overlay.innerHTML = `
+        <div class="sheet">
+          <div class="sheet-handle"></div>
+          <div class="sheet-title">
+            <span>Pronostiquer pour</span>
+            <button class="sheet-close" id="vis-close">✕</button>
+          </div>
+          ${visibilityOptions.map(opt => `
+            <div class="visibility-option" data-id="${opt.id}">
+              <span class="visibility-opt-icon">${opt.icon}</span>
+              <div class="visibility-opt-info">
+                <div class="visibility-opt-name">${opt.label}</div>
+                <div class="visibility-opt-sub">${opt.sub}</div>
+              </div>
+              ${opt.id === selectedVis.id ? '<span class="visibility-opt-check">✓</span>' : ''}
+            </div>`).join('')}
+        </div>`;
+      document.body.appendChild(overlay);
+
+      overlay.querySelector('#vis-close').addEventListener('click', () => overlay.remove());
+      overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+      overlay.querySelectorAll('.visibility-option').forEach(item => {
+        item.addEventListener('click', () => {
+          selectedVis = visibilityOptions.find(o => o.id === item.dataset.id);
+          updateVisibilityBtn();
+          overlay.remove();
+          if (navigator.vibrate) navigator.vibrate(15);
+        });
+      });
+    });
 
     // State
     let homeScore = 0, awayScore = 0;
@@ -823,13 +905,14 @@
       });
     }
 
-    // ── Load existing prono ──
+    // ── Load existing prono (sans filtre groupe — un seul prono par user/match) ──
     async function loadExistingProno() {
-      const groupeId = groupeSelect.value;
-      if (!groupeId) return;
       try {
         const { data } = await supabase.from('pronostics').select('*')
-          .eq('user_id', user.id).eq('match_id', matchId).eq('groupe_id', groupeId).maybeSingle();
+          .eq('user_id', user.id).eq('match_id', matchId)
+          .order('created_at', { ascending: false })
+          .limit(1).maybeSingle();
+
         if (data) {
           homeScore = data.home_score ?? 0;
           awayScore = data.away_score ?? 0;
@@ -852,7 +935,6 @@
       }
     }
 
-    groupeSelect.addEventListener('change', loadExistingProno);
     await loadExistingProno();
 
     // ── Oracle IA ──
@@ -937,45 +1019,60 @@
         '<p class="oracle-loading-text">Analyse indisponible pour ce match.</p>';
     }
 
-    // ── Valider ──
+    // ── Valider — synchronise le score sur tous les groupes ──
     document.getElementById('btn-valider').addEventListener('click', async () => {
-      const groupeId = groupeSelect.value;
-      const errEl    = document.getElementById('error-msg');
+      const errEl = document.getElementById('error-msg');
       errEl.style.display = 'none';
-
-      if (!groupeId) {
-        errEl.textContent = 'Sélectionne un groupe.';
-        errEl.style.display = 'block';
-        return;
-      }
       if (!beforeKickoff) return;
 
       const btn = document.getElementById('btn-valider');
       btn.disabled = true;
       btn.textContent = 'Enregistrement…';
 
+      const scoreFields = {
+        home_score: homeScore,
+        away_score: awayScore,
+        buteurs:    buteurs.filter(Boolean),
+      };
+      const selectedGroupeId = selectedVis.id !== 'public' ? selectedVis.id : null;
+
       try {
-        const pronoData = {
-          user_id:    user.id,
-          match_id:   matchId,
-          groupe_id:  groupeId,
-          home_score: homeScore,
-          away_score: awayScore,
-          buteurs:    buteurs.filter(Boolean),
-        };
+        // Récupérer tous les pronos existants pour user+match
+        const { data: allPronos } = await supabase.from('pronostics')
+          .select('id, groupe_id')
+          .eq('user_id', user.id)
+          .eq('match_id', matchId);
 
-        let error;
-        if (existingPronoId) {
-          ({ error } = await supabase.from('pronostics').update(pronoData).eq('id', existingPronoId));
+        if (allPronos?.length) {
+          // Mettre à jour le score sur TOUS les pronos existants (synchronisation)
+          const { error } = await supabase.from('pronostics')
+            .update(scoreFields)
+            .eq('user_id', user.id)
+            .eq('match_id', matchId);
+          if (error) throw error;
+
+          // Si le groupe sélectionné n'a pas encore de prono, en créer un
+          if (selectedGroupeId && !allPronos.some(p => p.groupe_id === selectedGroupeId)) {
+            await supabase.from('pronostics').insert({
+              user_id: user.id, match_id: matchId, groupe_id: selectedGroupeId, ...scoreFields
+            });
+          }
         } else {
-          ({ error } = await supabase.from('pronostics').insert(pronoData));
+          // Premier prono : insérer pour le contexte sélectionné
+          const { error } = await supabase.from('pronostics').insert({
+            user_id:   user.id,
+            match_id:  matchId,
+            groupe_id: selectedGroupeId,
+            ...scoreFields,
+          });
+          if (error) throw error;
         }
-
-        if (error) throw error;
 
         if (navigator.vibrate) navigator.vibrate([20, 10, 40]);
         showToast('Prono enregistré ! ✓');
-        setTimeout(() => window.location.href = '/src/pages/match.html?id=' + matchId, 1500);
+        btn.textContent = 'Modifier mon prono';
+        btn.disabled = false;
+        existingPronoId = true;
 
       } catch(e) {
         errEl.textContent = 'Erreur : ' + (e.message || 'Réessaie');

@@ -326,37 +326,38 @@
     .match-upcoming-team {
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 6px;
       flex: 1;
+      min-width: 0;
     }
     .match-upcoming-team.right { justify-content: flex-end; }
-    .match-upcoming-team-flag  { font-size: 1.3rem; line-height: 1; }
+    .match-upcoming-team-flag  { font-size: 1.5rem; line-height: 1; flex-shrink: 0; }
     .match-upcoming-team-name  {
-      font: 700 0.88rem/1 'Geist';
+      font: 700 0.78rem/1 'Geist';
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.05em;
       color: var(--color-text-primary);
+      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap;
-      max-width: calc(50vw - 80px);
+      max-width: 80px;
     }
     .match-upcoming-time-block {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2px;
+      gap: 3px;
       flex-shrink: 0;
-      min-width: 68px;
+      min-width: 72px;
     }
     .match-upcoming-date {
-      font: 500 0.58rem/1 'Geist';
+      font: 600 0.55rem/1 'Geist';
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.07em;
       color: var(--color-text-secondary);
     }
     .match-upcoming-hour {
-      font: 900 1.05rem/1 'Geist';
+      font: 900 1.1rem/1 'Geist';
       color: var(--color-text-primary);
       letter-spacing: -0.02em;
     }
@@ -796,6 +797,28 @@
       }).join('');
     }
 
+    // ── Nom d'équipe court pour affichage compact ──
+    function shortName(name) {
+      if (!name) return '';
+      const n = name.toUpperCase().trim();
+      const map = {
+        'PARIS SAINT-GERMAIN': 'PSG',   'PARIS SG': 'PSG',
+        'AFRIQUE DU SUD': 'AFR. SUD',   'CORÉE DU SUD': 'CORÉE S.',
+        'BOSNIE-HERZÉGOVINE': 'BOSNIE', 'ÉTATS-UNIS': 'USA',
+        'ARABIE SAOUDITE': 'ARABIE S.', 'NOUVELLE-ZÉLANDE': 'N. ZÉL.',
+        'COSTA RICA': 'C. RICA',        'RÉP. TCHÈQUE': 'TCHÈQUE',
+        'BURKINA FASO': 'B. FASO',      'CÔTE D\'IVOIRE': 'CIV',
+        'SIERRA LEONE': 'S. LEONE',     'PAYS-BAS': 'P.-BAS',
+        'GUINÉE ÉQUATORIALE': 'GUI. EQ.','GUINÉE-BISSAU': 'GUI.-B.',
+        'TRINIDAD ET TOBAGO': 'TRI.',    'SAINT-KITTS': 'SKN',
+        'EL SALVADOR': 'EL SALV.',      'RÉP. DOMINICAINE': 'DOM.',
+        'CORÉE DU NORD': 'CORÉE N.',    'HONG KONG': 'HKG',
+        'ARABIE SAOUDITE': 'ARA. SOUD', 'ÉMIRATS ARABES UNIS': 'EAU',
+        'IRISH': 'IRL',                  'NORTHERN IRELAND': 'NIR',
+      };
+      return map[n] || (n.length > 8 ? n.slice(0, 3) : n);
+    }
+
     // ─────────────────────────────────────────
     // [D] PROCHAINS MATCHS
     // ─────────────────────────────────────────
@@ -840,17 +863,17 @@
           <div class="match-upcoming-card" onclick="window.location.href='/src/pages/match.html?id=${m.id}'">
             <div class="match-upcoming-team">
               <span class="match-upcoming-team-flag">${m.home_flag || ''}</span>
-              <span class="match-upcoming-team-name">${m.home_team || ''}</span>
+              <span class="match-upcoming-team-name">${shortName(m.home_team)}</span>
             </div>
             <div class="match-upcoming-time-block">
               <span class="match-upcoming-date">${dayLabel}</span>
               <span class="match-upcoming-hour">${hour}</span>
+              ${done ? '<span style="width:6px;height:6px;border-radius:50%;background:var(--color-green);display:block;margin-top:3px"></span>' : ''}
             </div>
             <div class="match-upcoming-team right">
-              <span class="match-upcoming-team-name">${m.away_team || ''}</span>
+              <span class="match-upcoming-team-name">${shortName(m.away_team)}</span>
               <span class="match-upcoming-team-flag">${m.away_flag || ''}</span>
             </div>
-            ${done ? '<span class="match-upcoming-prono-done" title="Pronostic déjà fait"></span>' : ''}
           </div>`;
       }).join('');
     }

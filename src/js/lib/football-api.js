@@ -57,8 +57,17 @@ export async function searchPlayer(query) {
       { headers }
     );
     const data = await r.json();
-    return data?.response?.players || [];
-  } catch {
+    // L'API retourne response soit comme array, soit comme objet avec .players
+    const raw = Array.isArray(data?.response)
+      ? data.response
+      : (data?.response?.players || data?.players || []);
+    // Normaliser chaque item pour exposer .name directement
+    return raw.map(p => ({
+      name: p.player?.name || p.name || p.strPlayer || p.fullName || null,
+      ...p,
+    })).filter(p => p.name);
+  } catch(e) {
+    console.warn('searchPlayer failed:', e);
     return [];
   }
 }
